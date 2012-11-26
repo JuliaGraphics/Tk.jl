@@ -11,18 +11,20 @@
 # - cleaning up unused callbacks
 
 require("Cairo")
+require("OpenLib")
 
 module Tk
 using Base
 using Cairo
+using OpenLib
 
 export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-libtcl = dlopen("libtcl8.5")
-libtk = dlopen("libtk8.5")
-libX = dlopen("libX11")
+libtcl = openlib("libtcl8.5")
+libtk = openlib("libtk8.5")
+libX = openlib("libX11")
 tk_wrapper = dlopen("libtk_wrapper")
 
 tcl_doevent() = tcl_doevent(0)
