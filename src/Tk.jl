@@ -11,25 +11,23 @@
 # - cleaning up unused callbacks
 
 require("Cairo")
-require("OpenLib")
 
 module Tk
 using Base
 using Cairo
-using OpenLib
 
 export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-libtcl = openlib("libtcl8.5")
-libtk = openlib("libtk8.5")
-libX = openlib("libX11")
+libtcl = "libtcl8.5"
+libtk = "libtk8.5"
+libX = "libX11"
 tk_wrapper = dlopen("libtk_wrapper")
 
 tcl_doevent() = tcl_doevent(0)
 function tcl_doevent(fd)
-    while (ccall(dlsym(libtcl,:Tcl_DoOneEvent), Int32, (Int32,), (1<<1))!=0)
+    while (ccall((:Tcl_DoOneEvent,libtcl), Int32, (Int32,), (1<<1))!=0)
     end
 end
 
@@ -37,33 +35,33 @@ end
 tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 
 function init()
-    ccall(dlsym(libtcl,:Tcl_FindExecutable), Void, (Ptr{Uint8},),
+    ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
           file_path(JULIA_HOME, "julia"))
-    tcl_interp = ccall(dlsym(libtcl,:Tcl_CreateInterp), Ptr{Void}, ())
-    ccall(dlsym(libtcl,:Tcl_Init), Int32, (Ptr{Void},), tcl_interp)
-    ccall(dlsym(libtk,:Tk_Init), Int32, (Ptr{Void},), tcl_interp)
+    tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
+    ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
+    ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp)
     # TODO: for now cheat and use X-specific hack for events
     mainwin = mainwindow(tcl_interp)
     disp = tk_display(mainwin)
-    fd = ccall(dlsym(libX,:XConnectionNumber), Int32, (Ptr{Void},), disp)
+    fd = ccall((:XConnectionNumber,libX), Int32, (Ptr{Void},), disp)
     add_fd_handler(fd, tcl_doevent)
     tcl_interp
 end
 
 mainwindow(interp) =
-    ccall(dlsym(libtk,:Tk_MainWindow), Ptr{Void}, (Ptr{Void},), interp)
+    ccall((:Tk_MainWindow,libtk), Ptr{Void}, (Ptr{Void},), interp)
 
 type TclError <: Exception
     msg::String
 end
 
 function tcl_result()
-    bytestring(ccall(dlsym(libtcl,:Tcl_GetStringResult),
+    bytestring(ccall((:Tcl_GetStringResult,libtcl),
                      Ptr{Uint8}, (Ptr{Void},), tcl_interp))
 end
 
 function tcl_evalfile(name)
-    if ccall(dlsym(libtcl,:Tcl_EvalFile), Int32, (Ptr{Void}, Ptr{Uint8}),
+    if ccall((:Tcl_EvalFile,libtcl), Int32, (Ptr{Void}, Ptr{Uint8}),
              tcl_interp, name) != 0
         throw(TclError(tcl_result()))
     end
@@ -71,7 +69,7 @@ function tcl_evalfile(name)
 end
 
 function tcl_eval(cmd)
-    code = ccall(dlsym(libtcl,:Tcl_Eval), Int32, (Ptr{Void}, Ptr{Uint8}),
+    code = ccall((:Tcl_Eval,libtcl), Int32, (Ptr{Void}, Ptr{Uint8}),
                  tcl_interp, cmd)
     result = tcl_result()
     if code != 0
@@ -126,7 +124,7 @@ pack(widget::TkWidget) = tcl_eval("pack $(widget.path)")
 place(widget::TkWidget, x::Int, y::Int) = tcl_eval("place $(widget.path) -x $x -y $y")
 
 function nametowindow(name)
-    ccall(dlsym(libtk, :Tk_NameToWindow), Ptr{Void},
+    ccall((:Tk_NameToWindow,libtk), Ptr{Void},
           (Ptr{Void}, Ptr{Uint8}, Ptr{Void}),
           tcl_interp, name, mainwindow(tcl_interp))
 end
@@ -136,7 +134,7 @@ const _callbacks = ObjectIdDict()
 function tcl_callback(f)
     cname = string("jl_cb", repr(uint32(object_id(f))))
     # TODO: use Tcl_CreateObjCommand instead
-    ccall(dlsym(libtcl,:Tcl_CreateCommand), Ptr{Void},
+    ccall((:Tcl_CreateCommand,libtcl), Ptr{Void},
           (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Any, Ptr{Void}),
           tcl_interp, cname, dlsym(tk_wrapper,:jl_tcl_callback), f, C_NULL)
     # TODO: use a delete proc (last arg) to remove this
