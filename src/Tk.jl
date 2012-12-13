@@ -20,10 +20,11 @@ export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-libtcl = "libtcl8.5"
-libtk = "libtk8.5"
-libX = "libX11"
+const libtcl = "libtcl8.5"
+const libtk = "libtk8.5"
+const libX = "libX11"
 tk_wrapper = dlopen("libtk_wrapper")
+jl_tcl_callback = dlsym(tk_wrapper, :jl_tcl_callback)
 
 tcl_doevent() = tcl_doevent(0)
 function tcl_doevent(fd)
@@ -136,7 +137,7 @@ function tcl_callback(f)
     # TODO: use Tcl_CreateObjCommand instead
     ccall((:Tcl_CreateCommand,libtcl), Ptr{Void},
           (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Any, Ptr{Void}),
-          tcl_interp, cname, dlsym(tk_wrapper,:jl_tcl_callback), f, C_NULL)
+          tcl_interp, cname, jl_tcl_callback, f, C_NULL)
     # TODO: use a delete proc (last arg) to remove this
     _callbacks[f] = true
     cname
@@ -149,10 +150,10 @@ height(w::TkWidget) = int(tcl_eval("$(w.path) cget -height"))
 # But, this should be the only such function needed.
 function cairo_surface_for(w::TkWidget)
     win = nametowindow(w.path)
-    disp = ccall(dlsym(tk_wrapper,:jl_tkwin_display), Ptr{Void}, (Ptr{Void},),
+    disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
                  win)
-    d = ccall(dlsym(tk_wrapper,:jl_tkwin_id), Int32, (Ptr{Void},), win)
-    vis = ccall(dlsym(tk_wrapper,:jl_tkwin_visual), Ptr{Void}, (Ptr{Void},),
+    d = ccall((:jl_tkwin_id,:libtk_wrapper), Int32, (Ptr{Void},), win)
+    vis = ccall((:jl_tkwin_visual,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
                 win)
     if disp==C_NULL || d==0 || vis==C_NULL
         error("invalid window")
