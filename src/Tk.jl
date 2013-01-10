@@ -42,13 +42,13 @@ function init()
     ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
     ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp)
     # TODO: for now cheat and use X-specific hack for events
-    mainwin = mainwindow(tcl_interp)
-    if mainwin == C_NULL
-        error("cannot initialize Tk: window system not available")
-    end
-    disp = tk_display(mainwin)
-    fd = ccall((:XConnectionNumber,libX), Int32, (Ptr{Void},), disp)
-    add_fd_handler(fd, tcl_doevent)
+    #mainwin = mainwindow(tcl_interp)
+    #if mainwin == C_NULL
+    #    error("cannot initialize Tk: window system not available")
+    #end
+    #disp = tk_display(mainwin)
+    #fd = ccall((:XConnectionNumber,libX), Int32, (Ptr{Void},), disp)
+    #add_fd_handler(fd, tcl_doevent)
     tcl_interp
 end
 
