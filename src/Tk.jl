@@ -10,6 +10,7 @@
 # - state-interrogating functions
 # - cleaning up unused callbacks
 
+include(joinpath(julia_pkgdir(),"Tk","deps","ext.jl"))
 require("Cairo")
 
 module Tk
@@ -30,12 +31,16 @@ function tcl_doevent(fd)
     end
 end
 
+global timeout = nothing
+
 # fetch first word from struct
 tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 
 function init()
     ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
           joinpath(JULIA_HOME, "julia"))
+    println("initialized")
+    ccall((:g_type_init,"libgobject-2.0"),Void,())
     tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
     ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp)
@@ -47,11 +52,15 @@ function init()
     #disp = tk_display(mainwin)
     #fd = ccall((:XConnectionNumber,libX), Int32, (Ptr{Void},), disp)
     #add_fd_handler(fd, tcl_doevent)
+    global timeout
+    timeout = Base.TimeoutAsyncWork(globalEventLoop(),tcl_doevent)
+    startTimer(timeout,100,100)
     tcl_interp
 end
 
 mainwindow(interp) =
     ccall((:Tk_MainWindow,libtk), Ptr{Void}, (Ptr{Void},), interp)
+mainwindow() = mainwindow(tcl_interp)
 
 type TclError <: Exception
     msg::String
@@ -184,15 +193,23 @@ height(w::TkWidget) = int(tcl_eval("$(w.path) cget -height"))
 # But, this should be the only such function needed.
 function cairo_surface_for(w::TkWidget)
     win = nametowindow(w.path)
-    disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                 win)
-    d = ccall((:jl_tkwin_id,:libtk_wrapper), Int32, (Ptr{Void},), win)
-    vis = ccall((:jl_tkwin_visual,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                win)
-    if disp==C_NULL || d==0 || vis==C_NULL
-        error("invalid window")
+    if OS_NAME == :Linux
+        disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+                     win)
+        d = ccall((:jl_tkwin_id,:libtk_wrapper), Int32, (Ptr{Void},), win)
+        vis = ccall((:jl_tkwin_visual,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+                    win)
+        if disp==C_NULL || d==0 || vis==C_NULL
+            error("invalid window")
+        end
+        return CairoXlibSurface(disp, d, vis, width(w), height(w))
+    elseif OS_NAME == :Darwin
+        context = ccall((:getView,:libtk_wrapper), Ptr{Void},
+              (Ptr{Void},Int32), win, height(w))
+        return CairoQuartzSurface(context, width(w), height(w))
+    else
+        error("Unsupported Operating System")
     end
-    CairoXlibSurface(disp, d, vis, width(w), height(w))
 end
 
 const default_mouse_cb = (w, x, y)->nothing
