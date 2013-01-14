@@ -54,7 +54,7 @@ function init()
     #add_fd_handler(fd, tcl_doevent)
     global timeout
     timeout = Base.TimeoutAsyncWork(globalEventLoop(),tcl_doevent)
-    startTimer(timeout,100,100)
+    Base.startTimer(timeout,100,100)
     tcl_interp
 end
 
@@ -207,6 +207,10 @@ function cairo_surface_for(w::TkWidget)
         context = ccall((:getView,:libtk_wrapper), Ptr{Void},
               (Ptr{Void},Int32), win, height(w))
         return CairoQuartzSurface(context, width(w), height(w))
+	elseif OS_NAME == :Windows
+        hdc = ccall((:jl_tkwin_hdc,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+                     win)
+		return CairoWin32Surface(hdc, width(w), height(w))
     else
         error("Unsupported Operating System")
     end
@@ -296,9 +300,13 @@ function place(c::Canvas, x::Int, y::Int)
 end
 
 function reveal(c::Canvas)
-    set_source_surface(c.frontcc, c.back, 0, 0)
-    paint(c.frontcc)
+	println("reveal")
+	context = CairoContext(cairo_surface_for(c.c.parent))
+    set_source_surface(context, c.back, 0, 0)
+	paint(context)
+    #paint(c.frontcc)
     tcl_doevent()
+	ccall((:jl_tkwin_hdc_release,:libtk_wrapper),Void,(Ptr{Void},),ccall((:cairo_win32_surface_get_dc,Cairo._jl_libcairo),Ptr{Void},(Ptr{Void},),context.surface.ptr))
 end
 
 cairo_context(c::Canvas) = c.backcc

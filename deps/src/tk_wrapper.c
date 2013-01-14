@@ -47,7 +47,20 @@ int jl_tkwin_id(Tk_Window tkwin)
     return Tk_WindowId(tkwin);
 }
 
+HWND globalHWND;
 
+void *jl_tkwin_hdc(Tk_Window tkwin)
+{
+	globalHWND = (HWND)Tk_GetHWND(tkwin);
+	return GetDC(globalHWND);
+}
+
+void *jl_tkwin_hdc_release(HDC hdc) 
+{
+	ReleaseDC(globalHWND,hdc);
+}
+
+#ifdef __APPLE__
 
 #define MAC_OSX_TK
 #import <Cocoa/Cocoa.h>
@@ -115,3 +128,5 @@ getView(
     end:
     return NULL;
 }
+
+#endif
