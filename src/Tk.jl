@@ -23,8 +23,6 @@ export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
 const libtcl = "libtcl8.5"
 const libtk = "libtk8.5"
 const libX = "libX11"
-tk_wrapper = dlopen("libtk_wrapper")
-jl_tcl_callback = dlsym(tk_wrapper, :jl_tcl_callback)
 
 tcl_doevent() = tcl_doevent(0)
 function tcl_doevent(fd)
@@ -135,12 +133,45 @@ end
 
 const _callbacks = ObjectIdDict()
 
+const TCL_OK       = int32(0)
+const TCL_ERROR    = int32(1)
+const TCL_RETURN   = int32(2)
+const TCL_BREAK    = int32(3)
+const TCL_CONTINUE = int32(4)
+
+const TCL_VOLATILE = convert(Ptr{Void}, 1)
+const TCL_STATIC   = convert(Ptr{Void}, 0)
+const TCL_DYNAMIC  = convert(Ptr{Void}, 3)
+
+const empty_str = ""
+
+function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
+    args = { bytestring(unsafe_ref(argv,i)) for i=1:argc }
+    local result
+    try
+        result = f(args...)
+    catch
+        return TCL_ERROR
+    end
+    if isa(result,ByteString)
+        ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{Uint8}, Int32),
+              interp, result, TCL_VOLATILE)
+    else
+        ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{Uint8}, Int32),
+              interp, empty_str, TCL_STATIC)
+    end
+    return TCL_OK
+end
+
+jl_tcl_callback_ptr = cfunction(jl_tcl_callback,
+                                Int32, (Function, Ptr{Void}, Int32, Ptr{Ptr{Uint8}}))
+
 function tcl_callback(f)
     cname = string("jl_cb", repr(uint32(object_id(f))))
     # TODO: use Tcl_CreateObjCommand instead
     ccall((:Tcl_CreateCommand,libtcl), Ptr{Void},
           (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Any, Ptr{Void}),
-          tcl_interp, cname, jl_tcl_callback, f, C_NULL)
+          tcl_interp, cname, jl_tcl_callback_ptr, f, C_NULL)
     # TODO: use a delete proc (last arg) to remove this
     _callbacks[f] = true
     cname
