@@ -21,8 +21,13 @@ export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-const libtcl = "libtcl8.6"
-const libtk = "libtk8.6"
+if OS_NAME == :Linux
+    const libtcl = "libtcl8.5"
+    const libtk = "libtk8.5"
+else
+    const libtcl = "libtcl8.6"
+    const libtk = "libtk8.6"
+end
 #const libX = "libX11"
 
 tcl_doevent() = tcl_doevent(0)
@@ -39,7 +44,6 @@ tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 function init()
     ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
           joinpath(JULIA_HOME, "julia"))
-    println("initialized")
     ccall((:g_type_init,"libgobject-2.0"),Void,())
     tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
@@ -267,7 +271,7 @@ function init_canvas(c::Canvas)
     w = width(c.c)
     h = height(c.c)
     c.frontcc = CairoContext(c.front)
-    if is_unix(OS_NAME)
+    if Base.is_unix(OS_NAME)
         c.back = surface_create_similar(c.front, w, h)
     else
         c.back = CairoRGBSurface(w, h)
