@@ -54,7 +54,7 @@ function init()
     #add_fd_handler(fd, tcl_doevent)
     global timeout
     timeout = Base.TimeoutAsyncWork(globalEventLoop(),tcl_doevent)
-    Base.startTimer(timeout,100,100)
+    Base.startTimer(timeout,int64(100),int64(100))
     tcl_interp
 end
 
@@ -266,8 +266,8 @@ function init_canvas(c::Canvas)
     c.front = cairo_surface_for(c.c)
     w = width(c.c)
     h = height(c.c)
-    c.back = surface_create_similar(c.front, w, h)
     c.frontcc = CairoContext(c.front)
+    c.back = CairoRGBSurface(w, h)
     c.backcc = CairoContext(c.back)
     c.mouse = MouseHandler()
     cb = tcl_callback((x...)->reveal(c))
