@@ -4,34 +4,6 @@
 #include <tk.h>
 #include "julia.h"
 
-int jl_tcl_callback(ClientData clientData, Tcl_Interp *interp,
-                    int argc, char *argv[])
-{
-    jl_function_t *f = (jl_function_t*)clientData;
-    jl_value_t **jlargs = alloca(argc * sizeof(void*));
-    memset(jlargs, 0, argc * sizeof(void*));
-    JL_GC_PUSHARGS(jlargs, argc);
-    int i;
-    for(i=0; i < argc; i++) {
-        jlargs[i] = jl_cstr_to_string(argv[i]);
-    }
-    jl_value_t *result = NULL;
-    JL_TRY {
-        result = jl_apply(f, jlargs, argc);
-    }
-    JL_CATCH {
-        //jl_show(jl_stdout_obj(), jl_exception_in_transit);
-        JL_GC_POP();
-        return TCL_ERROR;
-    }
-    if (jl_is_byte_string(result))
-        Tcl_SetResult(interp, jl_string_data(result), TCL_VOLATILE);
-    else
-        Tcl_SetResult(interp, "", TCL_STATIC);
-    JL_GC_POP();
-    return TCL_OK;
-}
-
 void *jl_tkwin_display(Tk_Window tkwin)
 {
     return Tk_Display(tkwin);
@@ -49,10 +21,25 @@ int jl_tkwin_id(Tk_Window tkwin)
 
 HWND globalHWND;
 
-void *jl_tkwin_hdc(Tk_Window tkwin)
+#include "TkWinInt.h"
+
+void *jl_tkwin_hdc(Tk_Window tkwin, Display *display)
 {
-	globalHWND = (HWND)Tk_GetHWND(tkwin);
-	return GetDC(globalHWND);
+    HDC dc;
+    TkWinDCState state;
+    PAINTSTRUCT PS;
+    RECT rect, rect2;
+    HWND win = ((TkWinDrawable *)Tk_WindowId(tkwin))->window.handle;
+    GetClientRect(win,&rect);
+    InvalidateRect(win,&rect,FALSE);
+    HRGN rgn = CreateRectRgn(rect.left,rect.top,rect.right,rect.bottom);
+    dc = GetDC(win);
+    int ok = SelectClipRgn(dc,rgn);
+    GetClipBox(dc,&rect2);
+    SetBkMode(dc,1);
+    TextOut(dc,10,10,"Hello World",11);
+    return dc;
+    //return TkWinGetHDC(Tk_WindowId(tkwin));
 }
 
 void *jl_tkwin_hdc_release(HDC hdc) 

@@ -21,9 +21,9 @@ export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-const libtcl = "libtcl8.5"
-const libtk = "libtk8.5"
-const libX = "libX11"
+const libtcl = "libtcl8.6"
+const libtk = "libtk8.6"
+#const libX = "libX11"
 
 tcl_doevent() = tcl_doevent(0)
 function tcl_doevent(fd)
@@ -103,7 +103,7 @@ type TkWidget
     global Window
     function Window(title, w, h)
         wpath = ".jl_win$ID"; ID += 1
-        tcl_eval("toplevel $wpath -width $w -height $h")
+        tcl_eval("toplevel $wpath -width $w -height $h -background \"\"")
         tcl_eval("wm title $wpath \"$title\"")
         tcl_doevent()
         new(wpath, "toplevel", nothing)
@@ -208,8 +208,10 @@ function cairo_surface_for(w::TkWidget)
               (Ptr{Void},Int32), win, height(w))
         return CairoQuartzSurface(context, width(w), height(w))
 	elseif OS_NAME == :Windows
-        hdc = ccall((:jl_tkwin_hdc,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+	    disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
                      win)
+        hdc = ccall((:jl_tkwin_hdc,:libtk_wrapper), Ptr{Void}, (Ptr{Void},Ptr{Void}),
+                     win,disp)
 		return CairoWin32Surface(hdc, width(w), height(w))
     else
         error("Unsupported Operating System")
@@ -301,12 +303,9 @@ end
 
 function reveal(c::Canvas)
 	println("reveal")
-	context = CairoContext(cairo_surface_for(c.c.parent))
-    set_source_surface(context, c.back, 0, 0)
-	paint(context)
-    #paint(c.frontcc)
+    set_source_surface(c.frontcc, c.back, 0, 0)
+    paint(c.frontcc)
     tcl_doevent()
-	ccall((:jl_tkwin_hdc_release,:libtk_wrapper),Void,(Ptr{Void},),ccall((:cairo_win32_surface_get_dc,Cairo._jl_libcairo),Ptr{Void},(Ptr{Void},),context.surface.ptr))
 end
 
 cairo_context(c::Canvas) = c.backcc
