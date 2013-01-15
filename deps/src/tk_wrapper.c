@@ -44,7 +44,7 @@ void *jl_tkwin_hdc(Tk_Window tkwin, Display *display)
 
 void *jl_tkwin_hdc_release(HDC hdc) 
 {
-	ReleaseDC(globalHWND,hdc);
+    ReleaseDC(globalHWND,hdc);
 }
 
 #ifdef __APPLE__
@@ -62,24 +62,24 @@ NSView *drawableView(MacDrawable *macWin)
 {
     NSView *view;
     if (!macWin) {
-    view = NULL;
-    } else if (!macWin->toplevel) {
-    view = macWin->view;
-    } else if (!(macWin->toplevel->flags & TK_EMBEDDED)) {
-    view = macWin->toplevel->view;
-    } else {
-    TkWindow *contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
-    if (contWinPtr) {
-        view = drawableView(contWinPtr->privatePtr);
+        view = NULL;
     }
+    else if (!macWin->toplevel) {
+        view = macWin->view;
+    }
+    else if (!(macWin->toplevel->flags & TK_EMBEDDED)) {
+        view = macWin->toplevel->view;
+    }
+    else {
+        TkWindow *contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
+        if (contWinPtr) {
+            view = drawableView(contWinPtr->privatePtr);
+        }
     }
     return view;
 }
 
-CGContextRef
-getView(
-    TkWindow *winPtr,
-    int height)
+CGContextRef getView(TkWindow *winPtr, int height)
 {
     CGContextRef context;
     NSView *view;
@@ -93,26 +93,27 @@ getView(
 
     if (view) {
         if (view != [NSView focusView]) {
-        focusLocked = [view lockFocusIfCanDraw];
-        dontDraw = !focusLocked;
-        } else {
-        dontDraw = ![view canDraw];
+            focusLocked = [view lockFocusIfCanDraw];
+            dontDraw = !focusLocked;
+        }
+        else {
+            dontDraw = ![view canDraw];
         }
         if (dontDraw) {
-        goto end;
+            goto end;
         }
-        [[view window] disableFlushWindow];
+        //[[view window] disableFlushWindow];
         view = view;
         context = [[NSGraphicsContext currentContext] graphicsPort];
         portBounds = NSRectToCGRect([view bounds]);
         if (clipRgn) {
-        clipBounds = CGContextGetClipBoundingBox(context);
+            clipBounds = CGContextGetClipBoundingBox(context);
         }
     }
     CGContextTranslateCTM (context, 0.0, height);
     CGContextScaleCTM (context, 1.0, -1.0);
     return context;
-    end:
+ end:
     return NULL;
 }
 

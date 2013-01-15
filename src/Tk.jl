@@ -205,14 +205,14 @@ function cairo_surface_for(w::TkWidget)
         return CairoXlibSurface(disp, d, vis, width(w), height(w))
     elseif OS_NAME == :Darwin
         context = ccall((:getView,:libtk_wrapper), Ptr{Void},
-              (Ptr{Void},Int32), win, height(w))
+                        (Ptr{Void},Int32), win, height(w))
         return CairoQuartzSurface(context, width(w), height(w))
-	elseif OS_NAME == :Windows
-	    disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+    elseif OS_NAME == :Windows
+	disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
                      win)
         hdc = ccall((:jl_tkwin_hdc,:libtk_wrapper), Ptr{Void}, (Ptr{Void},Ptr{Void}),
-                     win,disp)
-		return CairoWin32Surface(hdc, width(w), height(w))
+                    win,disp)
+	return CairoWin32Surface(hdc, width(w), height(w))
     else
         error("Unsupported Operating System")
     end
@@ -267,7 +267,11 @@ function init_canvas(c::Canvas)
     w = width(c.c)
     h = height(c.c)
     c.frontcc = CairoContext(c.front)
-    c.back = CairoRGBSurface(w, h)
+    if is_unix(OS_NAME)
+        c.back = surface_create_similar(c.front, w, h)
+    else
+        c.back = CairoRGBSurface(w, h)
+    end
     c.backcc = CairoContext(c.back)
     c.mouse = MouseHandler()
     cb = tcl_callback((x...)->reveal(c))
@@ -302,7 +306,6 @@ function place(c::Canvas, x::Int, y::Int)
 end
 
 function reveal(c::Canvas)
-	println("reveal")
     set_source_surface(c.frontcc, c.back, 0, 0)
     paint(c.frontcc)
     tcl_doevent()
