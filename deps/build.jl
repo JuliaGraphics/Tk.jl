@@ -1,6 +1,6 @@
 @windows_only require("BinDeps")
 @windows_only begin
-	depsdir = joinpath(julia_pkgdir(),"Tk","deps")
+	depsdir = joinpath(Pkg.dir(),"Tk","deps")
 	prefix=joinpath(depsdir,"usr")
 	uprefix = replace(replace(prefix,"\\","/"),"C:/","/c/")
 	if(true)

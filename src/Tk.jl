@@ -10,7 +10,7 @@
 # - state-interrogating functions
 # - cleaning up unused callbacks
 
-include(joinpath(julia_pkgdir(),"Tk","deps","ext.jl"))
+include(joinpath(Pkg.dir(),"Tk","deps","ext.jl"))
 require("Cairo")
 
 module Tk
