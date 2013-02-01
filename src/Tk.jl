@@ -21,13 +21,8 @@ export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-if OS_NAME == :Linux
-    const libtcl = "libtcl8.5"
-    const libtk = "libtk8.5"
-else
-    const libtcl = "libtcl8.6"
-    const libtk = "libtk8.6"
-end
+const libtcl = "libtcl"
+const libtk = "libtk"
 #const libX = "libX11"
 
 tcl_doevent() = tcl_doevent(0)
@@ -197,7 +192,7 @@ height(w::TkWidget) = int(tcl_eval("$(w.path) cget -height"))
 # But, this should be the only such function needed.
 function cairo_surface_for(w::TkWidget)
     win = nametowindow(w.path)
-    if OS_NAME == :Linux
+    if OS_NAME == :Linux || OS_NAME == :Darwin
         disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
                      win)
         d = ccall((:jl_tkwin_id,:libtk_wrapper), Int32, (Ptr{Void},), win)
@@ -207,10 +202,10 @@ function cairo_surface_for(w::TkWidget)
             error("invalid window")
         end
         return CairoXlibSurface(disp, d, vis, width(w), height(w))
-    elseif OS_NAME == :Darwin
-        context = ccall((:getView,:libtk_wrapper), Ptr{Void},
-                        (Ptr{Void},Int32), win, height(w))
-        return CairoQuartzSurface(context, width(w), height(w))
+#    elseif OS_NAME == :Darwin
+#        context = ccall((:getView,:libtk_wrapper), Ptr{Void},
+#                        (Ptr{Void},Int32), win, height(w))
+#        return CairoQuartzSurface(context, width(w), height(w))
     elseif OS_NAME == :Windows
 	disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
                      win)
