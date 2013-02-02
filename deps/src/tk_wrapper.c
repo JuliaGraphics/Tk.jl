@@ -2,7 +2,6 @@
 #include <string.h>
 #include <tcl.h>
 #include <tk.h>
-#include "julia.h"
 
 void *jl_tkwin_display(Tk_Window tkwin)
 {
@@ -18,6 +17,8 @@ int jl_tkwin_id(Tk_Window tkwin)
 {
     return Tk_WindowId(tkwin);
 }
+
+#ifdef __WIN32__
 
 HWND globalHWND;
 
@@ -46,6 +47,8 @@ void *jl_tkwin_hdc_release(HDC hdc)
 {
     ReleaseDC(globalHWND,hdc);
 }
+
+#endif
 
 #ifdef __APPLE__
 

@@ -1,9 +1,18 @@
-@windows_only begin
-ENV["LD_LIBRARY_PATH"]="/Users/keno/.julia/Tk/deps/usr/lib"
-ccall(:add_library_mapping,Int32,(Ptr{Uint8},Ptr{Uint8}),"libtcl8.6",dlopen(joinpath(Pkg.dir(),"Tk","deps","usr","lib","tcl86g.dll")))
-ccall(:add_library_mapping,Int32,(Ptr{Uint8},Ptr{Uint8}),"libtk8.6",dlopen(joinpath(Pkg.dir(),"Tk","deps","usr","lib","tk86g.dll")))
-ccall(:add_library_mapping,Int32,(Ptr{Uint8},Ptr{Uint8}),"libtk_wrapper",dlopen(joinpath(Pkg.dir(),"Tk","deps","usr","lib","libtk_wrapper.dll")))
-
-#THIS IS FOR TESTING ONLY
-#ccall(:add_library_mapping,Int32,(Ptr{Uint8},Ptr{Uint8}),"libX11",dlopen("/usr/X11/lib/libX11.dylib"))
+let 
+    function find_library(libname,filename)
+        try 
+            dl = dlopen(joinpath(Pkg.dir(),"Tk","deps","usr","lib",filename))
+            ccall(:add_library_mapping,Int32,(Ptr{Uint8},Ptr{Uint8}),libname,dl)
+        catch
+            try 
+                dl = dlopen(libname)
+                dlclose(dl)
+            catch
+                error("Failed to find required library "*libname*". Try re-running the package script using Pkg.runbuildscript(\"pkg\")")
+            end
+        end
+    end
+    find_library("libtcl",OS_NAME == :Windows ? "tcl86g" : "libtcl-8.6")
+    find_library("libtk",OS_NAME == :Windows ? "tk86g" : "libtk-8.6")
+    find_library("libtk_wrapper","libtk_wrapper")
 end
