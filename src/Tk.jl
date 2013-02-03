@@ -310,6 +310,10 @@ function reveal(c::Canvas)
     tcl_doevent()
 end
 
+function update()
+    tcl_eval("update")
+end
+
 cairo_context(c::Canvas) = c.backcc
 cairo_surface(c::Canvas) = c.back
 
