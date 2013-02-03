@@ -12,7 +12,7 @@ let
             end
         end
     end
-    find_library("libtcl",OS_NAME == :Windows ? "tcl86g" : "libtcl-8.6")
-    find_library("libtk",OS_NAME == :Windows ? "tk86g" : "libtk-8.6")
+    find_library("libtcl",OS_NAME == :Windows ? "tcl86g" : "libtcl8.6")
+    find_library("libtk",OS_NAME == :Windows ? "tk86g" : "libtk8.6")
     find_library("libtk_wrapper","libtk_wrapper")
 end

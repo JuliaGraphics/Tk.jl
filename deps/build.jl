@@ -53,7 +53,7 @@ let
 end
 
 cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper.$shlib_ext",
-		["-shared","-fPIC","-I$prefix/include",
+		["-shared","-g","-fPIC","-I$prefix/include",
 		 "-IC:/src/julia/src","-IC:/src/julia/deps/libuv/include","-IC:/src/julia/src/support","-I/usr/local/include",
 		 "-L$prefix/lib"],["-ltcl8.6","-ltk8.6"])
 if(OS_NAME == :Darwin)
