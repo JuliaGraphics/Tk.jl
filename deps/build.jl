@@ -54,14 +54,19 @@ end
 
 cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper.$shlib_ext",
 		["-shared","-g","-fPIC","-I$prefix/include",
-		 "-IC:/src/julia/src","-IC:/src/julia/deps/libuv/include","-IC:/src/julia/src/support","-I/usr/local/include",
-		 "-L$prefix/lib"],["-ltcl8.6","-ltk8.6"])
+		 "-I/usr/local/include",
+		 "-L$prefix/lib"],["-ltcl","-ltk"])
 if(OS_NAME == :Darwin)
 	unshift!(cc.options,"-xobjective-c")
 	append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
 elseif(OS_NAME == :Windows)
 	push!(cc.libs,"-lGdi32")
+elseif(OS_NAME == :Linux)
+	push!(cc.options,"-I/usr/include/tcl")
 end
-s |= cc	
+s |= @build_steps begin
+	CreateDirectory(joinpath(prefix,"lib"))
+	cc	
+end 	
 
 run(s)
