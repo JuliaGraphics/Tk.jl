@@ -1,6 +1,6 @@
 require("BinDeps")
 s = @build_steps begin
-	c=Choices(Choice[])
+	c=Choices(Choice[Choice(:skip,"Skip Installation - Binaries must be installed manually",nothing)])
 end
 
 ## Homebrew
