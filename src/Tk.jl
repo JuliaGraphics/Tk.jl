@@ -52,8 +52,8 @@ function init()
     #fd = ccall((:XConnectionNumber,libX), Int32, (Ptr{Void},), disp)
     #add_fd_handler(fd, tcl_doevent)
     global timeout
-    timeout = Base.TimeoutAsyncWork(globalEventLoop(),tcl_doevent)
-    Base.startTimer(timeout,int64(100),int64(100))
+    timeout = Base.TimeoutAsyncWork(tcl_doevent)
+    Base.start_timer(timeout,int64(100),int64(100))
     tcl_interp
 end
 
