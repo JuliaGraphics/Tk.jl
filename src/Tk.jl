@@ -21,8 +21,13 @@ export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-const libtcl = "libtcl"
-const libtk = "libtk"
+if OS_NAME == :Linux
+    const libtcl = "libtcl8.5"
+    const libtk = "libtk8.5"
+else
+    const libtcl = "libtcl"
+    const libtk = "libtk"
+end
 #const libX = "libX11"
 
 tcl_doevent() = tcl_doevent(0)

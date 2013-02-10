@@ -55,7 +55,8 @@ end
 cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper.$shlib_ext",
 		["-shared","-g","-fPIC","-I$prefix/include",
 		 "-I/usr/local/include",
-		 "-L$prefix/lib"],["-ltcl","-ltk"])
+		 "-L$prefix/lib"],
+                OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : ["-ltcl","-ltk"])
 if(OS_NAME == :Darwin)
 	unshift!(cc.options,"-xobjective-c")
 	append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
