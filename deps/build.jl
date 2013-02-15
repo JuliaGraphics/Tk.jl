@@ -63,7 +63,12 @@ if(OS_NAME == :Darwin)
 elseif(OS_NAME == :Windows)
     push!(cc.libs,"-lGdi32")
 elseif(OS_NAME == :Linux)
-    push!(cc.options,"-I/usr/include/tcl")
+    for idir in ("/usr/include/tcl8.5", "/usr/include/tcl")
+        if isdir(idir)
+            push!(cc.options, "-I$idir")
+            break
+        end
+    end
 end
 s |= @build_steps begin
     CreateDirectory(joinpath(prefix,"lib"))
