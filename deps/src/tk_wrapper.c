@@ -55,7 +55,7 @@ void *jl_tkwin_hdc_release(HDC hdc)
 #define MAC_OSX_TK
 #import <Cocoa/Cocoa.h>
 #include "ApplicationServices/ApplicationServices.h"
-#include "TkMacOSXInt.h"
+#include "tkMacOSXInt.h"
 
 /* This thing is the cause of a lot of pain and suffering. In order to make this work correctly,
  * you need to make sure that the latest cached drawing context is that in which you want cairo to draw.
