@@ -52,28 +52,35 @@ let
     push!(c,Choice(:source,"Install depdendency from source",steps))
 end
 
-cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper.$shlib_ext",
-        ["-shared","-g","-fPIC","-I$prefix/include",
-         "-I/usr/local/include",
-         "-L$prefix/lib"],
-                OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : ["-ltcl","-ltk"])
-if(OS_NAME == :Darwin)
-    push!(cc.options, "-I/opt/X11/include")
-    unshift!(cc.options,"-xobjective-c")
-    append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
-elseif(OS_NAME == :Windows)
-    push!(cc.libs,"-lGdi32")
-elseif(OS_NAME == :Linux)
-    for idir in ("/usr/include/tcl8.5", "/usr/include/tcl")
-        if isdir(idir)
-            push!(cc.options, "-I$idir")
-            break
+try
+    dl = dlopen("libtk_wrapper")
+    dlclose(dl)
+catch
+    cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper.$shlib_ext",
+                  ["-shared","-g","-fPIC","-I$prefix/include",
+                   "-I/usr/local/include",
+                   "-L$prefix/lib"],
+                  OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : ["-ltcl","-ltk"])
+    if(OS_NAME == :Darwin)
+        push!(cc.options, "-I/opt/X11/include")
+        unshift!(cc.options,"-xobjective-c")
+        append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
+    elseif(OS_NAME == :Windows)
+        push!(cc.libs,"-lGdi32")
+    elseif(OS_NAME == :Linux)
+        for idir in ("/usr/include/tcl8.5", "/usr/include/tcl")
+            if isdir(idir)
+                push!(cc.options, "-I$idir")
+                break
+            end
         end
     end
-end
-s |= @build_steps begin
-    CreateDirectory(joinpath(prefix,"lib"))
-    cc
+    s |= @build_steps begin
+        CreateDirectory(joinpath(prefix,"lib"))
+        cc
+    end
+
+    run(s)
+
 end
 
-run(s)
