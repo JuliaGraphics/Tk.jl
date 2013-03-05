@@ -11,7 +11,6 @@
 # - cleaning up unused callbacks
 
 include(joinpath(Pkg.dir(),"Tk","deps","ext.jl"))
-require("Cairo")
 
 module Tk
 using Base
