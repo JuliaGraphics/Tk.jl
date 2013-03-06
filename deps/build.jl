@@ -60,9 +60,9 @@ catch
                   ["-shared","-g","-fPIC","-I$prefix/include",
                    "-I/usr/local/include",
                    "-L$prefix/lib"],
-                  OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : ["-ltcl","-ltk"])
+                  OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
     if(OS_NAME == :Darwin)
-        push!(cc.options, "-I/opt/X11/include")
+#        push!(cc.options, "-I/opt/X11/include")
         unshift!(cc.options,"-xobjective-c")
         append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
     elseif(OS_NAME == :Windows)
