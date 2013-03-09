@@ -17,7 +17,8 @@ using Base
 using Cairo
 
 export Window, Button, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
-    cairo_surface_for, width, height, reveal, cairo_context, cairo_surface,
+    cairo_surface_for, width, height, windowwidth, windowheight, reveal,
+    cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
 if OS_NAME == :Linux
@@ -191,6 +192,8 @@ end
 
 width(w::TkWidget) = int(tcl_eval("$(w.path) cget -width"))
 height(w::TkWidget) = int(tcl_eval("$(w.path) cget -height"))
+windowwidth(w::TkWidget) = int(tcl_eval("winfo width $(w.path)"))
+windowheight(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
 
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
