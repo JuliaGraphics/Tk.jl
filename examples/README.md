@@ -58,12 +58,12 @@ In addition to providing  constructors, there are some convenience methods defin
 A simple "Hello world" example, which shows off many of the styles is given by:
 
 ```
-w = Toplevel("Example")		                           ## A titled top level window
+w = Toplevel("Example")                                    ## A titled top level window
 f = Frame(w, {:padding => [3,3,2,2], :relief=>"groove"})   ## A Frame with some options set
 pack(f, {:expand => true, :fill => "both"})                ## using pack to manage the layout of f
 #
 b = Button(f, "Click for a message")                       ## Button constructor has convenience interface
-grid(b, 1, 1)			                           ## use grid to pack in b. 1,1 specifies location
+grid(b, 1, 1)                                              ## use grid to pack in b. 1,1 specifies location
 #
 callback(path) = Messagebox(w, "A message", "Hello World") ## A callback to open a message
 tk_bind(b, "command", callback)                            ## bind callback to 'command' option	 
