@@ -556,13 +556,6 @@ function TkCanvas(widget::Tk_Widget, width::Integer, height::Integer)
 end
 
 
-
-
-## The main purpose of Tk is to provide an interactive device for graphics. This is the Tk.Canvas
-## widget.
-
-
-
 ## Bring Canvas object into Tk_Widget level.
 type Tk_CairoCanvas <: Tk_Widget
     w::Union(Nothing, Canvas)
@@ -594,15 +587,14 @@ type Tk_CairoCanvas <: Tk_Widget
     end
 end
 
-CairoCanvas(w::Widget) = Tk_CairoCanvas(widget)
+CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
 
 ## This would be used with the following, but it only works directly if the
 ## canvas is packed in a window. It doesn't show in a themed widget (Frame, Panedwindow)
 ## and loosk funny when sharing the stage with a button.
 
-## using Winston ## also Image library...
 
-
+## add to Winston.jl:
 ## function render(cnv::Tk_CairoCanvas, p::Winston.PlotContainer)
 ##     if !isa(cnv.device, Nothing)
 ##         Winston.page_compose(p, cnv.device, false)
@@ -612,102 +604,25 @@ CairoCanvas(w::Widget) = Tk_CairoCanvas(widget)
 ##     end
 ## end
 
+## ## This works:
+## using Winston 
+## w = Toplevel("works")
+## canvas = Tk.CairoCanvas(w)
+## pack(canvas)
 
-## name = "test"; w,h = 500, 500
-## win = Toplevel(name, w, h)
-## tcl("pack", "propagate", win, false)
-
-## ## Pack into toplevel window -- works
-## #canvas = Tk_CairoCanvas(win)
-
-
-## f = Frame(win); pack(f, {:side=>"left"})
-## canvas = Tk_CairoCanvas(win)
-## pack(canvas, {:side=>"left", :expand=>true, :fill => "both"})
-
-## ## pack in frame
-## b = Button(f, "click me", (path) -> begin
-##     x = [-pi:1:pi]
-##     y = sin(x)
-
-##     p = FramedPlot()
-##     add(p, Curve(x, y))
-##     render(canvas, p)
-## end)
-## pack(b)
+## x = linspace(0, pi, 1000); y = cos(x); p = FramedPlot(); add(p, Curve(x,y))
+## render(canvas, p)
 
 
+## ## This fails:
 
+## w = Toplevel("Fails")
+## pack_stop_propagate(w)
+## f = Frame(w)
+## pack(f, {:expand=>true, :fill=>"both"})
+## #
+## canvas = Tk.CairoCanvas(f)
+## pack(canvas, {:expand=>true, :fill=>"both")
+## #
+## render(canvas, p)
 
-
-## ## Pack into Frame -- Fails!
-## #f = Frame(win); pack(f, {:expand=>true, :fill => "both"})
-## #set_size(win, w, h)
-## #canvas = Tk_CairoCanvas(f)
-## #pack(canvas, {:expand=>true, :fill => "both"})
-
-## ## Fails
-
-## ## pg = Panedwindow(win)
-## ## pack(pg, {:expand=>true, :fill => "both"})
-
-## ## b = Button(pg, "click me")
-## ## page_add(b)
-
-## ## canvas = Tk_CairoCanvas(pg)
-## ## page_add(canvas)
-
-
-
-
-## x = [-pi:1:pi]
-## y = sin(x)
-
-## p = FramedPlot()
-## add(p, Curve(x, y))
-
-
-## must pause until map call is doen
-#render(canvas, p)
-
-## This is a Tk issue:
-##
-
-## do_frame = false
-
-## using Tk
-## w, h = (500, 500)
-## win = Window("name", w, h)
-## tcl_eval(" pack propagate $(win.path) 0")
-
-## if !do_frame
-##     c = Tk.Canvas(win)
-## else
-##     f = Tk.TkWidget(win, "ttk:frame")
-##     cmd = "ttk::frame $(f.path)"
-##     tcl_eval(cmd)
-##     tcl_eval("pack $(f.path) -expand 1 -fill both")
-    
-##     c = Tk.Canvas(f)
-## end
-
-
-
-## pack(c)
-
-## Tk.init_canvas(c)
-## r = Cairo.CairoRenderer(Tk.cairo_surface(c))
-## r.upperright = (w, h)
-## r.on_open = () -> (cr = Tk.cairo_context(c); Cairo.set_source_rgb(cr, 1, 1, 1); Cairo.paint(cr))
-## r.on_close = () -> (Tk.reveal(c); Tk.tcl_doevent())
-
-
-## using Winston
-## x = [-pi:1:pi]
-## y = sin(x)
-
-## p = FramedPlot()
-## add(p, Curve(x, y))
-
-## Winston.page_compose(p, r, false)
-## r.on_close()
