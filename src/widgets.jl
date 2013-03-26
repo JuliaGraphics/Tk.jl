@@ -119,7 +119,7 @@ Radiobutton(parent::Widget, label::String) = Radiobutton(parent, nothing, label)
 get_value(widget::Tk_Radiobutton) = tk_instate(widget, "selected")
 set_value(widget::Tk_Radiobutton, value::Bool) = tk_state(value ? "selected" : "!selected")
 get_items(widget::Tk_Radiobutton) = tk_cget(widget, "text")
-set_items(widget::Tk_Radiobutton, value::String) = tk_configure(widget, {:text => value})
+set_items(widget::Tk_Radiobutton, value::String) = tk_configure(widget, {:text => value, :value=>value})
 
 
 ## Radio Button Group
