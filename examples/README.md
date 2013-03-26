@@ -59,7 +59,7 @@ pack(f, {:expand => true, :fill => "both"})  # using pack to manage the layout o
 callback(path) = Messagebox(w, "A message", "Hello World") ## A callback to open a message
 b = Button(f, "Click for a message", callback )            ## Button constructor has convenience interface
 grid(b, 1, 1)			                           ## use grid to pack in b. 1,1 specifies location
-``
+```
 
 
 
