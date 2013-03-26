@@ -1,19 +1,19 @@
-## The Tk Pacakge
+## The Tk Package
 
-This package provides an interface to the Tcl/Tk libraries, useful for creating graphical user interfaces. The basic functionality is provided by the `tcl_eval` function, which is used to pass Tcl commands. The `Canvas` widget is used to create a device for plotting of `julia`'s graphics. In particular, the `Winston` and `Images` package can render to such a device.
+This package provides an interface to the Tcl/Tk libraries, useful for creating graphical user interfaces. The basic functionality is provided by the `tcl_eval` function, which is used to pass on Tcl commands. The `Canvas` widget is used to create a device for plotting of `julia`'s graphics. In particular, the `Winston` and `Images` package can render to such a device.
 
 In addition, there are convenience methods for working with most of
 the widgets provided by `Tk`. The `tcl` function is a wrapper for
-`tcl_eval` which provides translations from `julia` objects into `Tcl`
+`tcl_eval` which provides translations from `julia` objects into Tcl
 constructs. This function is similar to the one found in `R`'s `tcltk`
-package. Following that package, we provides several of the basic
-function to simplify the interface for working with Tk. 
+package. Following that package, we provides several basic functions
+to simplify the interface for working with Tk.
 
 
 
 ### Constructors
 
-We provide constructors for the following widgets
+Constructors are provided  for the following widgets
 
 * `Toplevel`: for toplevel windows
 * `Frame`, `Labelframe`, `Notebook`, `Panedwindow`: for the basic containers
@@ -21,25 +21,31 @@ We provide constructors for the following widgets
 * `Checkbutton`, `Radio`, `Combobox`, `Slider`, `Spinbox`: selection widgets
 * `Entry`, `Text`: text widgets
 * `Treeview`: for trees, but also listboxes and grids
-* `Sizegrip`, `Separator`, `Progressbar`, `Image`, `Scrollbar`: various widgets
+* `Sizegrip`, `Separator`, `Progressbar`, `Image` various widgets
 
-Actually, scrollbars do not work (atleast on my Mac) and this also means comboboxes don't work.
+The basic usage simply calls the `ttk::` counterpart, though one can
+use a Dict to pass in configuration options. As well, some have a
+convenience interfaces.
 
 ### Methods
 
-In addition to providing more constructors, there are some convenience methods defined.
+In addition to providing  constructors, there are some convenience methods defined.
 
-* The usual `pack`, `pack_configure`, `forget`, `grid`,
-  `grid_configure`, `grid_forget`, ... for containers, but also
-  `formlayout`.
+* The `tk_configure`, `tk_cget`, `tclvar`, `tk_identify`, `tk_state`,
+  `tk_instate`, `tk_winfo`, `tk_wm`, `tk_bind` methods to simplify the
+  corresponding Tcl commands.
 
-* The conveniences `get_value` and `set_value` to get and set the
+* For widget layout, we have  `pack`, `pack_configure`, `forget`, `grid`,
+  `grid_configure`, `grid_forget`, ... providing interfaces to the appropriate Tk commands, but also
+   `formlayout` and `page_add` for working with simple forms and notebooks and pane windows..
+
+* We add the methods `get_value` and `set_value` to get and set the
   primary value for a control
 
-* The conveniences `get_items` and `set_items` to get and set the
+* We add the methods `get_items` and `set_items` to get and set the
   item(s) to select from for selection widgets.
 
-* The conveniences `get_width`, `get_height`, `get_size`, `set_width`,
+* We add the methods `get_width`, `get_height`, `get_size`, `set_width`,
   `set_height`, `set_size` for adjusting sizes. (Resizing a window
   with the mouse does strange things on a Mac ...)
 
@@ -47,23 +53,37 @@ In addition to providing more constructors, there are some convenience methods d
   widget accepts user input
 
 
-### Some basic examples
+## Examples
 
 A simple "Hello world" example, which shows off many of the styles is given by:
 
 ```
-w = Toplevel()			                           ## A top level window
+w = Toplevel("Example")		                           ## A titled top level window
 f = Frame(w, {:padding => [3,3,2,2], :relief=>"groove"})   ## A Frame with some options set
-pack(f, {:expand => true, :fill => "both"})  # using pack to manage the layout of f
+pack(f, {:expand => true, :fill => "both"})                ## using pack to manage the layout of f
+#
+b = Button(f, "Click for a message")                       ## Button constructor has convenience interface
+grid(b, 1, 1)			                           ## use grid to pack in b. 1,1 specifies location
 #
 callback(path) = Messagebox(w, "A message", "Hello World") ## A callback to open a message
-b = Button(f, "Click for a message", callback )            ## Button constructor has convenience interface
-grid(b, 1, 1)			                           ## use grid to pack in b. 1,1 specifies location
+tk_bind(b, "command", callback)                            ## bind callback to 'command' option	 
+tk_bind(b, "<Return>", callback)                           ## press return key when button has focus
 ```
 
+We see the use of an internal frame to hold the button. The frames
+layout is managed using `pack`, the buttons with `grid`. Both these
+have some conveniences. For grid, the location of the cell can be
+specified by 1-based index as shown. The button callback is just a
+`julia` function. Its first argument, `path`, is used internally. In
+this case, we open a modal dialog with the `Messagebox` constructor
+when the callback is called. The button object has this callback bound
+to the button's `command` option. This responds to a mouse click, but
+not a press of the `enter` key when the button has the focus. For
+that, we also bind to the '<Return>' event.
 
 
-For the R package `tctlk` there are numerous examples at http://bioinf.wehi.edu.au/~wettenhall/RTclTkExamples/
+For the R package `tctlk` there are numerous examples at
+http://bioinf.wehi.edu.au/~wettenhall/RTclTkExamples/
 
 We borrow a few of these to illustrate the `Tk` package for `julia`.
 
@@ -79,16 +99,17 @@ in a generic manner: `get_value`, `set_value`, ...
 like: `.button configure -text {button text}` is called as
 `tk_configure(button, {:text => "button text})`. key-value options are
 specified with a Dict, which converts to the underlying Tcl
-object. Similarly, path names are also translated.
+object. Similarly, path names are also translated and functions are
+converted to callbacks.
 
 
-## Pack widgets into a themed widget for better appearance
+### Pack widgets into a themed widget for better appearance
 
 `Toplevel` is the command to create a new top-level
 window. (`Tk.Window` is similar, but we give `Toplevel` a unique type
-allowing us to add methods to it.) Toplevel windows play a special
-role, as they start the widget hierarchy needed when constructing
-child components.
+allowing us to add methods, such as `set_value` to modify the title.)
+Toplevel windows play a special role, as they start the widget
+hierarchy needed when constructing child components.
 
 A toplevel window is not a themed widget. Immediately packing in a
 `Frame` instance is good practice, as otherwise the background of the
@@ -100,7 +121,7 @@ f = Frame(w)
 pack(f, {:expand=>true, :fill=>"both"})
 ```
 
-### Notes:
+#### Notes:
 
 * Sometimes the frame is configured with padding so that the sizegrip
   shows, e.g. `frame(w,{:padding => [3,3,2,2]})`.
@@ -123,7 +144,7 @@ pack(f, {:expand=>true, :fill=>"both"})
 
 <img src="munged-window.png"></img>
 
-## Message Box
+### Message Box
 
 The `Messagebox` constructor makes a modal message box.
 
@@ -134,7 +155,7 @@ Messagebox("title", "message")
 An optional `parent` argument can be specified to locate the box near
 the parent, as seen in the examples.
 
-## Checkbuttons
+### Checkbuttons
 
 <img src="checkbutton.png" > </img>
 
@@ -157,7 +178,7 @@ tk_bind(cb, "command", callback)   ## bind to command option
 The `set_items` method can be used to change the label.
 
 
-## Radio buttons
+### Radio buttons
 
 <img src="radio.png" > </img>
 
@@ -192,7 +213,7 @@ set_items(rb[1], "Honeycrisp Apples")
 widget, in this case the lone item is the name, or label of the
 button.)
 
-## Menus
+### Menus
 
 Menu bars for toplevel windows are easily created with the `menu_add`
 method. One can add actions items (pass a callback function), check
@@ -234,7 +255,7 @@ callback_add(b, callback)	## generic way to add callback for most common event
 ```
 
 
-## Entry widget
+### Entry widget
 
 <img src="entry.png"></img>
 
@@ -262,7 +283,7 @@ tk_bind(b, "<Return>", callback)
 tk_bind(e, "<Return>", callback)  ## bind to a certain key press event
 ```
 
-## Listboxes
+### Listboxes
 
 <img src="listbox.png"></img>
 
@@ -308,7 +329,7 @@ in addition to tree-like data.
 An editable grid could be done, but requires some additional Tk
 libraries.
 
-## Combo boxes
+### Combo boxes
 
 Selection from a list of choices can be done with a combo box:
 
@@ -345,7 +366,7 @@ to clear the selection, if desired.
 Editable combo boxes need to be configured by hand. (So combo isn't
 really what we have here :)
 
-## Text windows
+### Text windows
 
 The basic multi-line text widget can be done through:
 
@@ -362,7 +383,7 @@ Only a `get_value` and `set_value` is provided. One can configure
 other things (adding/inserting text, using tags, ...) directly with
 `tcl` or `tcl_eval`.
 
-## Events
+### Events
 
 One can bind a callback to an event in tcltk. There are few things to know:
 
@@ -386,7 +407,7 @@ One can bind a callback to an event in tcltk. There are few things to know:
 
 
 
-## Sliders
+### Sliders
 
 The `Slider` widget presents a slider for selection from a range of
 values. The convenience constructor allows one to specify the range of
@@ -400,7 +421,7 @@ tk_bind(sc, "command", path -> println("The value is $(get_value(sc))"))
 ```
 
 
-## Sharing a variable between widgets
+### Sharing a variable between widgets
 
 <img src="scale-label.png"></img>
 
@@ -425,7 +446,7 @@ This combination above is not ideal, as the length of the label is not
 fixed. It would be better to format the value and use `set_value` in a
 callback.
 
-## Spinbox
+### Spinbox
 
 <img src="scale-spinbox.png"></img>
 
@@ -444,7 +465,7 @@ map(pack, (sc, sp))
 tk_bind(sc, "command", path -> set_value(sp, get_value(sc)))
 tk_bind(sp, "command", path -> set_value(sc, get_value(sp)))
 ```
-## Images
+### Images
 
 <img src="image.png"></img>
 
@@ -595,7 +616,7 @@ obj = manipulate(ex,
 ```           
 
 
-## Frames
+### Frames
 
 The basic widget to hold child widgets is the Frame. As seen in the
 previous examples, it is simply constructed with `Frame`. The
@@ -604,7 +625,7 @@ previous examples, it is simply constructed with `Frame`. The
 Laying out child components is done with a layout manager, one of
 `pack`, `grid`, or `place` in Tk.
 
-### pack
+#### pack
 
 For `pack` there are several configuration options that are used to
 indicate how packing of child components is to be done. The examples
@@ -638,7 +659,7 @@ help_b = Button(f, "Help")
 map(u -> pack(u, {:side => "left"}), (ok_b, cancel_b, help_b))
 ```
 
-### grid
+#### grid
 
 For `grid`  the arguments are the  row and column. We  use integers or
 ranges.  When a  range,  then the  widget  can span  multiple rows  or
@@ -646,15 +667,6 @@ columns. Within  a cell, the `sticky` argument  replaces the `expand`,
 `fill`,  and `anchor` arguments.  This is  a string  with one  or more
 directions  to attach.  A  value of  `news`  is like  `{:expand=>true,
 :fill=>"both"}`, as all four sides are attached to.
-
-We provide the `formlayout` method for conveniently laying out widgets
-in a form-like manner, with a label on the left. (Pass `nothing` to
-suppress this.)
-
-One thing to keep in mind: *in Tk a container can only employ one
-layout style for its immediate children* That is, you can't manage
-children both with `pack` and `grid`, though you can nest frames and
-mix and match layout managers.
 
 
 <img src="grid.png"></img>
@@ -674,7 +686,17 @@ grid(b3, 2, 1)
 grid(b4, 3, 1,   {:sticky=>"ns"}) ## breaks theme
 ```
 
-## Notebooks
+We provide the `formlayout` method for conveniently laying out widgets
+in a form-like manner, with a label on the left. (Pass `nothing` to
+suppress this.)
+
+One thing to keep in mind: *a container in Tk can only employ one
+layout style for its immediate children* That is, you can't manage
+children both with `pack` and `grid`, though you can nest frames and
+mix and match layout managers.
+
+
+### Notebooks
 
 A notebook container holds various pages and draws tabs to allow the
 user to switch between them. The `page_add` method makes this easy:
@@ -697,7 +719,7 @@ set_value(nb, 2)		## position on page 2
 ```
 
 
-## Panedwindows
+### Panedwindows
 
 A paned window allows a user to allocate space between child
 components using their mouse. This is done by dragging a "sash". As
