@@ -34,16 +34,16 @@ export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_context, cairo_surface,
     tcl_doevent, MouseHandler
 
-export tcl, tclvar, tk_configure, tk_cget, tk_identify, tk_state, tk_instate, tk_winfo, tk_wm, tk_bind, callback_add
+export tcl, tclvar, tk_configure, tk_cget, tk_identify, tk_state, tk_instate, tk_winfo, tk_wm, tk_exists,
+       tcl_after, tk_bind, callback_add
 export Tk_Widget, TTk_Widget, Tk_Container
 export Toplevel, Frame, Labelframe, Notebook, Panedwindow
 export Label, Button
 export Checkbutton, Radio, Combobox
 export Slider, Spinbox
-export Entry, Text
+export Entry, set_validation, Text
 export Treeview, selected_nodes, node_insert, node_move, node_delete, node_open
 export tree_headers, tree_column_widths, tree_key_header, tree_key_width
-export Kanvas
 export Sizegrip, Separator, Progressbar, Image, Scrollbar
 export Menu, menu_add
 export GetOpenFile, GetSaveFile, ChooseDirectory, Messagebox
@@ -59,6 +59,7 @@ export get_value, set_value,
        get_enabled, set_enabled,
        get_editable, set_editable,
        get_visible, set_visible,
+       set_position,
        raise, focus, update, destroy
 
 

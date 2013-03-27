@@ -59,7 +59,11 @@ end
 Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, {:text => text, :image=>image, :compound => "left"})
 Label(parent::Widget, text::String) = Label(parent, {:text => text})
 Label(parent::Widget,  image::Tk_Image) = Label(parent, {:image=>image, :compound => "image"})
-## cf. Button for get_value, set_value
+get_value(widget::Union(Tk_Button, Tk_Label)) = tk_cget(widget, "text")
+function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
+    variable = tk_cget(widget, "textvariable")
+    (variable == "") ? tk_configure(widget, {:text => value}) : tclvar(variable, value)
+end
 
 ## Button constructors
 Button(parent::Widget, text::String, command::Function, image::Tk_Image) =
@@ -72,12 +76,8 @@ Button(parent::Widget, command::Function, image::Tk_Image) =
     Button(parent, {:command=>command, :image=>image, :compound=>"image"})
 Button(parent::Widget, image::Tk_Image) =
     Button(parent, {:image=>image, :compound=>"image"})
-    
-get_value(widget::Union(Tk_Button, Tk_Label)) = tk_cget(widget, "text")
-function set_value(widget::Union(Tk_Button, Tk_Label), value::String) 
-    variable = tk_cget(widget, "variable")
-    (variable == "") ? tk_configure(widget, {:text => value}) : tclvar(variable, value)
-end
+
+
 
 ## checkbox
 function Checkbutton(parent::Widget, label::String)
@@ -126,32 +126,29 @@ set_items(widget::Tk_Radiobutton, value::String) = tk_configure(widget, {:text =
 type Tk_Radio <: TTk_Widget
     w::TkWidget
     buttons::Vector
-    Tk_Radio(w::TkWidget) = new(w, [])
+    orient::Union(Nothing, String)
 end
 
-function Radio(parent::Widget, labels::Vector, horizontal::Bool)
-    rbs = Array(Tk_Radiobutton, length(labels))
+function Radio{T<:String}(parent::Widget, labels::Vector{T}, orient::String)
+    n = size(labels)[1]
+    rbs = Array(Tk_Radiobutton, n)
     frame = Frame(parent)
+    
     rbs[1] = Radiobutton(frame, labels[1])
-    if length(labels) > 1
-        for j in 2:length(labels)
+    if n > 1
+        for j in 2:n
             rbs[j] = Radiobutton(frame, rbs[1], labels[j])
         end
     end
-    path = tk_cget(rbs[1], "variable")
-    value = labels[1]
-    tcl("set", path, value)
-    
-    
-    rb = Tk_Radio(frame.w)
-    rb.buttons = rbs
-    map(u -> pack(u, {:side => horizontal ? "left" : "top",
-                      :anchor => horizontal ? "n" : "w"}), rbs)
 
+    rb = Tk_Radio(frame.w, rbs, orient)
     set_value(rb, labels[1])
+    map(u -> pack(u, {:side => orient == "horizontal" ? "left" : "top",
+                      :anchor => orient == "horizontal" ? "n" : "w"}), rbs)
+
     rb
 end
-Radio(parent::Widget, labels::Vector) = Radio(parent, labels, false) ## vertical default
+Radio{T <: String}(parent::Widget, labels::Vector{T}) = Radio(parent, labels, "vertical") ## vertical default
 
 function get_value(widget::Tk_Radio)
     items = get_items(widget)
@@ -167,6 +164,7 @@ function set_value(widget::Tk_Radio, value::Integer)
     set_value(widget, items[value])
 end
 get_items(widget::Tk_Radio) = map(get_items, widget.buttons)
+
 function tk_bind(widget::Tk_Radio, event::String, callback::Function)
     ## put onto each, but W now refers to button -- not group of buttons
     map(u -> tk_bind(u, event, callback), widget.buttons)
@@ -177,14 +175,16 @@ getindex(widget::Tk_Radio, i::Integer) = widget.buttons[i]
 ## Combobox
 type Tk_Combobox <: TTk_Widget
     w::TkWidget
-    values::Dict
-    Tk_Combobox(w::TkWidget) = new(w, Dict())
+    values::Vector                      #  of tuples (key, label)
+    Tk_Combobox(w::TkWidget) = new(w, [])
 end
 
-## Constructor for vectors
-## One can use a Dict to configure too, but this must be done with
-## cb = Combobox(parent)
-## set_items(cb, d) ## thekeys are displayed, the values are returned
+## Combobox.
+## One can specify the values different ways
+## * as a vector of strings
+## * as a vector of (key,value) tuples. The value is displayed, keys are used by get_value, set_value
+##   This has the advantage of keeping order.
+## * as a dict of (key,value) pairs. This must be specified through set_items though
 function Combobox(parent::Widget, values::Vector)
     cb = Combobox(parent)
     set_items(cb, values)
@@ -192,47 +192,50 @@ function Combobox(parent::Widget, values::Vector)
     cb
 end
 
+cb_pluck_labels(t) = String[v for (k,v) in t]
+cb_pluck_keys(t) = String[k for (k,v) in t]
 function get_value(widget::Tk_Combobox)
-    value =tcl(widget, "get")
-    if value == "" return(nothing) end
-    if has(widget.values, Base.symbol(value))
-        return(widget.values[Base.symbol(value)])
-    else
-        return(value)
-    end
+    label  = tcl(widget, "get")
+    if get_editable(widget) return(label) end
+    ## okay look up in vector or tuples
+    labels = cb_pluck_labels(widget.values)
+    keys = cb_pluck_keys(widget.values)
+    out = keys[label .== labels]
+    length(out) == 0 ? nothing : out[1]
 end
-set_value(widget::Tk_Combobox, index::Integer) = set_value(widget, [k for (k,v) in widget.values][index])
+
+set_value(widget::Tk_Combobox, index::Integer) = set_value(widget, cb_pluck_labels(widget.values)[index])
+## value is a key
 function set_value(widget::Tk_Combobox, value::MaybeString)
-    if value == nothing
-        tcl(widget, "set", "{}")
-    elseif has(widget.values, value)
+    if value == nothing tcl(widget, "set", "{}"); return end
+    if get_editable(widget)
         tcl(widget, "set", value)
     else
-        tcl(widget, "set", value)       #  not in list
+        keys = cb_pluck_keys(widget.values)
+        labels = cb_pluck_labels(widget.values)
+        if any(value .== keys) tcl(widget, "set", labels[value .== keys][1]) end
     end
 end
 
 
 get_items(widget::Tk_Combobox) =  widget.values
-
-function set_items(widget::Tk_Combobox, items::Dict)
-    vals = Array(String, 0)
-    for (k,v) in items
-        push!(vals, string(k))
-    end
+function set_items(widget::Tk_Combobox, items::Vector{Tuple})
+    vals = cb_pluck_labels(items)
     tk_configure(widget, {:values => vals})
     widget.values = items
 end
+function set_items(widget::Tk_Combobox, items::Dict)
+    widget.values = [(string(k),v) for (k,v) in items]
+    tk_configure(widget, {:values => cb_pluck_labels(widget.values)})
+end
 function set_items{T <: String}(widget::Tk_Combobox, items::Vector{T})
-    d = Dict()
-    for k in items
-        d[k] = k
-    end
+    d = [(v,v) for v in items]
     set_items(widget, d)
 end
 
 get_editable(widget::Tk_Combobox) = tk_cget(widget, "state") == "normal"
 set_editable(widget::Tk_Combobox, value::Bool) = tk_configure(widget, {:state => value ? "normal" : "readonly"})
+    
 
 ## Slider
 ## Restricted to integer ranges stepping by 1!
@@ -301,7 +304,7 @@ function Progressbar(widget::Widget, mode::String)
     w
 end
 
-get_value(widget::Tk_Progressbar) = tk_cget(widget, "value")
+get_value(widget::Tk_Progressbar) = tk_cget(widget, "value") | int
 set_value(widget::Tk_Progressbar, value::Integer) = tk_configure(widget, {:value => min(100, max(0, value))})
 
 ## Image
@@ -337,12 +340,31 @@ set_editable(widget::Tk_Entry, value::Bool) = tk_configure(widget, {:state => va
 
 ## visibility is for passwords
 get_visible(widget::Tk_Entry) = tk_cget(widget, "show") != "*"
-set_visible(widget::Tk_Entry, value::Bool) = tk_configure(widget, {:show => value ? "" : "*"})
+set_visible(widget::Tk_Entry, value::Bool) = tk_configure(widget, {:show => value ? "{}" : "*"})
+
+## validate is one of none, key, focus, focusin, focusout or all
+## validatecommand must return either tcl("expr", "FALSE") or tcl("expr", "TRUE") Use FALSE to call invalidate command
+## percent substitution is matched in callbacks
+function set_validation(widget::Tk_Entry, validate::String, validatecommand::Function, invalidcommand::MaybeFunction)
+    tk_configure(widget, {:validate=>validate, :validatecommand=>validatecommand, :invalidcommand=>invalidcommand})
+end
+set_validation(widget::Tk_Entry, validate::String, validatecommand::Function) = set_validation(widget, validate, validatecommand, nothing)
 
 
+
+## Scrollbar. Pass in parent and child. We configure both
+## used in scrollbars_add
+function Scrollbar(parent::Widget, child::Widget, orient::String)
+    which_view  = (orient == "horizontal") ? "xview" : "yview"
+    scr = Scrollbar(parent, {:orient=>orient, :command=>I("[list $(get_path(child)) $which_view]")})
+    d = Dict()
+    d[(orient == "horizontal") ? :xscrollcommand : :yscrollcommand] =  I("[list $(get_path(scr)) set]")
+    tk_configure(child, d)
+    scr
+end
 
 ## Text
-get_value(widget::Tk_Text) = tcl(widget, I"get 0.0 end")
+get_value(widget::Tk_Text) = tcl(widget, I"get 0.0 end") | chomp
 
 function set_value(widget::Tk_Text, value::String)
     path = get_path(widget)
@@ -370,15 +392,13 @@ MaybeTreeNode = Union(TreeNode, Nothing)
 ## Special Tree cases
 
 ## listbox like interface
-function Treeview(widget::Widget, items::Vector, title::String)
+function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String)
     w = Treeview(widget)
     tk_configure(w, {:show => "tree headings", :selectmode => "browse"})
     tcl(w, I"heading #0", {:text => title})
     tcl(w, I"column  #0", {:anchor => I"w"})
 
-    for i in items
-        tcl(w, I"insert {} end", {:text => i})
-    end
+    set_items(w, items)
 
     color = "gray"
     tcl_eval("ttk::style map Treeview.Row -background [list selected $color]")
@@ -387,9 +407,27 @@ function Treeview(widget::Widget, items::Vector, title::String)
 end
 Treeview(widget::Widget, items::Vector) = Treeview(widget, items, "")
 
+function treeview_delete_children(widget::Tk_Treeview)
+    children = tcl(widget, I"children {}")
+    if children != ""
+        tcl(widget, "delete", children)
+    end
+end
+
+function set_items{T <: String}(widget::Tk_Treeview, items::Vector{T})
+    treeview_delete_children(widget)
+    for i in items
+        tcl(widget, I"insert {} end", {:text => i})
+    end
+end
+
+
+
+
+
 
 ## t = Treeview(w, ["one" "two" "half"; "three" "four" "half"], [100, 50, 23])
-function Treeview(widget::Widget, items::Array{ASCIIString,2}, widths::MaybeVector)
+function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeVector)
 
     sz = size(items)
 
@@ -402,23 +440,23 @@ function Treeview(widget::Widget, items::Array{ASCIIString,2}, widths::MaybeVect
             tcl(w, I"column", k - 1, {:width => widths[k]})
         end
     end
-    for i in 1:sz[1]
-        val = "[list"
-        for j in 2:sz[2]
-          tmp = items[i,j]
-          val = val * " {$tmp}"
-        end
-    val = val * "]"
-    item = items[i,1]
-    tcl(w, I"insert {} end", {:text => items[i,1], :values => val})
-    end
 
+    set_items(w, items)
     color = "gray"
     tcl_eval("ttk::style map Treeview.Row -background [list selected $color]")
     
     w
 end
-Treeview(widget::Widget, items::Array{ASCIIString,2}) = Treeview(widget, items, nothing)
+Treeview{T <: String}(widget::Widget, items::Array{T,2}) = Treeview(widget, items, nothing)
+
+function set_items{T <: String}(widget::Tk_Treeview, items::Array{T,2})
+    treeview_delete_children(widget)
+    sz = size(items)
+    for i in 1:sz[1]
+        vals = String[j for j in items[i,2:end]]
+        tcl(widget, I"insert {} end", {:text => items[i,1], :values => vals})
+    end
+end
 
 
 ## Return array of selected values by key or nothing
@@ -428,6 +466,13 @@ function get_value(widget::Tk_Treeview)
     sels == nothing ? nothing : [tree_get_keys(widget, sel) for sel in sels]
 end
 
+## select row given by index. extend = true to add selection
+function set_value(widget::Tk_Treeview, index::Integer, extend::Bool)
+    children = split(tcl(widget, "children", "{}"), " ")
+    child = children[index]
+    tcl(widget, "selection", extend ? "add" : "set", child)
+end
+set_value(widget::Tk_Treeview, index::Integer) = set_value(widget, index, false)
 
 ## Some conveniences for working with trees
 ## w = Toplevel()
@@ -514,6 +559,9 @@ function node_open(widget::Tk_Treeview, node::TreeNode)
 end
 
 
+## XXX This could be cleaned up a bit. It is annoying to treat the value and text differently when
+## working on a grid XXX
+
 ## set column names, and widths. This works on values, not text part
 function tree_headers{T <: String, S<: Integer}(widget::Tk_Treeview, names::Vector{T}, widths::Vector{S})
     tree_headers(widget, names)
@@ -544,10 +592,11 @@ end
 
 ## set name and width of key column
 ## a ttk::treeview has a special column for the one which can expand
-tree_key_header(widget::Tk_Treeview, name::String) = tcl(widget, I"header @0", {:text => name})
-tree_key_width(widget::Tk_Treeview, width::Integer) = tcl(widget, I"column @0", {:width => width})
+tree_key_header(widget::Tk_Treeview, name::String)  = tcl(widget, I"heading #0", {:text => name})
+tree_key_width(widget::Tk_Treeview, width::Integer) = tcl(widget, I"column #0", {:width => width})
 
 
+## Canvas
 
 
 ## TkCanvas is plain canvas object, reserve name Canvas for Cairo enhanced one
