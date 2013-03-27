@@ -742,5 +742,6 @@ formlayout(Entry(f), "Rank:")
 formlayout(Entry(f), "Serial Number:")
 page_add(f)
 
-tcl(pg, "sashpos", 0, 50)  ## move first sash
+set_value(pg, 50)          ## move first sash 50 pixels
+tcl(pg, "sashpos", 1, 100) ## set_value, get_value are first sash (0-based)
 ```

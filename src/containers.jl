@@ -5,7 +5,7 @@ type Tk_Labelframe  <: TTk_Container w::TkWidget end
 type Tk_Notebook    <: TTk_Container w::TkWidget end
 type Tk_Panedwindow <: TTk_Container w::TkWidget end
 
-show(io::IO, widget::TkWidget) = println(typeof(widget))
+
 
 ## Toplevel window
 function Toplevel(title::String, width::Integer, height::Integer, visible::Bool)
@@ -17,7 +17,7 @@ end
 Toplevel(title::String, width::Integer, height::Integer) = Toplevel(title, width, height, true)
 Toplevel(title::String, visible::Bool) = Toplevel(title, 200, 200, visible)
 Toplevel(title::String) = Toplevel(title, 200, 200)
-Toplevel() = Toplevel("Default window")
+Toplevel() = Toplevel("Toplevel window")
 
 
 get_value(widget::Tk_Toplevel) = tk_wm(widget, "title")
@@ -29,6 +29,15 @@ function set_visible(widget::Tk_Toplevel, value::Bool)
 end
 
 set_size(widget::Tk_Toplevel, width::Integer, height::Integer) = tcl(I"wm minsize", widget, width, height)
+
+## Set upper left corner of Toplevel to...
+function set_position(widget::Tk_Toplevel, x::Integer, y::Integer)
+    p_or_m(x) = x < 0 ? "$x" : "+$x"
+    tk_wm(widget, "geometry", I(p_or_m(x) * p_or_m(y)))
+end
+set_position{T <: Integer}(widget::Tk_Toplevel, pos::Vector{T}) = set_position(w, pos[1], pos[2])
+set_position(widget::Tk_Toplevel, pos::Tk_Widget) = set_position(widget, Integer[parse_int(tk_winfo(pos, i)) for i in ["x", "y"]] + [10,10])
+
 update(widget::Tk_Toplevel) = tk_wm(widget, "geometry")
 destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 
@@ -37,7 +46,8 @@ destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 
 ## Labelframe
 Labelframe(parent::Widget, text::String) = Labelframe(parent, {:text=>text})
-set_value(widget::Tk_Labelframe, text::String) = tk_configure(f, {:text=> text})
+get_value(widget::Tk_Labelframe) = tk_cget(widget, "text")
+set_value(widget::Tk_Labelframe, text::String) = tk_configure(widget, {:text=> text})
 
 
 ## Notebook
@@ -54,7 +64,7 @@ end
 
 get_value(widget::Tk_Notebook) = 1 + int(tcl(widget, I"index current"))
 set_value(widget::Tk_Notebook, index::Integer) = tcl(widget, "select", index - 1)
-    
+no_tabs(widget::Tk_Notebook) = length(split(tcl(widget, "tabs"), " "))
 
 
 ## Panedwindow
@@ -72,11 +82,16 @@ function get_value(widget::Tk_Panedwindow)
     pos = tcl(widget, "sashpos", 0) | int
     floor(pos/sz*100)
 end
-function set_value(widget::Tk_Panedwindow, value::Integer)
-    sz = (tk_cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
-    pos = int(value * sz/100)
-    tcl(widget, "sashpos", 0, pos)
+## can set with Integer -- pixels, or real (proportion in [0,1])
+set_value(widget::Tk_Panedwindow, value::Integer) = tcl(widget, "sashpos", 0, value)
+function set_value(widget::Tk_Panedwindow, value::Real)
+    if value <= 1 && value >= 0
+        sz = (tk_cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
+        set_value(widget, int(value * sz/100))
+    end        
 end
+
+
 page_add(child::Widget) = page_add(child, 1)
         
         
@@ -142,23 +157,15 @@ end
 ## Wrap child in frame, return frame to pack (or grid) into parent of child
 ##
 ## w = Toplevel()
-## f = Frame(w); pack(f) ## f shouldn't have any layout management 
+## f = Frame(w); pack(f) ## f shouldn't have any layout management of its children
 ## t = Text(f)
 ## scrollbars_add(f,t)
 ##
 function scrollbars_add(parent::Tk_Frame, child::Tk_Widget)
 
-    ## we use tcl commands for the scrollbar, not Scrollbar. Can't get the callbacks to work properly
-    fpath = parent.w.path
-    wpath = child.w.path
-    xscr = "$fpath.xscr"
-    yscr = "$fpath.yscr"
-    
-    tcl_eval("ttk::scrollbar $xscr -orient horizontal -command \"$wpath xview\"")
-    tcl_eval("ttk::scrollbar $yscr -orient vertical -command \"$wpath yview\"")
-
-    tk_configure(child, {:xscrollcommand => "$xscr set",
-                          :yscrollcommand => "$yscr set"})
+    grid_stop_propagate(parent)
+    xscr = Scrollbar(parent, child, "horizontal")
+    yscr = Scrollbar(parent, child, "vertical")
     
     grid(child, 1, 1)
     grid(yscr, 1, 2)
@@ -168,7 +175,6 @@ function scrollbars_add(parent::Tk_Frame, child::Tk_Widget)
     grid_configure(xscr, {:sticky => "ew"})
     grid_rowconfigure(parent, 1, {:weight => 1})
     grid_columnconfigure(parent, 1, {:weight => 1})
-
-    tcl(I"grid propagate", parent, false) ## size request comes from parent, not from child.
+    
 end
 

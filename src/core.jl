@@ -1,9 +1,11 @@
+show(io::IO, widget::TkWidget) = print(io, typeof(widget))
+show(io::IO, widget::Tk_Widget) = print(io, "Tk widget of type $(typeof(widget))")
+
+
 tcl_eval("set auto_path")
 tcl_add_path(path::String) = tcl_eval("lappend auto_path $path")
-tcl_add_path(Pkg.dir("Tk", "tcl"))
 tcl_require(pkg::String) = tcl_eval("package require $pkg")
 
-## tk_configure helpers
 
 ## helper to get path
 ## assumes Tk_Widgets have w property storing TkWidget
@@ -27,22 +29,26 @@ function to_tcl{T <: String}(x::Vector{T})
 end
 to_tcl(x::Widget) = get_path(x)
 function to_tcl(x::Dict)
-    out = Dict()
-    for (k,v) in x
-        if v!=nothing out[k] = v end
-    end
+    out = filter((k,v) -> v != nothing, x)
     join([" -$(string(k)) $(to_tcl(v))" for (k, v) in out], "")
 end
-to_tcl(x::Function) = Tk.tcl_callback(x)
-
+function to_tcl(x::Function)
+    ccb = tcl_callback(x)
+    args = get_args(x)
+    perc_args = join(map(u -> "%$(string(u))", args[2:end]), " ")
+    cmd = "{$ccb $perc_args}"
+end
 
 ## Function to simplify call to tcl_eval, ala R's tcl() function
+## converts argumets through to_tcl
 function tcl(xs...)
     cmd = join([" $(to_tcl(x))" for x in xs], "")
-    ## println(cmd)
+    println(cmd)
     tcl_eval(cmd)
 end
 
+
+## tclvar for textvariables
 ## Work with a text variable. Stores values as strings. Must coerce!
 ## getter -- THIS FAILS IN A CALLBACK!!!
 #function tclvar(nm::String)
@@ -75,7 +81,7 @@ function tk_cget(widget::Widget, prop::String, coerce::MaybeFunction)
 end
 tk_cget(widget::Widget, prop::String) = tk_cget(widget, prop, nothing)
 
-## Identify
+## Identify widget at x,y
 tk_identify(widget::Widget, x::Integer, y::Integer) = tcl(widget, "identify", "%x", "%y")
 
 ## tk_state(w, "!disabled")
@@ -89,8 +95,8 @@ function tk_winfo(widget::Widget, prop::String, coerce::MaybeFunction)
 end
 tk_winfo(widget::Widget, prop::String) = tk_winfo(widget, prop, nothing)
 
-## wm. Is this okay? In many case args is wanted
-tk_wm(window::Widget, prop::String, args::MaybeString) = tcl("wm", prop, window, args)
+## wm. 
+tk_wm(window::Widget, prop::String, args...) = tcl("wm", prop, window, args...)
 tk_wm(window::Widget, prop::String) = tk_wm(window, prop, nothing)    
 
 ## Take a function, get its args as array of symbols. There must be better way...
@@ -126,7 +132,7 @@ end
 ## bind
 ## Function callbacks have first argument path that is ignored
 ## others match percent substitution
-## e.g. (W, x, y) -> x will have  W, x and y available through %W %x %y bindings
+## e.g. (path, W, x, y) -> x will have  W, x and y available through %W %x %y bindings
 function tk_bind(widget::Widget, event::String, callback::Function)
     if event == "command"
         tk_configure(widget, {:command => callback})
@@ -186,3 +192,31 @@ function make_widget(parent::Widget, str::String, args::Dict)
     w
 end
 make_widget(parent::Widget, str::String) = make_widget(parent, str, Dict())
+
+
+## tcl after ... (Maybe there is a better julia construct...)
+## create an object that will repeatedly call a
+## function after a delay of ms milliseconds. This is started with
+## obj.start() and stopped, if desired, with obj.stop(). To restart is
+## possible, but first set obj.run=true.
+type TclAfter
+    cb::Function
+    run::Bool
+    start::Union(Nothing, Function)
+    stop::Union(Nothing, Function)
+    ms::Int
+    
+    function TclAfter(ms, cb::Function)
+        obj = new(cb, true, nothing, nothing, ms)
+        function fun(path)
+            cb()
+            if obj.run
+                Tk.tcl("after", obj.ms, fun)
+            end
+        end
+        obj.start = () -> Tk.tcl("after", obj.ms, fun)
+        obj.stop = () -> obj.run = false
+        obj
+    end
+end
+tcl_after(ms::Integer, cb::Function) = TclAfter(ms, cb)

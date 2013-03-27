@@ -47,3 +47,6 @@ set_visible(widget::Widget, value::Bool) = XXX()
 ## set focus
 focus(widget::Widget) = tcl("focus", widget)
 raise(widget::Widget) = tcl("raise", widget)
+
+## does widget exist?
+tk_exists(widget::Widget) = tk_winfo(widget, "exists") == "1"
