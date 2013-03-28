@@ -64,7 +64,7 @@ end
 
 get_value(widget::Tk_Notebook) = 1 + int(tcl(widget, I"index current"))
 set_value(widget::Tk_Notebook, index::Integer) = tcl(widget, "select", index - 1)
-no_tabs(widget::Tk_Notebook) = length(split(tcl(widget, "tabs"), " "))
+no_tabs(widget::Tk_Notebook) = length(split(tcl(widget, "tabs")))
 
 
 ## Panedwindow
@@ -140,7 +140,7 @@ grid_forget(child::Widget) = tcl(I"grid forget", child)
 ##
 function formlayout(child::Tk_Widget, label::MaybeString)
     master = tk_winfo(child, "parent")
-    sz = int(split(tcl_eval("grid size $master"), " ")) ## columns, rows
+    sz = int(split(tcl_eval("grid size $master"))) ## columns, rows
     nrows = sz[2]
 
     if isa(label, String)

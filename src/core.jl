@@ -43,7 +43,7 @@ end
 ## converts argumets through to_tcl
 function tcl(xs...)
     cmd = join([" $(to_tcl(x))" for x in xs], "")
-    println(cmd)
+    ## println(cmd)
     tcl_eval(cmd)
 end
 

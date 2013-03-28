@@ -468,7 +468,7 @@ end
 
 ## select row given by index. extend = true to add selection
 function set_value(widget::Tk_Treeview, index::Integer, extend::Bool)
-    children = split(tcl(widget, "children", "{}"), " ")
+    children = split(tcl(widget, "children", "{}"))
     child = children[index]
     tcl(widget, "selection", extend ? "add" : "set", child)
 end
@@ -508,7 +508,7 @@ end
 ## return vector of TreeNodes that are currently selected or nothing (Maybe{Vector{TreeNodes}}
 function selected_nodes(widget::Tk_Treeview)
     sel = tcl(widget, "selection")
-    length(sel) == 0 ? nothing : map(TreeNode, split(sel, " "))
+    length(sel) == 0 ? nothing : map(TreeNode, split(sel))
 end
 
 
