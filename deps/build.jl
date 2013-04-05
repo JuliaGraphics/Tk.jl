@@ -1,4 +1,5 @@
-require("BinDeps")
+using BinDeps
+
 s = @build_steps begin
     c=Choices(Choice[Choice(:skip,"Skip Installation - Binaries must be installed manually",nothing)])
 end
@@ -37,12 +38,12 @@ let
 
     steps |= @build_steps begin
         ChangeDirectory(depsdir)
-        autotools_install("http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz","tcl-8.6.0.tar.gz",String[is64bit ? "--enable-64bit" : "--disable-64bit","--enable-threads","--enable-symbols","TCL_BIN_DIR=\"$uprefix/bin\""],"tcl8.6.0",tcldir,"libtcl8.6.$shlib_ext","libtcl8.6.$shlib_ext")
+        autotools_install(depsdir,"http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz","tcl-8.6.0.tar.gz",String[is64bit ? "--enable-64bit" : "--disable-64bit","--enable-threads","--enable-symbols","TCL_BIN_DIR=\"$uprefix/bin\""],"tcl8.6.0",tcldir,"libtcl8.6."*BinDeps.shlib_ext,"libtcl8.6."*BinDeps.shlib_ext)
         begin
             ChangeDirectory(joinpath("builds",tcldir))
             `make install-private-headers`
         end
-        autotools_install("http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz","tk-8.6.0.tar.gz",String["--enable-symbols",is64bit ? "--enable-64bit" : "--disable-64bit","--enable-threads","--enable-aqua=yes","--with-tcl="*joinpath(uprefix,"lib")],"tk8.6.0",tkdir,"libtk8.6.$shlib_ext","libtk8.6.$shlib_ext")
+        autotools_install(depsdir,"http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz","tk-8.6.0.tar.gz",String["--enable-symbols",is64bit ? "--enable-64bit" : "--disable-64bit","--enable-threads","--enable-aqua=yes","--with-tcl="*joinpath(uprefix,"lib")],"tk8.6.0",tkdir,"libtk8.6."*BinDeps.shlib_ext,"libtk8.6."*BinDeps.shlib_ext)
         begin
             ChangeDirectory(joinpath("builds",tkdir))
             `make install-private-headers`
@@ -56,7 +57,7 @@ try
     dl = dlopen("libtk_wrapper")
     dlclose(dl)
 catch
-    cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper.$shlib_ext",
+    cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper."*BinDeps.shlib_ext,
                   ["-shared","-g","-fPIC","-I$prefix/include",
                    "-I/usr/local/include",
                    "-L$prefix/lib"],
@@ -83,4 +84,3 @@ catch
     run(s)
 
 end
-
