@@ -608,7 +608,7 @@ end
 ## Bring Canvas object into Tk_Widget level.
 type Tk_CairoCanvas <: Tk_Widget
     w::Union(Nothing, Canvas)
-    device::Union(Nothing, Cairo.CairoRenderer)
+    device::Union(Nothing, Cairo.CairoSurface)
     function Tk_CairoCanvas(widget::Widget)
         self = new(Tk.Canvas(widget.w), nothing)
         function callback(path)
@@ -618,18 +618,13 @@ type Tk_CairoCanvas <: Tk_Widget
                 w = tk_winfo(c, "width")  | int
                 h = tk_winfo(c, "height")  | int
 
-                r = Cairo.CairoRenderer(Tk.cairo_surface(c))
-                r.upperright = (w, h)
-                r.on_open = () -> (cr = Tk.cairo_context(c); Cairo.set_source_rgb(cr, 1, 1, 1); Cairo.paint(cr))
-                r.on_close = () -> (Tk.reveal(c); Tk.tcl_doevent())
-                self.device = r
+                self.device = Tk.cairo_surface(c)
             end
         end
         tk_bind(self.w, "<Map>", callback)
         tk_bind(self.w, "<Configure>", (path) -> begin
             if !isa(self.device, Nothing)
                 w, h = map(u -> tk_winfo(self.w, u) | int, ("width", "height"))
-                self.device.upperright = (w, h)
             end
         end)
         self
