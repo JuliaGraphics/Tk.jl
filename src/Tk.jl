@@ -17,7 +17,7 @@ using Base
 using Cairo
 
 
-import Base.string, Base.show, Base.getindex
+import Base.string, Base.show
 
 include("tkwidget.jl")                  # old Tk
 include("types.jl")

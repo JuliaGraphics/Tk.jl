@@ -149,6 +149,10 @@ function tk_bind(widget::Widget, event::String, callback::Function)
         tcl_eval(cmd)
     end
 end
+
+## for use with do style
+tk_bind(callback::Function, widget::Widget, event::String) = tk_bind(widget, event, callback)
+    
 ## add most typical callback    
 function callback_add(widget::Tk_Widget, callback::Function)
   events ={:Tk_Window => "<Destroy>",

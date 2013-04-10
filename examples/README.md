@@ -1,14 +1,20 @@
 ## The Tk Package
 
-This package provides an interface to the Tcl/Tk libraries, useful for creating graphical user interfaces. The basic functionality is provided by the `tcl_eval` function, which is used to pass on Tcl commands. The `Canvas` widget is used to create a device for plotting of `julia`'s graphics. In particular, the `Winston` and `Images` package can render to such a device.
+This package provides an interface to the Tcl/Tk libraries, useful for
+creating graphical user interfaces. The basic functionality is
+provided by the `tcl_eval` function, which is used to pass on Tcl
+commands. The `Canvas` widget is used to create a device for plotting
+of `julia`'s graphics. In particular, among others, the `Winston` and
+`Images` package can render to such a device.
+
+The example `sketch.jl` illustrates this widget for a different purpose.
+
 
 In addition, there are convenience methods for working with most of
-the widgets provided by `Tk`. The `tcl` function is a wrapper for
-`tcl_eval` which provides translations from `julia` objects into Tcl
-constructs. This function is similar to the one found in `R`'s `tcltk`
-package. Following that package, we provides several basic functions
-to simplify the interface for working with Tk.
-
+the widgets provided by `Tk` similar to the ones found in `R`'s
+`tcltk` package.  For example, we add the `tcl` function as a wrapper
+for `tcl_eval` which provides translations from `julia` objects into
+Tcl constructs.
 
 
 ### Constructors
@@ -79,25 +85,16 @@ this case, we open a modal dialog with the `Messagebox` constructor
 when the callback is called. The button object has this callback bound
 to the button's `command` option. This responds to a mouse click, but
 not a press of the `enter` key when the button has the focus. For
-that, we also bind to the '<Return>' event.
+that, we also bind to the `<Return>` event.
 
 
 For the R package `tctlk` there are numerous examples at
-http://bioinf.wehi.edu.au/~wettenhall/RTclTkExamples/
-
-We borrow a few of these to illustrate the `Tk` package for `julia`.
-
-The `Tk` package provides some convenience constructors. We
-follow Tk's convention of capitalizing the first letter, so
-`ttk::checkbutton` is `Checkbutton`. As well, we have the function
-`tcl` as a more convenient alternative to `Tk.tcl_eval` and some
-helpers like `tk_configure` and `tk_cget`.  In addition, the package
-provides a few non-standard methods for interacting with the widgets
-in a generic manner: `get_value`, `set_value`, ...
+http://bioinf.wehi.edu.au/~wettenhall/RTclTkExamples/ . We borrow a
+few of these to illustrate the `Tk` package for `julia`.
 
 `Tk` commands are combined strings followed by options. Something
 like: `.button configure -text {button text}` is called as
-`tk_configure(button, {:text => "button text})`. key-value options are
+`tk_configure(button, {:text => "button text})`. Key-value options are
 specified with a Dict, which converts to the underlying Tcl
 object. Similarly, path names are also translated and functions are
 converted to callbacks.
@@ -129,7 +126,7 @@ pack(f, {:expand=>true, :fill=>"both"})
 * The above will get the size from the frame -- which has no
   request. This means the window will disappear. You may want to force
   the size to come from the toplevel window. You can use `tcl("pack",
-  "propagate", w, false)` (aliased to `pack_stop_propagate` to get
+  "propagate", w, false)` (wrapped in `pack_stop_propagate` to get
   this:)
 
 ```
@@ -202,11 +199,11 @@ end
 tk_bind(b, "command", callback)
 ```
 
-The individual buttons can be accessed via `[`, as in `rb[1]`. This
+The individual buttons can be accessed via the buttons property. This
 allows one to edit the labels, as in
 
 ```
-set_items(rb[1], "Honeycrisp Apples")  
+set_items(rb.buttons[1], "Honeycrisp Apples")  
 ```
 
 (The `set_items` method is used to set the items for a selection
@@ -397,7 +394,7 @@ One can bind a callback to an event in tcltk. There are few things to know:
   style can match all object of that style.
 
 * many widgets have a standard `command` argument in addition to
-  window manager events they respond to. This can be passed to
+  window manager events they respond to. The value `command` can be passed to
   `tk_bind` as the event.
 
 * The `tk_bind` method does most of the work. The `callback_add`
@@ -418,6 +415,15 @@ w = Toplevel()
 sc = Slider(w, 1:100)
 pack(sc)
 tk_bind(sc, "command", path -> println("The value is $(get_value(sc))"))
+```
+
+
+One can also call `tk_bind` using the `do` idiom:
+
+```
+tk_bind(sc, "command") do path
+  println("The value is $(get_value(sc))")
+end
 ```
 
 

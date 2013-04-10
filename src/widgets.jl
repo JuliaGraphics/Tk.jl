@@ -170,7 +170,8 @@ function tk_bind(widget::Tk_Radio, event::String, callback::Function)
     map(u -> tk_bind(u, event, callback), widget.buttons)
 end
 ## return ith button
-getindex(widget::Tk_Radio, i::Integer) = widget.buttons[i]
+## remove this until we split off a version for newer julia's.
+##getindex(widget::Tk_Radio, i::Integer) = widget.buttons[i]
 
 ## Combobox
 type Tk_Combobox <: TTk_Widget
