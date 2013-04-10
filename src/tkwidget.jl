@@ -169,10 +169,8 @@ function tcl_callback(f)
     cname
 end
 
-width(w::TkWidget) = int(tcl_eval("$(w.path) cget -width"))
-height(w::TkWidget) = int(tcl_eval("$(w.path) cget -height"))
-windowwidth(w::TkWidget) = int(tcl_eval("winfo width $(w.path)"))
-windowheight(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
+width(w::TkWidget) = int(tcl_eval("winfo width $(w.path)"))
+height(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
 
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
@@ -229,6 +227,7 @@ type Canvas
     frontcc::CairoContext
     backcc::CairoContext
     mouse::MouseHandler
+    redraw
 
     Canvas(parent) = Canvas(parent, -1, -1)
     function Canvas(parent, w, h)
@@ -240,14 +239,16 @@ type Canvas
         if h < 0
             h = height(parent)
         end
+        this = new(c)
+        # for some reason this fails
+        #tcl_eval("bind $(c.path) <Map> {$(tcl_callback(path->init_canvas(this)))}")
         tcl_eval("frame $(c.path) -width $w -height $h -background \"\"")
-        new(c)
+        this.redraw = nothing
+        this
     end
 end
 
-# some canvas init steps require the widget to fully exist
-function init_canvas(c::Canvas)
-    tcl_doevent()  # make sure window resources are assigned
+function configure(c::Canvas)
     c.front = cairo_surface_for(c.c)
     w = width(c.c)
     h = height(c.c)
@@ -258,6 +259,16 @@ function init_canvas(c::Canvas)
         c.back = CairoRGBSurface(w, h)
     end
     c.backcc = CairoContext(c.back)
+    if !is(c.redraw, nothing)
+        c.redraw(c)
+    end
+end
+
+# some canvas init steps require the widget to fully exist
+function init_canvas(c::Canvas)
+    tcl_doevent()  # make sure window resources are assigned
+    configure(c)
+
     c.mouse = MouseHandler()
     cb = tcl_callback((x...)->reveal(c))
     tcl_eval("bind $(c.c.path) <Expose> $(cb)")
@@ -277,11 +288,13 @@ function init_canvas(c::Canvas)
     tcl_eval("bind $(c.c.path) <ButtonRelease-3> {$br3cb %x %y}")
     tcl_eval("bind $(c.c.path) <Motion> {$motcb %x %y}")
     tcl_eval("bind $(c.c.path) <Button1-Motion> {$b1mcb %x %y}")
+    cfgcb = tcl_callback((path)->configure(c))
+    tcl_eval("bind $(c.c.path) <Configure> {$cfgcb}")
     c
 end
 
-function pack(c::Canvas)
-    pack(c.c)
+function pack(c::Canvas, args...)
+    pack(c.c, args...)
     init_canvas(c)
 end
 
@@ -306,4 +319,3 @@ cairo_surface(c::Canvas) = c.back
 
 tcl_interp = init()
 tcl_eval("wm withdraw .")
-
