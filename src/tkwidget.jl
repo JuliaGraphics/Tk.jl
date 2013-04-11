@@ -37,7 +37,7 @@ function init()
     #add_fd_handler(fd, tcl_doevent)
     global timeout
     timeout = Base.TimeoutAsyncWork(tcl_doevent)
-    Base.start_timer(timeout,int64(100),int64(100))
+    Base.start_timer(timeout,int64(50),int64(50))
     tcl_interp
 end
 
@@ -142,7 +142,8 @@ function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
     local result
     try
         result = f(args...)
-    catch
+    catch e
+        println("error during Tk callback: ", e)
         return TCL_ERROR
     end
     if isa(result,ByteString)
@@ -248,7 +249,16 @@ type Canvas
     end
 end
 
+width(c::Canvas) = width(c.c)
+height(c::Canvas) = height(c.c)
+
 function configure(c::Canvas)
+    if isdefined(c,:front)
+        Cairo.destroy(c.frontcc)
+        Cairo.destroy(c.backcc)
+        Cairo.destroy(c.front)
+        Cairo.destroy(c.back)
+    end
     c.front = cairo_surface_for(c.c)
     w = width(c.c)
     h = height(c.c)
