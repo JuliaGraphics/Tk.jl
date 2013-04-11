@@ -9,6 +9,16 @@ end
 
 #const libX = "libX11"
 
+const TCL_OK       = int32(0)
+const TCL_ERROR    = int32(1)
+const TCL_RETURN   = int32(2)
+const TCL_BREAK    = int32(3)
+const TCL_CONTINUE = int32(4)
+
+const TCL_VOLATILE = convert(Ptr{Void}, 1)
+const TCL_STATIC   = convert(Ptr{Void}, 0)
+const TCL_DYNAMIC  = convert(Ptr{Void}, 3)
+
 tcl_doevent() = tcl_doevent(0)
 function tcl_doevent(fd)
     while (ccall((:Tcl_DoOneEvent,libtcl), Int32, (Int32,), (1<<1))!=0)
@@ -26,7 +36,9 @@ function init()
     ccall((:g_type_init,"libgobject-2.0"),Void,())
     tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
-    ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp)
+    if ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp) == TCL_ERROR
+        throw(TclError(string("error initializing Tk: ", tcl_result())))
+    end
     # TODO: for now cheat and use X-specific hack for events
     #mainwin = mainwindow(tcl_interp)
     #if mainwin == C_NULL
@@ -124,16 +136,6 @@ function nametowindow(name)
 end
 
 const _callbacks = ObjectIdDict()
-
-const TCL_OK       = int32(0)
-const TCL_ERROR    = int32(1)
-const TCL_RETURN   = int32(2)
-const TCL_BREAK    = int32(3)
-const TCL_CONTINUE = int32(4)
-
-const TCL_VOLATILE = convert(Ptr{Void}, 1)
-const TCL_STATIC   = convert(Ptr{Void}, 0)
-const TCL_DYNAMIC  = convert(Ptr{Void}, 3)
 
 const empty_str = ""
 
