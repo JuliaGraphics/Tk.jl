@@ -1,6 +1,6 @@
 require("Tk")
 using Tk
-using Cairo
+using Base.Graphics
 
 function sketch_window()
     w = Window("drawing", 400, 300)
@@ -8,7 +8,7 @@ function sketch_window()
     pack(c)
     lastx = 0
     lasty = 0
-    cr = cairo_context(c)
+    cr = getgc(c)
     set_source_rgb(cr, 1, 1, 1)
     paint(cr)
     reveal(c)

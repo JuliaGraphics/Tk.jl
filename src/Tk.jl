@@ -17,7 +17,8 @@ using Base
 using Cairo
 
 
-import Base.string, Base.show
+import Base: string, show
+import Base.Graphics: width, height, getgc
 
 include("tkwidget.jl")                  # old Tk
 include("types.jl")
@@ -30,8 +31,7 @@ include("menu.jl")
 
 
 export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
-    cairo_surface_for, width, height, windowwidth, windowheight, reveal,
-    cairo_context, cairo_surface,
+    cairo_surface_for, width, height, reveal, cairo_surface, getgc,
     tcl_doevent, MouseHandler
 
 export tcl, tclvar, tk_configure, tk_cget, tk_identify, tk_state, tk_instate, tk_winfo, tk_wm, tk_exists,

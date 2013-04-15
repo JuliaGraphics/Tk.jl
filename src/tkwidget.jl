@@ -325,7 +325,7 @@ function update()
     tcl_eval("update")
 end
 
-cairo_context(c::Canvas) = c.backcc
+getgc(c::Canvas) = c.backcc
 cairo_surface(c::Canvas) = c.back
 
 
