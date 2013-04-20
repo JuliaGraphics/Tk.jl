@@ -35,7 +35,7 @@ export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     tcl_doevent, MouseHandler
 
 export tcl, tclvar, tk_configure, tk_cget, tk_identify, tk_state, tk_instate, tk_winfo, tk_wm, tk_exists,
-       tcl_after, tk_bind, callback_add
+       tcl_after, tk_bind, bindwheel, callback_add
 export Tk_Widget, TTk_Widget, Tk_Container
 export Toplevel, Frame, Labelframe, Notebook, Panedwindow
 export Label, Button

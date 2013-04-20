@@ -152,7 +152,25 @@ end
 
 ## for use with do style
 tk_bind(callback::Function, widget::Widget, event::String) = tk_bind(widget, event, callback)
-    
+
+## Binding to mouse wheel
+function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
+    path = get_path(widget)
+    if !isempty(modifier) && !endswith(modifier,"-")
+        modifier = string(modifier, "-")
+    end
+    if !isempty(tkargs) && !beginswith(tkargs," ")
+        tkargs = string(" ", tkargs)
+    end
+    ccb = Tk.tcl_callback(callback)
+    if OS_NAME == :Linux
+        Tk.tcl_eval("bind $(path) <$(modifier)Button-4> {$ccb -120$tkargs}")
+        Tk.tcl_eval("bind $(path) <$(modifier)Button-5> {$ccb 120$tkargs}")
+    else
+        Tk.tcl_eval("bind $(path) <$(modifier)MouseWheel> {$ccb %D$tkargs}")
+    end
+end
+
 ## add most typical callback    
 function callback_add(widget::Tk_Widget, callback::Function)
   events ={:Tk_Window => "<Destroy>",
