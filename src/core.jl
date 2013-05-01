@@ -104,7 +104,7 @@ tk_wm(window::Widget, prop::String) = tk_wm(window, prop, nothing)
 function get_args(li::LambdaStaticData)
     e = li.ast
     if !isa(e, Expr)
-        e = Base.uncompress_ast(li)
+        e = Base.uncompressed_ast(li)
     end
     argnames = e.args[1]
     ## return array of symbols -- not args
