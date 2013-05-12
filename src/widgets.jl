@@ -321,6 +321,42 @@ function Image(fname::String)
     end
 end
 
+# Create an image as a bitmap
+function Image(source::BitArray{2}, mask::BitArray{2}, background::String, foreground::String)
+    if size(source) != size(mask)
+        error("Source and mask must have the same size")
+    end
+    ssource = x11encode(source)
+    smask = x11encode(mask)
+    w = tcl(I"image create bitmap", {:data => ssource, :maskdata => smask, :background => background, :foreground => foreground})
+    Tk_Image(w)
+end
+
+function x11header(s::IO, data::AbstractMatrix)
+    println(s, "#define im_width ", size(data, 2))
+    println(s, "#define im_height ", size(data, 1))
+    println(s, "static char im_bits[] = {")
+end
+
+function x11encode(data::BitArray{2})
+    # Not efficient, but easy
+    s = memio()
+    x11header(s, data)
+    u8 = zeros(Uint8, iceil(size(data, 1)/8), size(data, 2))
+    for i = 1:size(data,1)
+        ii = iceil(i/8)
+        n = i - 8*(ii-1) - 1
+        for j = 1:size(data,2)
+            u8[ii, j] |= uint8(data[i,j]) << n
+        end
+    end
+    for i = 1:length(u8)-1
+        print(s, u8[i], ",")
+    end
+    println(s, u8[end], "\n};")
+    takebuf_string(s)
+end
+
 ## Entry
 
 function Entry(parent::Widget, text::String)
