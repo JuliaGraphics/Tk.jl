@@ -19,6 +19,7 @@ Toplevel(title::String, visible::Bool) = Toplevel(title, 200, 200, visible)
 Toplevel(title::String) = Toplevel(title, 200, 200)
 Toplevel() = Toplevel("Toplevel window")
 
+Canvas(parent::TTk_Container, args...) = Canvas(parent.w, args...)
 
 get_value(widget::Tk_Toplevel) = tk_wm(widget, "title")
 set_value(widget::Tk_Toplevel, value::String) = tk_wm(widget, "title", value)
