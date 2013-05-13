@@ -1,4 +1,3 @@
-
 if OS_NAME == :Linux
     const libtcl = "libtcl8.5"
     const libtk = "libtk8.5"
@@ -140,7 +139,7 @@ const _callbacks = ObjectIdDict()
 const empty_str = ""
 
 function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
-    args = { bytestring(unsafe_ref(argv,i)) for i=1:argc }
+    args = { bytestring(unsafe_load(argv,i)) for i=1:argc }
     local result
     try
         result = f(args...)
