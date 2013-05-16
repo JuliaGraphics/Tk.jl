@@ -149,9 +149,10 @@ function tk_bind(widget::Widget, event::String, callback::Function)
         tcl_eval(cmd)
     end
 end
+tk_bind(widget::Canvas, event::String, callback::Function) = tk_bind(widget.c, event, callback)
 
 ## for use with do style
-tk_bind(callback::Function, widget::Widget, event::String) = tk_bind(widget, event, callback)
+tk_bind(callback::Function, widget::Union(Widget, Canvas), event::String) = tk_bind(widget, event, callback)
 
 ## Binding to mouse wheel
 function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
