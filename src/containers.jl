@@ -9,10 +9,8 @@ type Tk_Panedwindow <: TTk_Container w::TkWidget end
 
 ## Toplevel window
 function Toplevel(title::String, width::Integer, height::Integer, visible::Bool)
-    w = Window(title, width, height)
-    w = Tk_Toplevel(w)
-    set_visible(w, visible)
-    w
+    w = Window(title, width, height, visible)
+    Tk_Toplevel(w)
 end
 Toplevel(title::String, width::Integer, height::Integer) = Toplevel(title, width, height, true)
 Toplevel(title::String, visible::Bool) = Toplevel(title, 200, 200, visible)

@@ -95,11 +95,14 @@ type TkWidget
         new(path, kind, parent)
     end
     global Window
-    function Window(title, w, h)
+    function Window(title, w, h, visible = true)
         wpath = ".jl_win$ID"; ID += 1
         tcl_eval("toplevel $wpath -width $w -height $h -background \"\"")
+        if !visible
+            tcl_eval("wm withdraw $wpath")
+        end
         tcl_eval("wm title $wpath \"$title\"")
-        tcl_doevent()
+#         tcl_doevent()
         new(wpath, "toplevel", nothing)
     end
 end
