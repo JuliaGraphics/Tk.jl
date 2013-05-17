@@ -155,7 +155,7 @@ tk_bind(widget::Canvas, event::String, callback::Function) = tk_bind(widget.c, e
 tk_bind(callback::Function, widget::Union(Widget, Canvas), event::String) = tk_bind(widget, event, callback)
 
 ## Binding to mouse wheel
-function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
+function tk_bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
     path = get_path(widget)
     if !isempty(modifier) && !endswith(modifier,"-")
         modifier = string(modifier, "-")
