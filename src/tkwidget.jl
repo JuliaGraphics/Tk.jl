@@ -245,9 +245,8 @@ type Canvas
             h = height(parent)
         end
         this = new(c)
-        # for some reason this fails
-        #tcl_eval("bind $(c.path) <Map> {$(tcl_callback(path->init_canvas(this)))}")
         tcl_eval("frame $(c.path) -width $w -height $h -background \"\"")
+        tk_bind(this, "<Map>", path -> init_canvas(this))
         this.redraw = nothing
         this
     end
@@ -309,23 +308,16 @@ end
 
 get_visible(c::Canvas) = get_visible(c.c.parent)
 
-macro iflinuxelse(exlinux,exother)
-    (Base.is_unix(OS_NAME) && OS_NAME != :Darwin) ? esc(exlinux) : esc(exother)
-end
-
 function pack(c::Canvas, args...)
     pack(c.c, args...)
-    @iflinuxelse (if get_visible(c) init_canvas(c); end) init_canvas(c)
 end
 
 function grid(c::Canvas, args...)
     grid(c.c, args...)
-    @iflinuxelse (if get_visible(c) init_canvas(c); end) init_canvas(c)
 end
 
 function place(c::Canvas, x::Int, y::Int)
     place(c.c, x, y)
-    @iflinuxelse (if get_visible(c) init_canvas(c); end) init_canvas(c)
 end
 
 function reveal(c::Canvas)
