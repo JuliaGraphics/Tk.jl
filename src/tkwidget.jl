@@ -307,14 +307,25 @@ function init_canvas(c::Canvas)
     c
 end
 
+get_visible(c::Canvas) = get_visible(c.c.parent)
+
+macro iflinuxelse(exlinux,exother)
+    (Base.is_unix(OS_NAME) && OS_NAME != :Darwin) ? esc(exlinux) : esc(exother)
+end
+
 function pack(c::Canvas, args...)
     pack(c.c, args...)
-    init_canvas(c)
+    @iflinuxelse (if get_visible(c) init_canvas(c); end) init_canvas(c)
+end
+
+function grid(c::Canvas, args...)
+    grid(c.c, args...)
+    @iflinuxelse (if get_visible(c) init_canvas(c); end) init_canvas(c)
 end
 
 function place(c::Canvas, x::Int, y::Int)
     place(c.c, x, y)
-    init_canvas(c)
+    @iflinuxelse (if get_visible(c) init_canvas(c); end) init_canvas(c)
 end
 
 function reveal(c::Canvas)

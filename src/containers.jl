@@ -26,6 +26,15 @@ function set_visible(widget::Tk_Toplevel, value::Bool)
     value = value ? "normal" : "withdrawn"
     tk_wm(widget, "state", value)
 end
+get_visible(widget::Tk_Toplevel) = tk_wm(widget, "state") == "normal"
+
+function get_visible(w::TkWidget)
+    if w.kind == "toplevel"
+        return tk_wm(w, "state") == "normal"
+    else
+        return get_visible(w.parent)
+    end
+end
 
 set_size(widget::Tk_Toplevel, width::Integer, height::Integer) = tcl(I"wm minsize", widget, width, height)
 
