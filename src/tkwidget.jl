@@ -102,7 +102,7 @@ type TkWidget
             tcl_eval("wm withdraw $wpath")
         end
         tcl_eval("wm title $wpath \"$title\"")
-#         tcl_doevent()
+        tcl_doevent()
         new(wpath, "toplevel", nothing)
     end
 end
