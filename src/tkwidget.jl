@@ -233,6 +233,7 @@ type Canvas
     backcc::CairoContext
     mouse::MouseHandler
     redraw
+    initialized::Bool
 
     Canvas(parent) = Canvas(parent, -1, -1)
     function Canvas(parent, w, h)
@@ -246,8 +247,8 @@ type Canvas
         end
         this = new(c)
         tcl_eval("frame $(c.path) -width $w -height $h -background \"\"")
-        tk_bind(this, "<Map>", path -> init_canvas(this))
         this.redraw = nothing
+        this.initialized = false
         this
     end
 end
@@ -272,9 +273,12 @@ function configure(c::Canvas)
         c.back = CairoRGBSurface(w, h)
     end
     c.backcc = CairoContext(c.back)
-    if !is(c.redraw, nothing)
+    # Check c.initialized to prevent infinite recursion if initialized from
+    # c.redraw. This also avoids a double-redraw on the first call.
+    if !is(c.redraw, nothing) && c.initialized
         c.redraw(c)
     end
+    c.initialized = true
 end
 
 # some canvas init steps require the widget to fully exist
@@ -308,6 +312,8 @@ end
 
 get_visible(c::Canvas) = get_visible(c.c.parent)
 
+initialized(c::Canvas) = c.initialized
+
 function pack(c::Canvas, args...)
     pack(c.c, args...)
 end
@@ -321,7 +327,8 @@ function place(c::Canvas, x::Int, y::Int)
 end
 
 function reveal(c::Canvas)
-    set_source_surface(c.frontcc, c.back, 0, 0)
+    back = cairo_surface(c)
+    set_source_surface(c.frontcc, back, 0, 0)
     paint(c.frontcc)
     tcl_doevent()
 end
@@ -330,9 +337,19 @@ function update()
     tcl_eval("update")
 end
 
-getgc(c::Canvas) = c.backcc
-cairo_surface(c::Canvas) = c.back
+function getgc(c::Canvas)
+    if !initialized(c)
+        c = init_canvas(c)
+    end
+    c.backcc
+end
 
+function cairo_surface(c::Canvas)
+    if !initialized(c)
+        c = init_canvas(c)
+    end
+    c.back
+end
 
 tcl_interp = init()
 tcl_eval("wm withdraw .")
