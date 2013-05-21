@@ -53,3 +53,11 @@ function menu_add(widget::Tk_Menu, rb::Tk_Radio)
     end
 end
 
+function tk_popup(widget::TTk_Container, menu::Tk_Menu)
+    if OS_NAME == :OSX
+        tcl_eval("bind $(widget.w.path) <2> {tk_popup $(menu.w.path) %X %Y}")
+        tcl_eval("bind $(widget.w.path) <Control-1> {tk_popup $(menu.w.path) %X %Y}")
+    else
+        tcl_eval("bind $(widget.w.path) <3> {tk_popup $(menu.w.path) %X %Y}")
+    end
+end

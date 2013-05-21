@@ -45,7 +45,7 @@ export Entry, set_validation, Text
 export Treeview, selected_nodes, node_insert, node_move, node_delete, node_open
 export tree_headers, tree_column_widths, tree_key_header, tree_key_width
 export Sizegrip, Separator, Progressbar, Image, Scrollbar
-export Menu, menu_add
+export Menu, menu_add, tk_popup
 export GetOpenFile, GetSaveFile, ChooseDirectory, Messagebox
 export pack, pack_configure, forget, pack_stop_propagate
 export grid, grid_configure, grid_rowconfigure, grid_columnconfigure, grid_forget, grid_stop_propagate

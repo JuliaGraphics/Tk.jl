@@ -163,12 +163,12 @@ function tk_bindwheel(widget::Widget, modifier::String, callback::Function, tkar
     if !isempty(tkargs) && !beginswith(tkargs," ")
         tkargs = string(" ", tkargs)
     end
-    ccb = Tk.tcl_callback(callback)
+    ccb = tcl_callback(callback)
     if OS_NAME == :Linux
-        Tk.tcl_eval("bind $(path) <$(modifier)Button-4> {$ccb -120$tkargs}")
-        Tk.tcl_eval("bind $(path) <$(modifier)Button-5> {$ccb 120$tkargs}")
+        tcl_eval("bind $(path) <$(modifier)Button-4> {$ccb -120$tkargs}")
+        tcl_eval("bind $(path) <$(modifier)Button-5> {$ccb 120$tkargs}")
     else
-        Tk.tcl_eval("bind $(path) <$(modifier)MouseWheel> {$ccb %D$tkargs}")
+        tcl_eval("bind $(path) <$(modifier)MouseWheel> {$ccb %D$tkargs}")
     end
 end
 
