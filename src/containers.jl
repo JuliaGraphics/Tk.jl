@@ -12,6 +12,7 @@ function Toplevel(;title::String="Toplevel Window", width::Integer=200, height::
     w = Window(title, width, height, visible)
     Tk_Toplevel(w)
 end
+Toplevel(title::String, width::Integer, height::Integer, visible::Bool) = Toplevel(title=title, width=width, height=height, visible=visible)
 Toplevel(title::String, width::Integer, height::Integer) = Toplevel(title=title, width=width, height=height)
 Toplevel(title::String, visible::Bool) = Toplevel(title=title,  visible=visible)
 Toplevel(title::String) = Toplevel(title=title)
@@ -19,18 +20,18 @@ Toplevel(title::String) = Toplevel(title=title)
 
 Canvas(parent::TTk_Container, args...) = Canvas(parent.w, args...)
 
-get_value(widget::Tk_Toplevel) = tk_wm(widget, "title")
-set_value(widget::Tk_Toplevel, value::String) = tk_wm(widget, "title", value)
+get_value(widget::Tk_Toplevel) = wm(widget, "title")
+set_value(widget::Tk_Toplevel, value::String) = wm(widget, "title", value)
 
 function set_visible(widget::Tk_Toplevel, value::Bool)
     value = value ? "normal" : "withdrawn"
-    tk_wm(widget, "state", value)
+    wm(widget, "state", value)
 end
-get_visible(widget::Tk_Toplevel) = tk_wm(widget, "state") == "normal"
+get_visible(widget::Tk_Toplevel) = wm(widget, "state") == "normal"
 
 function get_visible(w::TkWidget)
     if w.kind == "toplevel"
-        return tk_wm(w, "state") == "normal"
+        return wm(w, "state") == "normal"
     else
         return get_visible(w.parent)
     end
@@ -41,12 +42,12 @@ set_size(widget::Tk_Toplevel, width::Integer, height::Integer) = tcl(I"wm minsiz
 ## Set upper left corner of Toplevel to...
 function set_position(widget::Tk_Toplevel, x::Integer, y::Integer)
     p_or_m(x) = x < 0 ? "$x" : "+$x"
-    tk_wm(widget, "geometry", I(p_or_m(x) * p_or_m(y)))
+    wm(widget, "geometry", I(p_or_m(x) * p_or_m(y)))
 end
 set_position{T <: Integer}(widget::Tk_Toplevel, pos::Vector{T}) = set_position(w, pos[1], pos[2])
-set_position(widget::Tk_Toplevel, pos::Tk_Widget) = set_position(widget, Integer[parse_int(tk_winfo(pos, i)) for i in ["x", "y"]] + [10,10])
+set_position(widget::Tk_Toplevel, pos::Tk_Widget) = set_position(widget, Integer[parse_int(winfo(pos, i)) for i in ["x", "y"]] + [10,10])
 
-update(widget::Tk_Toplevel) = tk_wm(widget, "geometry")
+update(widget::Tk_Toplevel) = wm(widget, "geometry")
 destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 
 ## Frame
@@ -54,19 +55,19 @@ destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 
 ## Labelframe
 Labelframe(parent::Widget, text::String) = Labelframe(parent, text=text)
-get_value(widget::Tk_Labelframe) = tk_cget(widget, "text")
-set_value(widget::Tk_Labelframe, text::String) = tk_configure(widget, {:text=> text})
+get_value(widget::Tk_Labelframe) = cget(widget, "text")
+set_value(widget::Tk_Labelframe, text::String) = configure(widget, {:text=> text})
 
 
 ## Notebook
 function page_add(child::Widget, label::String)
-    parent = tk_winfo(child, "parent")
+    parent = winfo(child, "parent")
     tcl(parent, "add", child, text = label)
 end
 
 
 function page_insert(child::Widget, index::Integer, label::String)
-    parent = tk_winfo(child, "parent")
+    parent = winfo(child, "parent")
     tcl(parent, "insert", index, child, text = label)
 end
 
@@ -80,13 +81,13 @@ no_tabs(widget::Tk_Notebook) = length(split(tcl(widget, "tabs")))
 Panedwindow(widget::Widget, orient::String) = Panedwindow(widget, orient = orient)
 
 function page_add(child::Widget, weight::Integer)
-    parent = tk_winfo(child, "parent")
+    parent = winfo(child, "parent")
     tcl(parent, "add", child, weight = weight)
 end
 
 ## value is sash position as percentage of first pane
 function get_value(widget::Tk_Panedwindow)
-    sz = (tk_cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
+    sz = (cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
     pos = tcl(widget, "sashpos", 0) | int
     floor(pos/sz*100)
 end
@@ -94,7 +95,7 @@ end
 set_value(widget::Tk_Panedwindow, value::Integer) = tcl(widget, "sashpos", 0, value)
 function set_value(widget::Tk_Panedwindow, value::Real)
     if value <= 1 && value >= 0
-        sz = (tk_cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
+        sz = (cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
         set_value(widget, int(value * sz/100))
     end        
 end
@@ -148,7 +149,7 @@ grid_forget(child::Widget) = tcl(I"grid forget", child)
 ## formlayout(b, nothing)
 ##
 function formlayout(child::Tk_Widget, label::MaybeString)
-    master = tk_winfo(child, "parent")
+    master = winfo(child, "parent")
     sz = int(split(tcl_eval("grid size $master"))) ## columns, rows
     nrows = sz[2]
 

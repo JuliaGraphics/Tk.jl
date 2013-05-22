@@ -34,8 +34,8 @@ export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_surface, getgc,
     tcl_doevent, MouseHandler
 
-export tcl, tclvar, tk_configure, tk_cget, tk_identify, tk_state, tk_instate, tk_winfo, tk_wm, tk_exists,
-       tcl_after, tk_bind, tk_bindwheel, callback_add
+export tcl, tclvar, configure, cget, identify, state, instate, winfo, wm, exists,
+       tcl_after, bind, bindwheel, callback_add
 export Tk_Widget, TTk_Widget, Tk_Container
 export Toplevel, Frame, Labelframe, Notebook, Panedwindow
 export Label, Button
@@ -53,8 +53,8 @@ export page_add, page_insert
 export formlayout, scrollbars_add
 export get_value, set_value,
        get_items, set_items,
-       get_width, set_width,
-       get_height, set_height,
+       set_width,
+       set_height,
        get_size, set_size,
        get_enabled, set_enabled,
        get_editable, set_editable,
@@ -63,7 +63,17 @@ export get_value, set_value,
        raise, focus, update, destroy
 
 
-@deprecate  bindwheel     tk_bindwheel
+@deprecate  tk_bindwheel  bindwheel
+@deprecate  tk_cget       cget
+@deprecate  tk_configure  configure
+@deprecate  tk_winfo      winfo
+@deprecate  tk_wm         wm
+@deprecate  tk_exists     exists
+@deprecate  tk_bind       bind
+@deprecate  tk_state      state
+@deprecate  tk_instate    instate
+@deprecate  get_width     width
+@deprecate  get_height    height
 
 
 end  # module

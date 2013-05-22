@@ -60,7 +60,7 @@ Label(parent::Widget, text::String) = Label(parent, text=text)
 Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
 get_value(widget::Union(Tk_Button, Tk_Label)) = widget[:text]
 function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
-    variable = tk_cget(widget, "textvariable")
+    variable = cget(widget, "textvariable")
     (variable == "") ? widget[:text] =  value : tclvar(variable, value)
 end
 
@@ -88,7 +88,7 @@ function Checkbutton(parent::Widget, label::String)
 end
 
 function get_value(widget::Tk_Checkbutton)
-    tk_instate(widget, "selected")
+    instate(widget, "selected")
 end
 function set_value(widget::Tk_Checkbutton, value::Bool)
     var = widget[:variable]
@@ -108,15 +108,15 @@ function Radiobutton(parent::Widget, group::MaybeTkRadioButton, label::String)
     rb = Radiobutton(parent)
 
     var = isa(group, Tk_Radiobutton) ? group[:variable] : tclvar()
-    tk_configure(rb, variable = var, text=label, value=label)
+    configure(rb, variable = var, text=label, value=label)
     rb
 end
 Radiobutton(parent::Widget, label::String) = Radiobutton(parent, nothing, label)
 
-get_value(widget::Tk_Radiobutton) = tk_instate(widget, "selected")
-set_value(widget::Tk_Radiobutton, value::Bool) = tk_state(value ? "selected" : "!selected")
+get_value(widget::Tk_Radiobutton) = instate(widget, "selected")
+set_value(widget::Tk_Radiobutton, value::Bool) = state(value ? "selected" : "!selected")
 get_items(widget::Tk_Radiobutton) = widget[:text]
-set_items(widget::Tk_Radiobutton, value::String) = tk_configure(widget, text = value, value=value)
+set_items(widget::Tk_Radiobutton, value::String) = configure(widget, text = value, value=value)
 
 
 ## Radio Button Group
@@ -153,7 +153,7 @@ function get_value(widget::Tk_Radio)
     items[sel][1]
 end
 function set_value(widget::Tk_Radio, value::String)
-    var = tk_cget(widget.buttons[1], "variable")
+    var = cget(widget.buttons[1], "variable")
     tclvar(var, value)
 end
 function set_value(widget::Tk_Radio, value::Integer)
@@ -162,9 +162,9 @@ function set_value(widget::Tk_Radio, value::Integer)
 end
 get_items(widget::Tk_Radio) = map(get_items, widget.buttons)
 
-function tk_bind(widget::Tk_Radio, event::String, callback::Function)
+function bind(widget::Tk_Radio, event::String, callback::Function)
     ## put onto each, but W now refers to button -- not group of buttons
-    map(u -> tk_bind(u, event, callback), widget.buttons)
+    map(u -> bind(u, event, callback), widget.buttons)
 end
 ## return ith button
 ## remove this until we split off a version for newer julia's.
@@ -219,12 +219,12 @@ end
 get_items(widget::Tk_Combobox) =  widget.values
 function set_items(widget::Tk_Combobox, items::Vector{Tuple})
     vals = cb_pluck_labels(items)
-    tk_configure(widget, values = vals)
+    configure(widget, values = vals)
     widget.values = items
 end
 function set_items(widget::Tk_Combobox, items::Dict)
     widget.values = [(string(k),v) for (k,v) in items]
-    tk_configure(widget, values = cb_pluck_labels(widget.values))
+    configure(widget, values = cb_pluck_labels(widget.values))
 end
 function set_items{T <: String}(widget::Tk_Combobox, items::Vector{T})
     d = [(v,v) for v in items]
@@ -242,7 +242,7 @@ function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizont
     w = Slider(parent, orient=orient)
     var = tclvar()
     tclvar(var, min(range))
-    tk_configure(w, from=min(range), to = max(range), variable=var)
+    configure(w, from=min(range), to = max(range), variable=var)
     w
 end
 
@@ -254,13 +254,13 @@ function set_value(widget::Tk_Scale, value::Integer)
 end
 
 
-## tk_bind needs extra args for command
-function tk_bind(widget::Tk_Scale, event::String, callback::Function)
+## bind needs extra args for command
+function bind(widget::Tk_Scale, event::String, callback::Function)
     if event == "command"
         wrapper = (path, xs...) -> callback(path)
-        tk_bind(widget.w, event, wrapper)
+        bind(widget.w, event, wrapper)
     else
-        tk_bind(widget, event, callback)
+        bind(widget, event, callback)
     end
 end
 
@@ -283,7 +283,7 @@ set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
 function set_items{T <: Integer}(widget::Tk_Spinbox, range::Range1{T})
-    tk_configure(widget, from=min(range), to = max(range), increment = step(range))
+    configure(widget, from=min(range), to = max(range), increment = step(range))
     widget.range = range
 end
 
@@ -291,13 +291,13 @@ end
 ## Separator
 function Separator(widget::Widget, horizontal::Bool)
     w = Separator(widget)
-    tk_configure(w, orient = (horizontal ? "horizontal" : "vertical"))
+    configure(w, orient = (horizontal ? "horizontal" : "vertical"))
 end
 
 ## Progressbar
 function Progressbar(widget::Widget, mode::String)
     w = Progressbar(widget)
-    tk_configure(w, mode = mode)    #  one of "determinate", "indeterminate"
+    configure(w, mode = mode)    #  one of "determinate", "indeterminate"
     w
 end
 
@@ -392,7 +392,7 @@ function Scrollbar(parent::Widget, child::Widget, orient::String)
     scr = Scrollbar(parent, orient=orient, command=I("[list $(get_path(child)) $which_view]"))
     d = Dict()
     d[(orient == "horizontal") ? :xscrollcommand : :yscrollcommand] =  I("[list $(get_path(scr)) set]")
-    tk_configure(child, d)
+    configure(child, d)
     scr
 end
 
@@ -427,7 +427,7 @@ MaybeTreeNode = Union(TreeNode, Nothing)
 ## listbox like interface
 function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String; selected_color::String="gray")
     w = Treeview(widget)
-    tk_configure(w, show="tree headings", selectmode="browse")
+    configure(w, show="tree headings", selectmode="browse")
     tcl(w, I"heading #0", text = title)
     tcl(w, I"column  #0", anchor = I"w")
 
@@ -464,7 +464,7 @@ function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeV
     sz = size(items)
 
     w = Treeview(widget)
-    tk_configure(w, show = "tree headings", selectmode = "browse", columns=[1:(sz[2]-1)])
+    configure(w, show = "tree headings", selectmode = "browse", columns=[1:(sz[2]-1)])
     ## widths ...
     if isa(widths, Vector)
         tcl(w, I"column #0", width = widths[1])
@@ -647,16 +647,16 @@ type Tk_CairoCanvas <: Tk_Widget
             if self.device == nothing
                 c = self.w
                 Tk.init_canvas(c)
-                w = tk_winfo(c, "width")  | int
-                h = tk_winfo(c, "height")  | int
+                w = winfo(c, "width")  | int
+                h = winfo(c, "height")  | int
 
                 self.device = Tk.cairo_surface(c)
             end
         end
-        tk_bind(self.w, "<Map>", callback)
-        tk_bind(self.w, "<Configure>", (path) -> begin
+        bind(self.w, "<Map>", callback)
+        bind(self.w, "<Configure>", (path) -> begin
             if !isa(self.device, Nothing)
-                w, h = map(u -> tk_winfo(self.w, u) | int, ("width", "height"))
+                w, h = map(u -> winfo(self.w, u) | int, ("width", "height"))
             end
         end)
         self

@@ -9,7 +9,7 @@ set_value(w, "Toplevel 2")
 @assert get_value(w) == "Toplevel 2"
 @assert get_size(w) == [400, 400]
 destroy(w)
-@assert !tk_exists(w)
+@assert !exists(w)
 
 ## Frame
 w = Toplevel("Frame", 400, 400)
@@ -123,11 +123,11 @@ function cb(path)
     global ctr
     ctr = ctr + 1
 end
-tk_bind(b, "command", cb)
+bind(b, "command", cb)
 tcl(b, "invoke")
 @assert ctr == 2
 img = Image(Pkg.dir("Tk", "examples", "weather-overcast.gif"))
-map(u-> tk_configure(u, image=img, compound="left"), (l,b))
+map(u-> configure(u, image=img, compound="left"), (l,b))
 destroy(w)
 
 ## checkbox
@@ -138,7 +138,7 @@ set_value(check, true)
 set_items(check, "new label")
 @assert get_items(check) == "new label"
 ctr = 1
-tk_bind(check, "command", cb)
+bind(check, "command", cb)
 tcl(check, "invoke")
 @assert ctr == 2
 destroy(w)
@@ -178,7 +178,7 @@ w = Toplevel("Slider")
 sl = Slider(w, 1:10, orient="vertical"); pack(sl)
 set_value(sl, 3)
 @assert get_value(sl) == 3
-tk_bind(sl, "command", cb) ## can't test
+bind(sl, "command", cb) ## can't test
 destroy(w)
 
 ## spinbox
@@ -193,7 +193,7 @@ w = Toplevel("Progress bar")
 pb = Progressbar(w, orient="horizontal"); pack(pb)
 set_value(pb, 50)
 @assert get_value(pb) == 50
-tk_configure(pb, mode = "indeterminate")
+configure(pb, mode = "indeterminate")
 destroy(w)
 
 
@@ -214,7 +214,7 @@ function invalidcommand(path, W)
     tcl(W, "delete", "@0", "end")
     tcl(W, "insert", "@0", "new text")
 end
-tk_configure(e, validate="key", validatecommand=validatecommand, invalidcommand=invalidcommand)
+configure(e, validate="key", validatecommand=validatecommand, invalidcommand=invalidcommand)
 destroy(w)
 
 ## Text

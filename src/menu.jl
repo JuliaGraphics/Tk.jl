@@ -14,7 +14,7 @@ tcl_eval("option add *tearOff 0")
 ## create menu, add to window
 function Menu(widget::Tk_Toplevel)
     m = Menu(widget.w)                  #  dispatch down
-    tk_configure(widget, menu = m)
+    configure(widget, menu = m)
     m
 end
 
@@ -45,7 +45,7 @@ end
 
 
 function menu_add(widget::Tk_Menu, rb::Tk_Radio)
-    var = tk_cget(rb.buttons[1], "variable")
+    var = cget(rb.buttons[1], "variable")
     items = get_items(rb)
     for i in 1:length(items)
         tcl(widget, "add", "radiobutton", label = items[i], value = items[i],

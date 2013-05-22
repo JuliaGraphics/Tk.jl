@@ -11,11 +11,11 @@ get_items(widget::Widget) = XXX()
 set_items(widget::Widget, items) = XXX()
 
 ## size
-get_width(widget::Widget) = tk_winfo(widget, "width") | int
+width(widget::Widget) = winfo(widget, "width") | int
 set_width(widget::Widget, value::Integer) = widget[:width] = value
 
 
-get_height(widget::Widget) = tk_winfo(widget, "height") | int
+height(widget::Widget) = winfo(widget, "height") | int
 set_height(widget::Widget, value::Integer) = widget[:height] = value
 
 get_size(widget::Widget) = [get_width(widget), get_height(widget)]
@@ -27,7 +27,7 @@ set_size(widget::Widget, value::Array{Integer}) = set_size(widget, value[1], val
 
 ## sensitive to user input
 get_enabled(widget::Widget) = XXX()
-get_enabled(widget::TTk_Widget) = tk_instate(widget, "!disabled")
+get_enabled(widget::TTk_Widget) = instate(widget, "!disabled")
 
 set_enabled(widget::Widget, value::Bool) = XXX()
 set_enabled(widget::TTk_Widget, value::Bool) = widget[:state] = value ? "!disabled" : "disabled"
@@ -35,7 +35,7 @@ set_enabled(widget::TTk_Widget, value::Bool) = widget[:state] = value ? "!disabl
 
 ## can be edited
 get_editable(widget::Widget) = XXX()
-get_editable(widget::TTk_Widget) = tk_instate(widget, "!readonly")
+get_editable(widget::TTk_Widget) = instate(widget, "!readonly")
 
 set_editable(widget::Widget, value::Bool) = XXX()
 set_editable(widget::TTk_Widget, value::Bool) = widget[:state] = value ? "!readonly" : "readonly"
@@ -49,4 +49,4 @@ focus(widget::Widget) = tcl("focus", widget)
 raise(widget::Widget) = tcl("raise", widget)
 
 ## does widget exist?
-tk_exists(widget::Widget) = tk_winfo(widget, "exists") == "1"
+exists(widget::Widget) = winfo(widget, "exists") == "1"

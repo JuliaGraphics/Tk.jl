@@ -37,8 +37,8 @@ convenience interfaces.
 
 In addition to providing  constructors, there are additional convenience methods defined.
 
-* The `tk_configure`, `tk_cget`, `tclvar`, `tk_identify`, `tk_state`,
-  `tk_instate`, `tk_winfo`, `tk_wm`, `tk_bind` methods to simplify the
+* The `configure`, `cget`, `tclvar`, `identify`, `state`,
+  `instate`, `winfo`, `wm`, `bind` methods to simplify the
   corresponding Tcl commands. 
 
 * For widget layout, we have  `pack`, `pack_configure`, `forget`, `grid`,
@@ -72,8 +72,8 @@ b = Button(f, "Click for a message")                       ## Button constructor
 grid(b, 1, 1)                                              ## use grid to pack in b. 1,1 specifies location
 #
 callback(path) = Messagebox(w, title="A message", message="Hello World") ## A callback to open a message
-tk_bind(b, "command", callback)                            ## bind callback to 'command' option	 
-tk_bind(b, "<Return>", callback)                           ## press return key when button has focus
+bind(b, "command", callback)                            ## bind callback to 'command' option	 
+bind(b, "<Return>", callback)                           ## press return key when button has focus
 ```
 
 We see the use of an internal frame to hold the button. The frames
@@ -94,7 +94,7 @@ few of these to illustrate the `Tk` package for `julia`.
 
 `Tk` commands are combined strings followed by options. Something
 like: `.button configure -text {button text}` is called as
-`tk_configure(button, text = "button text)`. Key-value options are
+`configure(button, text = "button text)`. Key-value options are
 specified with through named arguments, which are converted to the
 underlying Tcl object. Similarly, path names are also translated and
 functions are converted to callbacks.
@@ -169,7 +169,7 @@ function callback(path)		   ## callbacks have at least one argument
   Messagebox(w, title="Thanks for the feedback", message=msg)
 end	 
 
-tk_bind(cb, "command", callback)   ## bind to command option
+bind(cb, "command", callback)   ## bind to command option
 ```
 
 The `set_items` method can be used to change the label.
@@ -196,7 +196,7 @@ function callback(path)
   Messagebox(w, msg)
 end
 
-tk_bind(b, "command", callback)
+bind(b, "command", callback)
 ```
 
 The individual buttons can be accessed via the buttons property. This
@@ -275,9 +275,9 @@ function callback(path)
   Messagebox(w,  msg)
 end
 
-tk_bind(b, "command", callback)
-tk_bind(b, "<Return>", callback)
-tk_bind(e, "<Return>", callback)  ## bind to a certain key press event
+bind(b, "command", callback)
+bind(b, "<Return>", callback)
+bind(e, "<Return>", callback)  ## bind to a certain key press event
 ```
 
 ### Listboxes
@@ -303,7 +303,7 @@ pack(f1,  expand=true, fill="both")
 b = Button(f, "Ok")
 pack(b)
 
-tk_bind(b, "command") do path	## do style
+bind(b, "command") do path	## do style
          fruit_choice = get_value(lb)
 	 msg = (fruit_choice == nothing) ? "What, no choice?" : "Good choice! $(fruit_choice[1])" * "s are delicious!"
 	 Messagebox(w,  msg)
@@ -314,7 +314,7 @@ The value returned by `get_value` is an array or `nothing`. Returning
 `nothing` may not be the best choice, perhaps a 0-length array is
 better?
 
-One can configure the `selectmode`. E.g. `tk_configure(lb,
+One can configure the `selectmode`. E.g. `configure(lb,
 selectmode = "extended")` with either `extended` (multiple
 selection possible, `browse` (single selection), or `none` (no
 selection).) The shortcut `lb[:selectmode] = "extended"` will also work.
@@ -352,7 +352,7 @@ function callback(path)
   Messagebox(w, msg)
 end
 
-tk_bind(b, "command", callback)
+bind(b, "command", callback)
 ```
 
 
@@ -384,7 +384,7 @@ other things (adding/inserting text, using tags, ...) directly with
 One can bind a callback to an event in tcltk. There are few things to know:
 
 * Callbacks have at least one argument (we use `path`). With
-  `tk_bind`, other arguments are matched by name to correspond to
+  `bind`, other arguments are matched by name to correspond to
   tcltk's percent substitution. E.g. `f(path, x, y)` would get values
   for x and y through `%x %y`.
 
@@ -394,9 +394,9 @@ One can bind a callback to an event in tcltk. There are few things to know:
 
 * many widgets have a standard `command` argument in addition to
   window manager events they respond to. The value `command` can be passed to
-  `tk_bind` as the event.
+  `bind` as the event.
 
-* The `tk_bind` method does most of the work. The `callback_add`
+* The `bind` method does most of the work. The `callback_add`
   method binds to the most common event, mostly the `command`
   one. This can be used to bind the same callback to multiple widgets
   at once.
@@ -413,14 +413,14 @@ values through a Range object:
 w = Toplevel()
 sc = Slider(w, 1:100)
 pack(sc)
-tk_bind(sc, "command", path -> println("The value is $(get_value(sc))"))
+bind(sc, "command", path -> println("The value is $(get_value(sc))"))
 ```
 
 
-One can also call `tk_bind` using the `do` idiom:
+One can also call `bind` using the `do` idiom:
 
 ```
-tk_bind(sc, "command") do path
+bind(sc, "command") do path
   println("The value is $(get_value(sc))")
 end
 ```
@@ -468,8 +468,8 @@ sc = Slider(f, 1:100)
 sp = Spinbox(f, 1:100)
 map(pack, (sc, sp))
 
-tk_bind(sc, "command", path -> set_value(sp, get_value(sc)))
-tk_bind(sp, "command", path -> set_value(sc, get_value(sp)))
+bind(sc, "command", path -> set_value(sp, get_value(sc)))
+bind(sp, "command", path -> set_value(sc, get_value(sp)))
 ```
 ### Images
 
