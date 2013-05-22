@@ -30,12 +30,12 @@ Constructors are provided  for the following widgets
 * `Sizegrip`, `Separator`, `Progressbar`, `Image` various widgets
 
 The basic usage simply calls the `ttk::` counterpart, though one can
-use a Dict to pass in configuration options. As well, some have a
+use named arguments to pass in configuration options. As well, some have a
 convenience interfaces.
 
 ### Methods
 
-In addition to providing  constructors, there are some convenience methods defined.
+In addition to providing  constructors, there are additional convenience methods defined.
 
 * The `tk_configure`, `tk_cget`, `tclvar`, `tk_identify`, `tk_state`,
   `tk_instate`, `tk_winfo`, `tk_wm`, `tk_bind` methods to simplify the
@@ -94,10 +94,10 @@ few of these to illustrate the `Tk` package for `julia`.
 
 `Tk` commands are combined strings followed by options. Something
 like: `.button configure -text {button text}` is called as
-`tk_configure(button, {:text => "button text})`. Key-value options are
-specified with a Dict, which converts to the underlying Tcl
-object. Similarly, path names are also translated and functions are
-converted to callbacks.
+`tk_configure(button, text = "button text)`. Key-value options are
+specified with through named arguments, which are converted to the
+underlying Tcl object. Similarly, path names are also translated and
+functions are converted to callbacks.
 
 
 ### Pack widgets into a themed widget for better appearance
@@ -121,13 +121,13 @@ pack(f, expand=true, fill="both")
 #### Notes:
 
 * Sometimes the frame is configured with padding so that the sizegrip
-  shows, e.g. `frame(w,{:padding => [3,3,2,2]})`.
+  shows, e.g. `frame(w, padding = [3,3,2,2])`.
 
 * The above will get the size from the frame -- which has no
   request. This means the window will disappear. You may want to force
   the size to come from the toplevel window. You can use `tcl("pack",
-  "propagate", w, false)` (wrapped in `pack_stop_propagate` to get
-  this:)
+  "propagate", w, false)` (wrapped in `pack_stop_propagate`) to get
+  this:
 
 ```
 w = Toplevel("title", 400, 300)	## title, width, height
@@ -136,8 +136,8 @@ f = Frame(w)
 pack(f, expand=true, fill="both")
 ```
 
-* resizing toplevel windows can leave visual artifacts, at least on a
-  Mac. This is not optimal!
+* resizing toplevel windows with the mouse can leave visual artifacts, at least on a
+  Mac. This is not optimal! (The picture below can be avoided by packing an expanding frame into the toplevel widget.)
 
 <img src="munged-window.png"></img>
 
@@ -289,7 +289,7 @@ There is no `Listbox` constructor, rather we replicate this with
 scrollbar too:
 
 ```
-fruits = ["Apple", "Orange", "Banana", "Pear"]
+fruits = ["Apple", "Naval orange", "Banana", "Pear"]
 w = Toplevel("Favorite fruit?")
 tcl("pack", "propagate", w, false)
 f = Frame(w)
@@ -303,12 +303,11 @@ pack(f1,  expand=true, fill="both")
 b = Button(f, "Ok")
 pack(b)
 
-function callback(path)
-	 fruit_choice = get_value(lb)
+tk_bind(b, "command") do path	## do style
+         fruit_choice = get_value(lb)
 	 msg = (fruit_choice == nothing) ? "What, no choice?" : "Good choice! $(fruit_choice[1])" * "s are delicious!"
 	 Messagebox(w,  msg)
 end
-tk_bind(b, "command", callback)
 ```
 
 The value returned by `get_value` is an array or `nothing`. Returning
@@ -333,7 +332,7 @@ Selection from a list of choices can be done with a combo box:
 <img src="combo.png" > </img>
 
 ```
-fruits = ["Apple", "Orange", "Banana", "Pear"]
+fruits = ["Apple", "Navel orange", "Banana", "Pear"]
 
 w = Toplevel("Combo boxes", 300, 200)
 tcl("pack", "propagate", w, false)
@@ -665,6 +664,6 @@ formlayout(Entry(f), "Rank:")
 formlayout(Entry(f), "Serial Number:")
 page_add(f)
 
-set_value(pg, 50)          ## move first sash 50 pixels
-tcl(pg, "sashpos", 1, 100) ## set_value, get_value are first sash (0-based)
+set_value(pg, 100)                 ## set divider between first two pixels
+tcl(pg, "sashpos", 1, 200)	   ## others set the tcl way
 ```

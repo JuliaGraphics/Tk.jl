@@ -16,5 +16,6 @@ function Messagebox(parent::MaybeWidget; title::String="", message::String="", d
     
     tcl("tk_messageBox", args)
 end
+Messagebox(;kwargs...) = Messagebox(nothing; kwargs...)
 Messagebox(parent::Widget, message::String) = Messagebox(parent, message=message)
 Messagebox(message::String) = Message(nothing, message=message)

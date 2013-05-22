@@ -45,8 +45,7 @@ for (k, k1, v) in ((:Label, :Tk_Label, "ttk::label"),
                    )
     @eval begin
         function $k(parent::Widget; kwargs...)
-            args = [key => value for (key, value) in kwargs]
-            w = make_widget(parent, $v, args)
+            w = make_widget(parent, $v; kwargs...)
             $k1(w)
         end
     end
@@ -89,8 +88,6 @@ function Checkbutton(parent::Widget, label::String)
 end
 
 function get_value(widget::Tk_Checkbutton)
-    ## var = tk_cget(widget, "variable")
-    ## tclvar(var) == "1"
     tk_instate(widget, "selected")
 end
 function set_value(widget::Tk_Checkbutton, value::Bool)
@@ -428,7 +425,7 @@ MaybeTreeNode = Union(TreeNode, Nothing)
 ## Special Tree cases
 
 ## listbox like interface
-function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String)
+function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String; selected_color::String="gray")
     w = Treeview(widget)
     tk_configure(w, show="tree headings", selectmode="browse")
     tcl(w, I"heading #0", text = title)
@@ -436,8 +433,7 @@ function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String)
 
     set_items(w, items)
 
-    color = "gray"
-    tcl_eval("ttk::style map Treeview.Row -background [list selected $color]")
+    tcl_eval("ttk::style map Treeview.Row -background [list selected $selected_color]")
     
     w
 end

@@ -44,7 +44,7 @@ end
 function tcl(xs...; kwargs...)
     cmd = join([" $(to_tcl(x)) " for x in xs], "")
     cmd = cmd * join([" -$(string(k)) $(to_tcl(v)) " for (k, v) in kwargs], " ")
-     println(cmd)
+    ## println(cmd)
     tcl_eval(cmd)
 end
 
@@ -64,15 +64,14 @@ end
 
 ## create new variable with random name
 function tclvar()
-    var = "tcl" * join(int(10*rand(20)), "")
+    var = "tcl_" * randstring(10)
     tclvar(var, "null")
     var
 end
 
 ## main configuration interface
 function tk_configure(widget::Widget, args...; kwargs...)
-    kwargs = [key => value for (key, value) in kwargs]
-    tcl(widget, "configure", args..., kwargs)
+    tcl(widget, "configure", args...; kwargs...)
 end
 
 setindex!(widget::Widget, value, prop::Symbol) = tk_configure(widget, {prop=>value})
@@ -102,7 +101,7 @@ end
 tk_winfo(widget::Widget, prop::String) = tk_winfo(widget, prop, nothing)
 
 ## wm. 
-tk_wm(window::Widget, prop::String, args...; kwargs...) = tcl("wm", prop, window, args..., [k=>v for (k,v) in kwargs])
+tk_wm(window::Widget, prop::String, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
 
 
 ## Take a function, get its args as array of symbols. There must be better way...
@@ -211,10 +210,10 @@ end
 
 ## Need this pattern to make a widget
 ## Parent is not a string, but TkWidget or Tk_Widget instance
-function make_widget(parent::Widget, str::String, args)
+function make_widget(parent::Widget, str::String; kwargs...)
     path = isa(parent, Tk_Widget) ? parent.w : parent
     w = TkWidget(path, str)
-    tcl(str, w, args)
+    tcl(str, w; kwargs...)
     w
 end
 

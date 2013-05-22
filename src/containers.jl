@@ -106,9 +106,9 @@ page_add(child::Widget) = page_add(child, 1)
 ## Container methods
 
 ## pack(widget, {:expand => true, :anchor => "w"})
-pack(widget::Widget; expand::Bool=false, fill::String="both", anchor::String="center", side::String="top", kwargs...) = tcl("pack", widget, [k=>v for (k,v) in kwargs], expand=expand, fill=fill, anchor=anchor, side=side)
+pack(widget::Widget;  kwargs...) = tcl("pack", widget; kwargs...)
 
-pack_configure(widget::Widget, kwargs...) = tcl(I"pack configure", widget, kwargs...)
+pack_configure(widget::Widget, kwargs...) = tcl(I"pack configure", widget; kwargs...)
 pack_stop_propagate(widget::Widget) = tcl(I"pack propagate", widget, false)
 
 ## remove a page from display
@@ -119,18 +119,19 @@ forget(parent::Widget, child::Widget) = tcl(widget, "forget", child)
 IntOrRange = Union(Integer, Range1)
 function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
     path = get_path(child)
-    row = min(row) - 1
-    column = min(column) - 1
     if isa(row, Range1) rowspan = 1 + max(row) - min(row)  else rowspan = 1 end
     if isa(column, Range1) columnspan = 1 + max(column) - min(column) else columnspan = 1 end
+
+    row = min(row) - 1
+    column = min(column) - 1
     
-    grid_configure(child, [k=>v for (k,v) in kwargs], row=row, column=column, rowspan=rowspan, columnspan=columnspan)
+    grid_configure(child,  row=row, column=column, rowspan=rowspan, columnspan=columnspan; kwargs...)
 end
 
 
-grid_configure(child::Widget, args...; kwargs...) = tcl("grid", "configure", child, args...,[k=>v for (k,v) in kwargs])
-grid_rowconfigure(parent::Widget, row::Integer; kwargs...) = tcl(I"grid rowconfigure", parent, row-1,[k=>v for (k,v) in kwargs] )
-grid_columnconfigure(parent::Widget, column::Integer; kwargs...) = tcl(I"grid columnconfigure", parent, column-1, [k=>v for (k,v) in kwargs])
+grid_configure(child::Widget, args...; kwargs...) = tcl("grid", "configure", child, args...,; kwargs...)
+grid_rowconfigure(parent::Widget, row::Integer; kwargs...) = tcl(I"grid rowconfigure", parent, row-1; kwargs... )
+grid_columnconfigure(parent::Widget, column::Integer; kwargs...) = tcl(I"grid columnconfigure", parent, column-1; kwargs...)
 grid_stop_propagate(parent::Widget) = tcl(I"grid propagate", parent, false)
 grid_forget(child::Widget) = tcl(I"grid forget", child)
 
