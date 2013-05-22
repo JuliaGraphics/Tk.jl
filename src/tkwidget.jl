@@ -259,7 +259,7 @@ end
 
 # some canvas init steps require the widget to fully exist
 function init_canvas(c::Canvas)
-    println("init canvas")
+
     tcl_doevent()  # make sure window resources are assigned
     configure(c)
     c.mouse = MouseHandler()

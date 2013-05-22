@@ -18,7 +18,7 @@ set_width(widget::Widget, value::Integer) = widget[:width] = value
 height(widget::Widget) = winfo(widget, "height") | int
 set_height(widget::Widget, value::Integer) = widget[:height] = value
 
-get_size(widget::Widget) = [get_width(widget), get_height(widget)]
+get_size(widget::Widget) = [width(widget), height(widget)]
 function set_size(widget::Widget, width::Integer, height::Integer)
     set_width(widget, width)
     set_height(widget, height)

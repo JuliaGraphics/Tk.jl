@@ -51,7 +51,7 @@ In addition to providing  constructors, there are additional convenience methods
 * We add the methods `get_items` and `set_items` to get and set the
   item(s) to select from for selection widgets.
 
-* We add the methods `get_width`, `get_height`, `get_size`, `set_width`,
+* We add the methods `width`, `height`, `get_size`, `set_width`,
   `set_height`, `set_size` for adjusting sizes. (Resizing a window
   with the mouse does strange things on a Mac ...)
 

@@ -87,7 +87,7 @@ end
 
 ## value is sash position as percentage of first pane
 function get_value(widget::Tk_Panedwindow)
-    sz = (cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
+    sz = (cget(widget, "orient") == "horizontal") ? width(widget) : height(widget)
     pos = tcl(widget, "sashpos", 0) | int
     floor(pos/sz*100)
 end
@@ -95,7 +95,7 @@ end
 set_value(widget::Tk_Panedwindow, value::Integer) = tcl(widget, "sashpos", 0, value)
 function set_value(widget::Tk_Panedwindow, value::Real)
     if value <= 1 && value >= 0
-        sz = (cget(widget, "orient") == "horizontal") ? get_width(widget) : get_height(widget)
+        sz = (cget(widget, "orient") == "horizontal") ? width(widget) : height(widget)
         set_value(widget, int(value * sz/100))
     end        
 end
