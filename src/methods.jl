@@ -11,6 +11,10 @@ get_items(widget::Widget) = XXX()
 set_items(widget::Widget, items) = XXX()
 
 ## size
+## width and height refer to actual size
+## w[:width], w[:height] give the requested size
+## set_width, set_height as same as w[:width]=width, in setting requested size
+## for toplevel widgets, set_size will set the minimum size, but for others sets requested size.
 width(widget::Widget) = winfo(widget, "width") | int
 set_width(widget::Widget, value::Integer) = widget[:width] = value
 

@@ -37,7 +37,10 @@ function get_visible(w::TkWidget)
     end
 end
 
-set_size(widget::Tk_Toplevel, width::Integer, height::Integer) = tcl(I"wm minsize", widget, width, height)
+## Uncommenting this would have have set_size for a Toplevel widget set the minimum size.
+## to set the requested size, there is set_width, set_height which are also
+## widget[:width] = ... and widget[:height] = ...
+#set_size(widget::Tk_Toplevel, width::Integer, height::Integer) = tcl(I"wm minsize", widget, width, height)
 
 ## Set upper left corner of Toplevel to...
 function set_position(widget::Tk_Toplevel, x::Integer, y::Integer)
