@@ -6,18 +6,15 @@ GetSaveFile() = tcl("tkGetSaveFile")
 ChooseDirectory() = tcl("tk_chooseDirectory")
 
 ## Message box
-function Messagebox(parent::MaybeWidget, title::MaybeString, message::MaybeString, detail::MaybeString)
+function Messagebox(parent::MaybeWidget; title::String="", message::String="", detail::String="")
     args = Dict()
     if !isa(parent, Nothing) args["parent"] = get_path(parent) end
-    args["title"] = title 
-    args["message"] = message
-    args["detail"] = detail
+    if length(title) > 0 args["title"] = title  end
+    if length(message) > 0 args["message"] = message end
+    if length(detail) > 0 args["detail"] = detail end
     args["type"] = "okcancel"
     
     tcl("tk_messageBox", args)
 end
-
-Messagebox(parent::Widget, title::String, message::String) = Messagebox(parent, title, message, nothing)
-Messagebox(parent::Widget, message::String) = Messagebox(parent, nothing, message, nothing)
-Messagebox(title::String, message::String, detail::String) = Messagebox(nothing, title, message, detail)
-Messagebox(title::String, message::String) = Messagebox(nothing, title, message, nothing)
+Messagebox(parent::Widget, message::String) = Messagebox(parent, message=message)
+Messagebox(message::String) = Message(nothing, message=message)

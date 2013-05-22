@@ -17,7 +17,7 @@ using Base
 using Cairo
 
 
-import Base: string, show
+import Base: string, show, getindex, setindex!
 import Base.Graphics: width, height, getgc
 
 include("tkwidget.jl")                  # old Tk
