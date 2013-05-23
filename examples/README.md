@@ -30,20 +30,24 @@ Constructors are provided  for the following widgets
 * `Sizegrip`, `Separator`, `Progressbar`, `Image` various widgets
 
 The basic usage simply calls the `ttk::` counterpart, though one can
-use a Dict to pass in configuration options. As well, some have a
+use named arguments to pass in configuration options. As well, some have a
 convenience interfaces.
 
 ### Methods
 
-In addition to providing  constructors, there are some convenience methods defined.
+In addition to providing constructors, there are few additional
+convenience methods defined.
 
-* The `tk_configure`, `tk_cget`, `tclvar`, `tk_identify`, `tk_state`,
-  `tk_instate`, `tk_winfo`, `tk_wm`, `tk_bind` methods to simplify the
-  corresponding Tcl commands.
+* The `configure`, `cget`, `tclvar`, `identify`, `state`, `instate`,
+  `winfo`, `wm`, `bind` methods to simplify the corresponding Tcl
+  commands. For a single option of a widget accessed via `cget` and
+  modified via `configure`, one can use the index notation with a
+  symbol, as in `widget[:option]` or `widget[:option] = value`.
 
-* For widget layout, we have  `pack`, `pack_configure`, `forget`, `grid`,
-  `grid_configure`, `grid_forget`, ... providing interfaces to the appropriate Tk commands, but also
-   `formlayout` and `page_add` for working with simple forms and notebooks and pane windows..
+* For widget layout, we have `pack`, `pack_configure`, `forget`,
+  `grid`, `grid_configure`, `grid_forget`, ... providing interfaces to
+  the appropriate Tk commands, but also `formlayout` and `page_add`
+  for working with simple forms and notebooks and pane windows..
 
 * We add the methods `get_value` and `set_value` to get and set the
   primary value for a control
@@ -51,9 +55,12 @@ In addition to providing  constructors, there are some convenience methods defin
 * We add the methods `get_items` and `set_items` to get and set the
   item(s) to select from for selection widgets.
 
-* We add the methods `get_width`, `get_height`, `get_size`, `set_width`,
-  `set_height`, `set_size` for adjusting sizes. (Resizing a window
-  with the mouse does strange things on a Mac ...)
+* We add the methods `width`, `height`, `get_size` to get the
+  on-screen size of a widget. For toplevel windows there are
+  `set_width`, `set_height`, and `set_size` for adjusting the
+  geometry. The `:width` and `:height` properties are common to most
+  widgets, and return the _requested_ width and height, which need not
+  be the actual width and height on screen.
 
 * The conveniences `get_enabled` and `set_enabled` to specify if a
   widget accepts user input
@@ -65,18 +72,18 @@ A simple "Hello world" example, which shows off many of the styles is given by:
 
 ```
 w = Toplevel("Example")                                    ## A titled top level window
-f = Frame(w, {:padding => [3,3,2,2], :relief=>"groove"})   ## A Frame with some options set
-pack(f, {:expand => true, :fill => "both"})                ## using pack to manage the layout of f
+f = Frame(w, padding = [3,3,2,2], relief="groove")         ## A Frame with some options set
+pack(f, expand = true, fill = "both")                      ## using pack to manage the layout of f
 #
 b = Button(f, "Click for a message")                       ## Button constructor has convenience interface
 grid(b, 1, 1)                                              ## use grid to pack in b. 1,1 specifies location
 #
-callback(path) = Messagebox(w, "A message", "Hello World") ## A callback to open a message
-tk_bind(b, "command", callback)                            ## bind callback to 'command' option	 
-tk_bind(b, "<Return>", callback)                           ## press return key when button has focus
+callback(path) = Messagebox(w, title="A message", message="Hello World") ## A callback to open a message
+bind(b, "command", callback)                            ## bind callback to 'command' option	 
+bind(b, "<Return>", callback)                           ## press return key when button has focus
 ```
 
-We see the use of an internal frame to hold the button. The frames
+We see the use of an internal frame to hold the button. The frame's
 layout is managed using `pack`, the buttons with `grid`. Both these
 have some conveniences. For grid, the location of the cell can be
 specified by 1-based index as shown. The button callback is just a
@@ -94,10 +101,10 @@ few of these to illustrate the `Tk` package for `julia`.
 
 `Tk` commands are combined strings followed by options. Something
 like: `.button configure -text {button text}` is called as
-`tk_configure(button, {:text => "button text})`. Key-value options are
-specified with a Dict, which converts to the underlying Tcl
-object. Similarly, path names are also translated and functions are
-converted to callbacks.
+`configure(button, text = "button text)`. Key-value options are
+specified with through named arguments, which are converted to the
+underlying Tcl object. Similarly, path names are also translated and
+functions are converted to callbacks.
 
 
 ### Pack widgets into a themed widget for better appearance
@@ -115,29 +122,29 @@ window may show through:
 ```
 w = Toplevel()
 f = Frame(w)
-pack(f, {:expand=>true, :fill=>"both"})
+pack(f, expand=true, fill="both")
 ```
 
 #### Notes:
 
 * Sometimes the frame is configured with padding so that the sizegrip
-  shows, e.g. `frame(w,{:padding => [3,3,2,2]})`.
+  shows, e.g. `frame(w, padding = [3,3,2,2])`.
 
 * The above will get the size from the frame -- which has no
   request. This means the window will disappear. You may want to force
   the size to come from the toplevel window. You can use `tcl("pack",
-  "propagate", w, false)` (wrapped in `pack_stop_propagate` to get
-  this:)
+  "propagate", w, false)` (wrapped in `pack_stop_propagate`) to get
+  this:
 
 ```
 w = Toplevel("title", 400, 300)	## title, width, height
 pack_stop_propagate(w)
 f = Frame(w)
-pack(f, {:expand=>true, :fill=>"both"})
+pack(f, expand=true, fill="both")
 ```
 
-* resizing toplevel windows can leave visual artifacts, at least on a
-  Mac. This is not optimal!
+* resizing toplevel windows with the mouse can leave visual artifacts, at least on a
+  Mac. This is not optimal! (The picture below can be avoided by packing an expanding frame into the toplevel widget.)
 
 <img src="munged-window.png"></img>
 
@@ -146,7 +153,7 @@ pack(f, {:expand=>true, :fill=>"both"})
 The `Messagebox` constructor makes a modal message box.
 
 ```
-Messagebox("title", "message")
+Messagebox(title="title", message="message")
 ```
 
 An optional `parent` argument can be specified to locate the box near
@@ -166,10 +173,10 @@ pack(cb)
 function callback(path)		   ## callbacks have at least one argument
   value = get_value(cb)
   msg = value ? "Glad to hear that" : "Sorry to hear that"
-  Messagebox(w, "Thanks for the feedback", msg)
+  Messagebox(w, title="Thanks for the feedback", message=msg)
 end	 
 
-tk_bind(cb, "command", callback)   ## bind to command option
+bind(cb, "command", callback)   ## bind to command option
 ```
 
 The `set_items` method can be used to change the label.
@@ -182,24 +189,24 @@ The `set_items` method can be used to change the label.
 ```
 w = Toplevel()
 f = Frame(w)
-pack(f, {:expand=>true, :fill=>"both"})
+pack(f, expand=true, fill="both")
 
 l  = Label(f, "Which do you prefer?")
 rb = Radio(f, ["apples", "oranges"])
 b  = Button(f, "ok")
-map(u -> pack(u, {:anchor => "w"}), (l, rb, b))     ## pack in left to right
+map(u -> pack(u, anchor="w"), (l, rb, b))     ## pack in left to right
 
 
 function callback(path) 
   msg = (get_value(rb) == "apples") ? "Good choice!  An apple a day keeps the doctor away!" : 
                                       "Good choice!  Oranges are full of Vitamin C!"
-  Messagebox(w, "Title:", msg)
+  Messagebox(w, msg)
 end
 
-tk_bind(b, "command", callback)
+bind(b, "command", callback)
 ```
 
-The individual buttons can be accessed via the buttons property. This
+The individual buttons can be accessed via the `buttons` property. This
 allows one to edit the labels, as in
 
 ```
@@ -240,7 +247,7 @@ set_value(rb, "option 1")	## initialize
 menu_add(omenu, rb)		## second argument is Tk_Radio instance
 
 b = Button(w, "print selected options")
-pack(b, {:expand=>true, :fill=>"both"})
+pack(b, expand=true, fill="both")
 
 function callback(path)
   vals = map(get_value, (cb, rb))
@@ -260,7 +267,7 @@ The entry widget can be used to collect data from the user.
 
 ```
 w = Toplevel()
-f = Frame(w); pack(f, {:expand=>true, :fill=>"both"})
+f = Frame(w); pack(f, expand=true, fill="both")
 
 e = Entry(f)
 b = Button(f, "Ok")
@@ -272,12 +279,12 @@ focus(e)			## put keyboard focus on widget
 function callback(path) 
   val = get_value(e)
   msg = "You have a nice name $val"
-  Messagebox(w, "Title", msg)
+  Messagebox(w,  msg)
 end
 
-tk_bind(b, "command", callback)
-tk_bind(b, "<Return>", callback)
-tk_bind(e, "<Return>", callback)  ## bind to a certain key press event
+bind(b, "command", callback)
+bind(b, "<Return>", callback)
+bind(e, "<Return>", callback)  ## bind to a certain key press event
 ```
 
 ### Listboxes
@@ -289,36 +296,35 @@ There is no `Listbox` constructor, rather we replicate this with
 scrollbar too:
 
 ```
-fruits = ["Apple", "Orange", "Banana", "Pear"]
+fruits = ["Apple", "Naval orange", "Banana", "Pear"]
 w = Toplevel("Favorite fruit?")
 tcl("pack", "propagate", w, false)
 f = Frame(w)
-pack(f, {:expand=>true, :fill=>"both"})
+pack(f, expand=true, fill="both")
 
 f1 = Frame(f)			## need internal frame for use with scrollbars
 lb = Treeview(f1, fruits)
 scrollbars_add(f1, lb)
-pack(f1,  {:expand=>true, :fill=>"both"})
+pack(f1,  expand=true, fill="both")
 
 b = Button(f, "Ok")
 pack(b)
 
-function callback(path)
-	 fruit_choice = get_value(lb)
+bind(b, "command") do path	## do style
+         fruit_choice = get_value(lb)
 	 msg = (fruit_choice == nothing) ? "What, no choice?" : "Good choice! $(fruit_choice[1])" * "s are delicious!"
-	 Messagebox(w, "title", msg)
+	 Messagebox(w,  msg)
 end
-tk_bind(b, "command", callback)
 ```
 
 The value returned by `get_value` is an array or `nothing`. Returning
 `nothing` may not be the best choice, perhaps a 0-length array is
 better?
 
-One can configure the `selectmode`. E.g. `tk_configure(lb,
-{:selectmode => "extended"})` with either `extended` (multiple
+One can configure the `selectmode`. E.g. `configure(lb,
+selectmode = "extended")` with either `extended` (multiple
 selection possible, `browse` (single selection), or `none` (no
-selection).)
+selection).) The shortcut `lb[:selectmode] = "extended"` will also work.
 
 The `Treeview` widget can also display a matrix of strings in a grid
 in addition to tree-like data.
@@ -333,15 +339,15 @@ Selection from a list of choices can be done with a combo box:
 <img src="combo.png" > </img>
 
 ```
-fruits = ["Apple", "Orange", "Banana", "Pear"]
+fruits = ["Apple", "Navel orange", "Banana", "Pear"]
 
 w = Toplevel("Combo boxes", 300, 200)
 tcl("pack", "propagate", w, false)
-f = Frame(w); pack(f, {:expand=>true, :fill=>"both"})
+f = Frame(w); pack(f, expand=true, fill="both")
 
 grid(Label(f, "Again, What is your favorite fruit?"), 1, 1)
 cb = Combobox(f, fruits)
-grid(cb, 2,1, {:sticky=>"ew"})
+grid(cb, 2,1, sticky="ew")
 
 b = Button(f, "Ok")
 grid(b, 3, 1)
@@ -350,10 +356,10 @@ function callback(path)
   fruit_choice = get_value(cb)
   msg = (fruit_choice == nothing) ? "What, no choice?" : 
                                     "Good choice! $(fruit_choice)" * "s are delicious!"
-  Messagebox(w, "title", msg)
+  Messagebox(w, msg)
 end
 
-tk_bind(b, "command", callback)
+bind(b, "command", callback)
 ```
 
 
@@ -373,7 +379,7 @@ tcl("pack", "propagate", w, false)
 f = Frame(w)
 txt = Text(f)
 scrollbars_add(f, txt)
-pack(f, {:expand=>true, :fill => "both"})
+pack(f, expand=true, fill = "both")
 ```
 
 Only a `get_value` and `set_value` is provided. One can configure
@@ -385,7 +391,7 @@ other things (adding/inserting text, using tags, ...) directly with
 One can bind a callback to an event in tcltk. There are few things to know:
 
 * Callbacks have at least one argument (we use `path`). With
-  `tk_bind`, other arguments are matched by name to correspond to
+  `bind`, other arguments are matched by name to correspond to
   tcltk's percent substitution. E.g. `f(path, x, y)` would get values
   for x and y through `%x %y`.
 
@@ -395,9 +401,9 @@ One can bind a callback to an event in tcltk. There are few things to know:
 
 * many widgets have a standard `command` argument in addition to
   window manager events they respond to. The value `command` can be passed to
-  `tk_bind` as the event.
+  `bind` as the event.
 
-* The `tk_bind` method does most of the work. The `callback_add`
+* The `bind` method does most of the work. The `callback_add`
   method binds to the most common event, mostly the `command`
   one. This can be used to bind the same callback to multiple widgets
   at once.
@@ -414,14 +420,14 @@ values through a Range object:
 w = Toplevel()
 sc = Slider(w, 1:100)
 pack(sc)
-tk_bind(sc, "command", path -> println("The value is $(get_value(sc))"))
+bind(sc, "command", path -> println("The value is $(get_value(sc))"))
 ```
 
 
-One can also call `tk_bind` using the `do` idiom:
+One can also call `bind` using the `do` idiom:
 
 ```
-tk_bind(sc, "command") do path
+bind(sc, "command") do path
   println("The value is $(get_value(sc))")
 end
 ```
@@ -438,14 +444,15 @@ any indication as to the value, we remedy this with a label.
 ```
 w = Toplevel("Slider and label", 300, 200)
 pack_stop_propagate(w)
-f = Frame(w); pack(f, {:expand => true, :fill => "both"})
+f = Frame(w); pack(f, expand = true, fill = "both")
 
 sc = Slider(f, 1:20)
 l = Label(f)
-tk_configure(l, {:textvariable => tk_cget(sc, "variable") })
+l[:textvariable] = sc[:variable]
 
-pack(sc, {:side=>"left", :expand=>true, :fill=>"x", :anchor=>"w"})
-pack(l,  {:side=>"left", :anchor=>"w"})
+
+pack(sc, side="left", expand=true, fill="x", anchor="w")
+pack(l,  side="left", anchor="w")
 ```
 
 This combination above is not ideal, as the length of the label is not
@@ -462,14 +469,14 @@ two using a callback:
 
 ```
 w = Toplevel("Slider/Spinbox")
-f = Frame(w); pack(f, {:expand => true, :fill => "both"})
+f = Frame(w); pack(f, expand = true, fill = "both")
 
 sc = Slider(f, 1:100)
 sp = Spinbox(f, 1:100)
 map(pack, (sc, sp))
 
-tk_bind(sc, "command", path -> set_value(sp, get_value(sc)))
-tk_bind(sp, "command", path -> set_value(sc, get_value(sp)))
+bind(sc, "command", path -> set_value(sp, get_value(sc)))
+bind(sp, "command", path -> set_value(sc, get_value(sp)))
 ```
 ### Images
 
@@ -493,101 +500,17 @@ fname = Pkg.dir("Tk", "examples", "weather-overcast.gif") ## https://code.google
 img = Image(fname)
 
 w = Toplevel("Icon in button")
-b = Button(w, "weather", img)   ## or: b = Button(w, {:text=>"weather", :image=>img, :compound=>"left"})
+b = Button(w, "weather", img)   ## or: b = Button(w, text="weather", image=img, compound="left")
 pack(b)
 ```
 
 ### Graphics
 
-The obvious desire to embed a graph into a GUI turns out to be not so
-simple. Why?
-
-* `Gadfly` makes SVG graphics. This is great for showing in a web
-  browser, but not so great with Tk, as there is not SVG viewer. The
-  example below can be easily modified.
-
-* `Winston` can render to a `Canvas` object. This should be great, *but* for
-  some reason trying to show the canvas object in anything but a
-  toplevel window fails. When this issue is fixed, that should work out
-  really well.
-
-* In the meantime, we can do the following:
-
-  - write a Winston graphic to a `png` file.
-
-  - convert this to `gif` format via imagemagick's `convert` function,
-    which is also used by the `Images` package
-
-  - use that `gif` file through an `Image` object.
-
-The only issue is the asynchronous nature of the `convert` command
-requires us to wait until the command is finished to update the
-label. The `spawn` command below with all its arguments does this.
-
-```
-using Tk
-using Winston
-using Images ## not used, but installs imagemagick?
-
-type WinstonLabel <: Tk.Tk_Widget
-    w
-    p
-    fname
-    WinstonLabel(w) = new(Tk.Label(w), nothing, nothing)
-    WinstonLabel(w, args::Dict) = new(Tk.Label(w, args), nothing, nothing)
-end
-
-function render(parent::WinstonLabel, p)
-    parent.p = p
-    if isa(parent.fname, Nothing)
-        parent.fname = nm = tempname()
-	##	tk_bind(parent, "<Destroy>", map(rm, ("$nm.png", "$nm.gif"))) ## clean up
-    end
-    nm = parent.fname
-    file(p, "$nm.png")
-    ## would use imwrite(imread("$nm.png"), "$nm.gif") but need to wait until done to update label
-    cmd = `convert $nm.png $nm.gif`     # imagemagick convert from Images
-    spawn(false, cmd, (STDIN, STDOUT, STDERR), false, (self) -> begin ## spawn -- not run!
-                img = Tk.Image("$nm.gif")
-                Tk.tk_configure(parent.w, {:image=>img, :compound => "image"})
-            end)
-end
-    
-
-## The interface
-w = Toplevel("demo", 800, 600)
-tcl("pack", "propagate", w, false)
-pg = Frame(w); pack(pg, {:expand=>true, :fill=>"both"})
-
-f = Labelframe(pg, "Controls"); pack(f, {:side=> "left", :anchor=>"nw"})
-img_area = WinstonLabel(pg)
-pack(img_area, {:expand => true, :fill=>"both"})
-
-sl = Slider(f, 1:20);
-formlayout(sl, "n")
-
-function plot_val(val) 
-    x = linspace(0, 1.0, 200)
-    y = x.^val
-    p = FramedPlot()
-    add(p, Curve(x, y))	 
-
-    render(img_area, p)
-end
-	 
-tk_bind(sl, "command", (path) -> plot_val(get_value(sl)))
-plot_val(1)			## initial graph
-```
-
-If you try this you may find that it isn't great: sometimes the graphic is done; at times a black box
-flashes across the screen as the slider is moved.
-
-<img src="manipulate.png"></img>
-
-
-In the examples directory you can find an implementation of RStudio's
-`manipulate` function, which extends this example.  This functions makes it very straightforward to define
-basic interactive GUIs for plotting with `Winston`.
+The `Canvas` widget can be placed in a GUI to embed a graphics device
+(though the display is flaky with a Mac) In the examples directory you
+can find an implementation of RStudio's `manipulate` function.  This
+functions makes it very straightforward to define basic interactive
+GUIs for plotting with `Winston`.
 
 To try it, run
 
@@ -658,11 +581,11 @@ by first creating the widgets, then managing them:
 
 ```
 w = Toplevel("packing example")
-f = Frame(w); pack(f, {:expand=>true, :fill=>"both"})
+f = Frame(w); pack(f, expand=true, fill="both")
 ok_b = Button(f, "Ok")
 cancel_b = Button(f, "Cancel")
 help_b = Button(f, "Help")
-map(u -> pack(u, {:side => "left"}), (ok_b, cancel_b, help_b))
+map(u -> pack(u, side = "left"), (ok_b, cancel_b, help_b))
 ```
 
 #### grid
@@ -679,17 +602,17 @@ directions  to attach.  A  value of  `news`  is like  `{:expand=>true,
 
 ```
 w = Toplevel("Grid")
-f = Frame(w, {:padding => 10}); pack(f, {:expand=>true, :fill=>"both"})
+f = Frame(w, padding = 10); pack(f, expand=true, fill="both")
 
 s1 = Slider(f, 1:10)
-s2 = Slider(f, 1:10, {:orient=>"vertical"})
+s2 = Slider(f, 1:10, orient="vertical")
 b3 = Button(f, "ew sticky")
 b4 = Button(f, "ns sticky")
 
-grid(s1, 1, 1:2, {:sticky=>"news"})
-grid(s2, 2:3, 2, {:sticky=>"news"})
+grid(s1, 1, 1:2, sticky="news")
+grid(s2, 2:3, 2, sticky="news")
 grid(b3, 2, 1)
-grid(b4, 3, 1,   {:sticky=>"ns"}) ## breaks theme
+grid(b4, 3, 1,   sticky="ns") ## breaks theme
 ```
 
 We provide the `formlayout` method for conveniently laying out widgets
@@ -711,7 +634,7 @@ user to switch between them. The `page_add` method makes this easy:
 w = Toplevel()
 tcl("pack", "propagate", w, false)
 nb = Notebook(w)
-pack(nb, {:expand=>true, :fill=>"both"})
+pack(nb, expand=true, fill="both")
 
 page1 = Frame(nb)
 page_add(page1, "Tab 1")
@@ -734,10 +657,10 @@ with `Notebook` containers, children are added through `page_add`.
 ```
 w = Toplevel("Panedwindow", 800, 300)
 tcl("pack", "propagate", w, false)
-f = Frame(w); pack(f, {:expand=>true, :fill=>"both"})
+f = Frame(w); pack(f, expand=true, fill="both")
 
 pg = Panedwindow(f, "horizontal") ## orientation. Use "vertical" for up down.
-grid(pg, 1, 1, {:sticky => "news"})
+grid(pg, 1, 1, sticky = "news")
 
 page_add(Button(pg, "button"))
 page_add(Label(pg, "label"))
@@ -748,6 +671,6 @@ formlayout(Entry(f), "Rank:")
 formlayout(Entry(f), "Serial Number:")
 page_add(f)
 
-set_value(pg, 50)          ## move first sash 50 pixels
-tcl(pg, "sashpos", 1, 100) ## set_value, get_value are first sash (0-based)
+set_value(pg, 100)                 ## set divider between first two pixels
+tcl(pg, "sashpos", 1, 200)	   ## others set the tcl way
 ```

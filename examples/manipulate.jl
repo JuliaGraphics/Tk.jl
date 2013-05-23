@@ -4,29 +4,16 @@
 ## To add a control is easy. There are just a few: slider, picker, checkbox, button, and entry
 
 using Winston
+using Tk
 
 
-
-type WinstonLabel <: Tk.Tk_Widget
-    w
-    p
-    fname
-    WinstonLabel(w) = new(Tk.Label(w), nothing, nothing)
-end
-
-function render(parent::WinstonLabel, p)
-    parent.p = p
-    if isa(parent.fname, Nothing)
-        parent.fname = tempname()
-    end
-    nm = parent.fname
-    file(p, "$nm.png")
-    ## would use imwrite(imread("$nm.png"), "$nm.gif") but need to wait until done to update label
-    cmd = `convert $nm.png $nm.gif`     # imagemagick convert from Images
-    spawn(false, cmd, (STDIN, STDOUT, STDERR), false, (self) -> begin ## spawn -- not run!
-                img = Tk.Image("$nm.gif")
-                Tk.tk_configure(parent.w, {:image=>img, :compound => "image"})
-            end)
+function render(c, p)
+    ctx = getgc(c)
+    Base.Graphics.set_source_rgb(ctx, 1, 1, 1)
+    Base.Graphics.paint(ctx)
+    Winston.page_compose(p, Tk.cairo_surface(c))
+    reveal(c)
+    Tk.update()
 end
 
 ## do a manipulate type thing
@@ -123,10 +110,9 @@ function manipulate(ex::Union(Symbol,Expr), controls...)
 
     w = Toplevel("Manipulate", 800, 500)
     pack_stop_propagate(w)
-    pg = Panedwindow(w,"horizontal"); pack(pg, {:expand=>true, :fill=>"both"})
-    control_pane = Frame(pg); page_add(control_pane)
-    graph = WinstonLabel(pg); page_add(graph)
-    set_value(pg, 25)                   #  heuristic
+    graph = Canvas(w, 500, 500); pack(graph, side="left")
+    control_pane= Frame(w); pack(control_pane, side="left", expand=true, fill="both")
+
     
     ## create, layout widgets
     for i in controls
@@ -161,7 +147,7 @@ function manipulate(ex::Union(Symbol,Expr), controls...)
         render(graph, p)
     end
     map(u -> callback_add(u, make_graphic), widgets)
-    make_graphic()
+#    make_graphic()
     widgets
 end
 
