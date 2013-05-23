@@ -18,6 +18,16 @@ Toplevel(title::String, visible::Bool) = Toplevel(title=title,  visible=visible)
 Toplevel(title::String) = Toplevel(title=title)
 
 
+## Sizing of toplevel windows should refer to the geometry
+width(widget::Tk_Toplevel) = winfo(widget, "width") | int
+height(widget::Tk_Toplevel) = winfo(widget, "height") | int
+get_size(widget::Tk_Toplevel) = [width(widget), height(widget)]
+set_size(widget::Tk_Toplevel,  width::Integer, height::Integer) = wm(widget, "geometry", "$(string(width))x$(string(height))")
+set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(widget, widthheight[1], widthheight[2])
+
+
+
+
 Canvas(parent::TTk_Container, args...) = Canvas(parent.w, args...)
 
 get_value(widget::Tk_Toplevel) = wm(widget, "title")
@@ -29,6 +39,7 @@ function set_visible(widget::Tk_Toplevel, value::Bool)
 end
 get_visible(widget::Tk_Toplevel) = wm(widget, "state") == "normal"
 
+
 function get_visible(w::TkWidget)
     if w.kind == "toplevel"
         return wm(w, "state") == "normal"
@@ -36,11 +47,6 @@ function get_visible(w::TkWidget)
         return get_visible(w.parent)
     end
 end
-
-## Uncommenting this would have have set_size for a Toplevel widget set the minimum size.
-## to set the requested size, there is set_width, set_height which are also
-## widget[:width] = ... and widget[:height] = ...
-#set_size(widget::Tk_Toplevel, width::Integer, height::Integer) = tcl(I"wm minsize", widget, width, height)
 
 ## Set upper left corner of Toplevel to...
 function set_position(widget::Tk_Toplevel, x::Integer, y::Integer)

@@ -10,24 +10,26 @@ set_value(widget::Widget, value) = XXX()
 get_items(widget::Widget) = XXX()
 set_items(widget::Widget, items) = XXX()
 
-## size
-## width and height refer to actual size
-## w[:width], w[:height] give the requested size
-## set_width, set_height as same as w[:width]=width, in setting requested size
-## for toplevel widgets, set_size will set the minimum size, but for others sets requested size.
-width(widget::Widget) = winfo(widget, "width") | int
-set_width(widget::Widget, value::Integer) = widget[:width] = value
-
-
-height(widget::Widget) = winfo(widget, "height") | int
-set_height(widget::Widget, value::Integer) = widget[:height] = value
-
+## size of widgets have three possible values:
+## geometry -- actual size when drawn (winfo info)
+## reqwidth -- may not be satisfied by window sizing algorithm. 
+## that reported by -width property
+## width, height, get_size refer to that drawn:
+width(widget::Widget) = winfo(widget, "width") | float | int
+height(widget::Widget) = winfo(widget, "height") | float | int
 get_size(widget::Widget) = [width(widget), height(widget)]
-function set_size(widget::Widget, width::Integer, height::Integer)
-    set_width(widget, width)
-    set_height(widget, height)
-end
-set_size(widget::Widget, value::Array{Integer}) = set_size(widget, value[1], value[2])
+
+## setting is different. 
+## Toplevel windows are set by geometry and wm
+## Other widgets *may* have a -width, -height property for setting a requested width and height that gets set
+## may or may not be in pixels
+## as getting and setting would be different, we skip the setting part
+## a user can set the requested size with w[:width] = width, or w[:height] = height.
+## (Or for sliders, w[:length] = width_or_height
+## Changing the requested width will usually cause the geometry to recompute
+## to force this, one has wm(toplevel, "geometry", "{}")
+set_size(widget::Widget, args...) = XXX()
+
 
 ## sensitive to user input
 get_enabled(widget::Widget) = XXX()

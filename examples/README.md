@@ -35,15 +35,19 @@ convenience interfaces.
 
 ### Methods
 
-In addition to providing  constructors, there are additional convenience methods defined.
+In addition to providing constructors, there are few additional
+convenience methods defined.
 
-* The `configure`, `cget`, `tclvar`, `identify`, `state`,
-  `instate`, `winfo`, `wm`, `bind` methods to simplify the
-  corresponding Tcl commands. 
+* The `configure`, `cget`, `tclvar`, `identify`, `state`, `instate`,
+  `winfo`, `wm`, `bind` methods to simplify the corresponding Tcl
+  commands. For a single option of a widget accessed via `cget` and
+  modified via `configure`, one can use the index notation with a
+  symbol, as in `widget[:option]` or `widget[:option] = value`.
 
-* For widget layout, we have  `pack`, `pack_configure`, `forget`, `grid`,
-  `grid_configure`, `grid_forget`, ... providing interfaces to the appropriate Tk commands, but also
-   `formlayout` and `page_add` for working with simple forms and notebooks and pane windows..
+* For widget layout, we have `pack`, `pack_configure`, `forget`,
+  `grid`, `grid_configure`, `grid_forget`, ... providing interfaces to
+  the appropriate Tk commands, but also `formlayout` and `page_add`
+  for working with simple forms and notebooks and pane windows..
 
 * We add the methods `get_value` and `set_value` to get and set the
   primary value for a control
@@ -51,9 +55,12 @@ In addition to providing  constructors, there are additional convenience methods
 * We add the methods `get_items` and `set_items` to get and set the
   item(s) to select from for selection widgets.
 
-* We add the methods `width`, `height`, `get_size`, `set_width`,
-  `set_height`, `set_size` for adjusting sizes. (Resizing a window
-  with the mouse does strange things on a Mac ...)
+* We add the methods `width`, `height`, `get_size` to get the
+  on-screen size of a widget. For toplevel windows there are
+  `set_width`, `set_height`, and `set_size` for adjusting the
+  geometry. The `:width` and `:height` properties are common to most
+  widgets, and return the _requested_ width and height, which need not
+  be the actual width and height on screen.
 
 * The conveniences `get_enabled` and `set_enabled` to specify if a
   widget accepts user input
@@ -76,7 +83,7 @@ bind(b, "command", callback)                            ## bind callback to 'com
 bind(b, "<Return>", callback)                           ## press return key when button has focus
 ```
 
-We see the use of an internal frame to hold the button. The frames
+We see the use of an internal frame to hold the button. The frame's
 layout is managed using `pack`, the buttons with `grid`. Both these
 have some conveniences. For grid, the location of the cell can be
 specified by 1-based index as shown. The button callback is just a
@@ -199,7 +206,7 @@ end
 bind(b, "command", callback)
 ```
 
-The individual buttons can be accessed via the buttons property. This
+The individual buttons can be accessed via the `buttons` property. This
 allows one to edit the labels, as in
 
 ```
