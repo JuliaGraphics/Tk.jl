@@ -109,26 +109,6 @@ end
 
 Window(title) = Window(title, 200, 200)
 
-## Button(parent, text) = Button(parent, text, nothing)
-
-## function Button(parent, text, command)
-##     b = TkWidget(parent, "ttk::button")
-##     cmd = "ttk::button $(b.path) -text \"$text\""
-##     if isa(command,Function)
-##         cmd = cmd * " -command $(tcl_callback(command))"
-##     end
-##     tcl_eval(cmd)
-##     b
-## end
-
-## function TkCanvas(parent, w, h)
-##     c = TkWidget(parent, "canvas")
-##     tcl_eval("canvas $(c.path) -width $w -height $h")
-##     c
-## end
-
-## pack(widget::TkWidget) = tcl_eval("pack $(widget.path)")
-
 place(widget::TkWidget, x::Int, y::Int) = tcl_eval("place $(widget.path) -x $x -y $y")
 
 function nametowindow(name)
@@ -283,9 +263,9 @@ end
 
 # some canvas init steps require the widget to fully exist
 function init_canvas(c::Canvas)
+
     tcl_doevent()  # make sure window resources are assigned
     configure(c)
-
     c.mouse = MouseHandler()
     cb = tcl_callback((x...)->reveal(c))
     tcl_eval("bind $(c.c.path) <Expose> $(cb)")
