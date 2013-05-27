@@ -41,8 +41,9 @@ end
 
 ## Function to simplify call to tcl_eval, ala R's tcl() function
 ## converts argumets through to_tcl
-function tcl(xs...)
-    cmd = join([" $(to_tcl(x))" for x in xs], "")
+function tcl(xs...; kwargs...)
+    cmd = join([" $(to_tcl(x)) " for x in xs], "")
+    cmd = cmd * join([" -$(string(k)) $(to_tcl(v)) " for (k, v) in kwargs], " ")
     ## println(cmd)
     tcl_eval(cmd)
 end
@@ -63,41 +64,45 @@ end
 
 ## create new variable with random name
 function tclvar()
-    var = "tcl" * join(int(10*rand(20)), "")
+    var = "tcl_" * randstring(10)
     tclvar(var, "null")
     var
 end
 
 ## main configuration interface
-function tk_configure(widget::Widget, args::Dict)
-    tcl(widget, "configure", args)
+function configure(widget::Widget, args...; kwargs...)
+    tcl(widget, "configure", args...; kwargs...)
 end
+
+setindex!(widget::Widget, value, prop::Symbol) = configure(widget, {prop=>value})
 
 ## Get values
 ## cget
-function tk_cget(widget::Widget, prop::String, coerce::MaybeFunction)
+function cget(widget::Widget, prop::String, coerce::MaybeFunction)
     out = tcl(widget, "cget", "-$prop")
     isa(coerce, Function) ? coerce(out) : out
 end
-tk_cget(widget::Widget, prop::String) = tk_cget(widget, prop, nothing)
+cget(widget::Widget, prop::String) = cget(widget, prop, nothing)
+## convenience
+getindex(widget::Widget, prop::Symbol) = cget(widget, string(prop))
 
 ## Identify widget at x,y
-tk_identify(widget::Widget, x::Integer, y::Integer) = tcl(widget, "identify", "%x", "%y")
+identify(widget::Widget, x::Integer, y::Integer) = tcl(widget, "identify", "%x", "%y")
 
-## tk_state(w, "!disabled")
-tk_state(widget::Widget, state::String) = tcl(widget, "state", state)
-tk_instate(widget::Widget, state::String) = tcl(widget, "instate", state) == "1" # return Bool
+## state(w, "!disabled")
+state(widget::Widget, state::String) = tcl(widget, "state", state)
+instate(widget::Widget, state::String) = tcl(widget, "instate", state) == "1" # return Bool
 
 ## tkwinfo
-function tk_winfo(widget::Widget, prop::String, coerce::MaybeFunction)
+function winfo(widget::Widget, prop::String, coerce::MaybeFunction)
     out = tcl("winfo", prop, widget)
     isa(coerce, Function) ? coerce(out) : out
 end
-tk_winfo(widget::Widget, prop::String) = tk_winfo(widget, prop, nothing)
+winfo(widget::Widget, prop::String) = winfo(widget, prop, nothing)
 
 ## wm. 
-tk_wm(window::Widget, prop::String, args...) = tcl("wm", prop, window, args...)
-tk_wm(window::Widget, prop::String) = tk_wm(window, prop, nothing)    
+wm(window::Widget, prop::String, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
+
 
 ## Take a function, get its args as array of symbols. There must be better way...
 ## Helper functions for bind callback
@@ -133,9 +138,9 @@ end
 ## Function callbacks have first argument path that is ignored
 ## others match percent substitution
 ## e.g. (path, W, x, y) -> x will have  W, x and y available through %W %x %y bindings
-function tk_bind(widget::Widget, event::String, callback::Function)
+function bind(widget::Widget, event::String, callback::Function)
     if event == "command"
-        tk_configure(widget, {:command => callback})
+        configure(widget, command = callback)
     else
         path = get_path(widget)
         ## Need to grab percent subs from signature of function
@@ -149,13 +154,13 @@ function tk_bind(widget::Widget, event::String, callback::Function)
         tcl_eval(cmd)
     end
 end
-tk_bind(widget::Canvas, event::String, callback::Function) = tk_bind(widget.c, event, callback)
+bind(widget::Canvas, event::String, callback::Function) = bind(widget.c, event, callback)
 
 ## for use with do style
-tk_bind(callback::Function, widget::Union(Widget, Canvas), event::String) = tk_bind(widget, event, callback)
+bind(callback::Function, widget::Union(Widget, Canvas), event::String) = bind(widget, event, callback)
 
 ## Binding to mouse wheel
-function tk_bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
+function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
     path = get_path(widget)
     if !isempty(modifier) && !endswith(modifier,"-")
         modifier = string(modifier, "-")
@@ -197,7 +202,7 @@ function callback_add(widget::Tk_Widget, callback::Function)
         if event == nothing
             return()
         else
-            tk_bind(widget, event, callback)
+            bind(widget, event, callback)
         end
     end
 end        
@@ -205,19 +210,18 @@ end
 
 ## Need this pattern to make a widget
 ## Parent is not a string, but TkWidget or Tk_Widget instance
-function make_widget(parent::Widget, str::String, args::Dict)
-    if isa(parent, Tk_Widget)
-        return(make_widget(parent.w, str, args))
-    end
-
-    w = TkWidget(parent, str)
-    tcl(str, w, args)
+function make_widget(parent::Widget, str::String; kwargs...)
+    path = isa(parent, Tk_Widget) ? parent.w : parent
+    w = TkWidget(path, str)
+    tcl(str, w; kwargs...)
     w
 end
-make_widget(parent::Widget, str::String) = make_widget(parent, str, Dict())
 
 
-## tcl after ... (Maybe there is a better julia construct...)
+## tcl after ... 
+## Better likely to use julia's
+## timer = Base.TimeoutAsyncWork(next_frame)
+## Base.start_timer(timer,int64(50),int64(50))
 ## create an object that will repeatedly call a
 ## function after a delay of ms milliseconds. This is started with
 ## obj.start() and stopped, if desired, with obj.stop(). To restart is

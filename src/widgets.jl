@@ -44,11 +44,10 @@ for (k, k1, v) in ((:Label, :Tk_Label, "ttk::label"),
                    (:Panedwindow, :Tk_Panedwindow, "ttk::panedwindow")
                    )
     @eval begin
-        function $k(parent::Widget, args::Dict)
-            w = make_widget(parent, $v, args)
+        function $k(parent::Widget; kwargs...)
+            w = make_widget(parent, $v; kwargs...)
             $k1(w)
         end
-        $k(parent::Widget) = $k(parent, Dict())
     end
 end
 
@@ -56,26 +55,26 @@ end
 ## Now customize
 
 ## Label constructors
-Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, {:text => text, :image=>image, :compound => "left"})
-Label(parent::Widget, text::String) = Label(parent, {:text => text})
-Label(parent::Widget,  image::Tk_Image) = Label(parent, {:image=>image, :compound => "image"})
-get_value(widget::Union(Tk_Button, Tk_Label)) = tk_cget(widget, "text")
+Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=text, image=image, compound="left")
+Label(parent::Widget, text::String) = Label(parent, text=text)
+Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
+get_value(widget::Union(Tk_Button, Tk_Label)) = widget[:text]
 function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
-    variable = tk_cget(widget, "textvariable")
-    (variable == "") ? tk_configure(widget, {:text => value}) : tclvar(variable, value)
+    variable = cget(widget, "textvariable")
+    (variable == "") ? widget[:text] =  value : tclvar(variable, value)
 end
 
 ## Button constructors
 Button(parent::Widget, text::String, command::Function, image::Tk_Image) =
-    Button(parent, {:text => text, :command=>command, :image=>image, :compound=>"left"})
+    Button(parent, text = text, command=command, image=image, compound="left")
 Button(parent::Widget, text::String, image::Tk_Image) =
-    Button(parent, {:text => text, :image=>image, :compound=>"left"})
-Button(parent::Widget, text::String, command::Function) = Button(parent, {:text=>text, :command=>command})
-Button(parent::Widget, text::String) = Button(parent, {:text=>text})
+    Button(parent, text = text, image=image, compound="left")
+Button(parent::Widget, text::String, command::Function) = Button(parent, text=text, command=command)
+Button(parent::Widget, text::String) = Button(parent, text=text)
 Button(parent::Widget, command::Function, image::Tk_Image) =
-    Button(parent, {:command=>command, :image=>image, :compound=>"image"})
+    Button(parent, command=command, image=image, compound="image")
 Button(parent::Widget, image::Tk_Image) =
-    Button(parent, {:image=>image, :compound=>"image"})
+    Button(parent, image=image, compound="image")
 
 
 
@@ -83,22 +82,20 @@ Button(parent::Widget, image::Tk_Image) =
 function Checkbutton(parent::Widget, label::String)
     cb = Checkbutton(parent)
     set_items(cb, label)
-    tk_configure(cb, {:variable => tclvar()})
+    cb[:variable] = tclvar()
     set_value(cb, false)
     cb
 end
 
 function get_value(widget::Tk_Checkbutton)
-    ## var = tk_cget(widget, "variable")
-    ## tclvar(var) == "1"
-    tk_instate(widget, "selected")
+    instate(widget, "selected")
 end
 function set_value(widget::Tk_Checkbutton, value::Bool)
-    var = tk_cget(widget, "variable")
+    var = widget[:variable]
     tclvar(var, value ? 1 : 0)
 end
-get_items(widget::Tk_Checkbutton) = tk_cget(widget, "text")
-set_items(widget::Tk_Checkbutton, value::String) = tk_configure(widget, {:text => value})
+get_items(widget::Tk_Checkbutton) = widget[:text]
+set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = value
 
 ## RadioButton
 type Tk_Radiobutton <: TTk_Widget
@@ -110,16 +107,16 @@ function Radiobutton(parent::Widget, group::MaybeTkRadioButton, label::String)
     
     rb = Radiobutton(parent)
 
-    var = isa(group, Tk_Radiobutton) ? tk_cget(group, "variable") : tclvar()
-    tk_configure(rb, {:variable => var, :text=>label, :value=>label})
+    var = isa(group, Tk_Radiobutton) ? group[:variable] : tclvar()
+    configure(rb, variable = var, text=label, value=label)
     rb
 end
 Radiobutton(parent::Widget, label::String) = Radiobutton(parent, nothing, label)
 
-get_value(widget::Tk_Radiobutton) = tk_instate(widget, "selected")
-set_value(widget::Tk_Radiobutton, value::Bool) = tk_state(value ? "selected" : "!selected")
-get_items(widget::Tk_Radiobutton) = tk_cget(widget, "text")
-set_items(widget::Tk_Radiobutton, value::String) = tk_configure(widget, {:text => value, :value=>value})
+get_value(widget::Tk_Radiobutton) = instate(widget, "selected")
+set_value(widget::Tk_Radiobutton, value::Bool) = state(value ? "selected" : "!selected")
+get_items(widget::Tk_Radiobutton) = widget[:text]
+set_items(widget::Tk_Radiobutton, value::String) = configure(widget, text = value, value=value)
 
 
 ## Radio Button Group
@@ -143,8 +140,8 @@ function Radio{T<:String}(parent::Widget, labels::Vector{T}, orient::String)
 
     rb = Tk_Radio(frame.w, rbs, orient)
     set_value(rb, labels[1])
-    map(u -> pack(u, {:side => orient == "horizontal" ? "left" : "top",
-                      :anchor => orient == "horizontal" ? "n" : "w"}), rbs)
+    map(u -> pack(u, side = orient == "horizontal" ? "left" : "top",
+                     anchor = orient == "horizontal" ? "n" : "w"), rbs)
 
     rb
 end
@@ -156,7 +153,7 @@ function get_value(widget::Tk_Radio)
     items[sel][1]
 end
 function set_value(widget::Tk_Radio, value::String)
-    var = tk_cget(widget.buttons[1], "variable")
+    var = cget(widget.buttons[1], "variable")
     tclvar(var, value)
 end
 function set_value(widget::Tk_Radio, value::Integer)
@@ -165,9 +162,9 @@ function set_value(widget::Tk_Radio, value::Integer)
 end
 get_items(widget::Tk_Radio) = map(get_items, widget.buttons)
 
-function tk_bind(widget::Tk_Radio, event::String, callback::Function)
+function bind(widget::Tk_Radio, event::String, callback::Function)
     ## put onto each, but W now refers to button -- not group of buttons
-    map(u -> tk_bind(u, event, callback), widget.buttons)
+    map(u -> bind(u, event, callback), widget.buttons)
 end
 ## return ith button
 ## remove this until we split off a version for newer julia's.
@@ -222,49 +219,48 @@ end
 get_items(widget::Tk_Combobox) =  widget.values
 function set_items(widget::Tk_Combobox, items::Vector{Tuple})
     vals = cb_pluck_labels(items)
-    tk_configure(widget, {:values => vals})
+    configure(widget, values = vals)
     widget.values = items
 end
 function set_items(widget::Tk_Combobox, items::Dict)
     widget.values = [(string(k),v) for (k,v) in items]
-    tk_configure(widget, {:values => cb_pluck_labels(widget.values)})
+    configure(widget, values = cb_pluck_labels(widget.values))
 end
 function set_items{T <: String}(widget::Tk_Combobox, items::Vector{T})
     d = [(v,v) for v in items]
     set_items(widget, d)
 end
 
-get_editable(widget::Tk_Combobox) = tk_cget(widget, "state") == "normal"
-set_editable(widget::Tk_Combobox, value::Bool) = tk_configure(widget, {:state => value ? "normal" : "readonly"})
+get_editable(widget::Tk_Combobox) = widget[:state] == "normal"
+set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "normal" : "readonly"
     
 
 ## Slider
 ## Restricted to integer ranges stepping by 1!
 
-function Slider{T <: Integer}(parent::Widget, range::Range1{T}, args::Dict)
-    w = Slider(parent, args)
+function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizontal")
+    w = Slider(parent, orient=orient)
     var = tclvar()
     tclvar(var, min(range))
-    tk_configure(w, {:from=>min(range), :to => max(range), :variable=>var})
+    configure(w, from=min(range), to = max(range), variable=var)
     w
 end
-Slider{T <: Integer}(parent::Widget, range::Range1{T}) = Slider(parent, range, Dict())
 
 
-get_value(widget::Tk_Scale) = int(float(tk_cget(widget, "value")))
+get_value(widget::Tk_Scale) = int(float(widget[:value]))
 function set_value(widget::Tk_Scale, value::Integer)
-    variable = tk_cget(widget, "variable")
-    (variable == "") ? tk_cget(widget, {:value => value}) : tclvar(variable, value)
+    variable = widget[:variable]
+    (variable == "") ? widget[:value] = value : tclvar(variable, value)
 end
 
 
-## tk_bind needs extra args for command
-function tk_bind(widget::Tk_Scale, event::String, callback::Function)
+## bind needs extra args for command
+function bind(widget::Tk_Scale, event::String, callback::Function)
     if event == "command"
         wrapper = (path, xs...) -> callback(path)
-        tk_bind(widget.w, event, wrapper)
+        bind(widget.w, event, wrapper)
     else
-        tk_bind(widget, event, callback)
+        bind(widget, event, callback)
     end
 end
 
@@ -287,7 +283,7 @@ set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
 function set_items{T <: Integer}(widget::Tk_Spinbox, range::Range1{T})
-    tk_configure(widget, {:from=>min(range), :to => max(range), :increment => step(range)})
+    configure(widget, from=min(range), to = max(range), increment = step(range))
     widget.range = range
 end
 
@@ -295,18 +291,18 @@ end
 ## Separator
 function Separator(widget::Widget, horizontal::Bool)
     w = Separator(widget)
-    tk_configure(w, {:orient => (horizontal ? "horizontal" : "vertical")})
+    configure(w, orient = (horizontal ? "horizontal" : "vertical"))
 end
 
 ## Progressbar
 function Progressbar(widget::Widget, mode::String)
     w = Progressbar(widget)
-    tk_configure(w, {:mode => mode})    #  one of "determinate", "indeterminate"
+    configure(w, mode = mode)    #  one of "determinate", "indeterminate"
     w
 end
 
-get_value(widget::Tk_Progressbar) = tk_cget(widget, "value") | int
-set_value(widget::Tk_Progressbar, value::Integer) = tk_configure(widget, {:value => min(100, max(0, value))})
+get_value(widget::Tk_Progressbar) = widget[:value] | float | int
+set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image
 MaybeImage = Union(Nothing, Tk_Image)
@@ -314,7 +310,7 @@ to_tcl(x::Tk_Image) = x.w
 
 function Image(fname::String)
     if isfile(fname)
-        w = tcl(I"image create photo", {:file => fname})
+        w = tcl(I"image create photo", file = fname)
         Tk_Image(w)
     else
         error("Image needs filename of .gif file: $fname")
@@ -328,7 +324,7 @@ function Image(source::BitArray{2}, mask::BitArray{2}, background::String, foreg
     end
     ssource = x11encode(source)
     smask = x11encode(mask)
-    w = tcl(I"image create bitmap", {:data => ssource, :maskdata => smask, :background => background, :foreground => foreground})
+    w = tcl(I"image create bitmap", data = ssource, maskdata = smask, background = background, foreground = foreground)
     Tk_Image(w)
 end
 
@@ -372,18 +368,18 @@ function set_value(widget::Tk_Entry, val::String)
     tcl(widget, I"insert @0", val == "" ? "{}" : val)
 end
 
-get_editable(widget::Tk_Entry) = tk_cget(widget, "state") == "normal"
-set_editable(widget::Tk_Entry, value::Bool) = tk_configure(widget, {:state => value ? "normal" : "readonly"})
+get_editable(widget::Tk_Entry) = widget[:state] == "normal"
+set_editable(widget::Tk_Entry, value::Bool) = widget[:state] = value ? "normal" : "readonly"
 
 ## visibility is for passwords
-get_visible(widget::Tk_Entry) = tk_cget(widget, "show") != "*"
-set_visible(widget::Tk_Entry, value::Bool) = tk_configure(widget, {:show => value ? "{}" : "*"})
+get_visible(widget::Tk_Entry) = widget[:show] != "*"
+set_visible(widget::Tk_Entry, value::Bool) = widget[:show] = value ? "{}" : "*"
 
 ## validate is one of none, key, focus, focusin, focusout or all
 ## validatecommand must return either tcl("expr", "FALSE") or tcl("expr", "TRUE") Use FALSE to call invalidate command
 ## percent substitution is matched in callbacks
 function set_validation(widget::Tk_Entry, validate::String, validatecommand::Function, invalidcommand::MaybeFunction)
-    tk_configure(widget, {:validate=>validate, :validatecommand=>validatecommand, :invalidcommand=>invalidcommand})
+    tk_configure(widget, validate=validate, validatecommand=validatecommand, invalidcommand=invalidcommand)
 end
 set_validation(widget::Tk_Entry, validate::String, validatecommand::Function) = set_validation(widget, validate, validatecommand, nothing)
 
@@ -393,10 +389,10 @@ set_validation(widget::Tk_Entry, validate::String, validatecommand::Function) = 
 ## used in scrollbars_add
 function Scrollbar(parent::Widget, child::Widget, orient::String)
     which_view  = (orient == "horizontal") ? "xview" : "yview"
-    scr = Scrollbar(parent, {:orient=>orient, :command=>I("[list $(get_path(child)) $which_view]")})
+    scr = Scrollbar(parent, orient=orient, command=I("[list $(get_path(child)) $which_view]"))
     d = Dict()
     d[(orient == "horizontal") ? :xscrollcommand : :yscrollcommand] =  I("[list $(get_path(scr)) set]")
-    tk_configure(child, d)
+    configure(child, d)
     scr
 end
 
@@ -410,8 +406,8 @@ function set_value(widget::Tk_Text, value::String)
     tcl(widget, I"see 0.0")
 end
 
-get_editable(widget::Tk_Text) = tk_cget(widget, "state") != "disabled"
-set_editable(widget::Tk_Text, value::Bool) = tk_configure(widget, {:state => value ? "normal" : "disabled"})
+get_editable(widget::Tk_Text) = widget[:state] != "disabled"
+set_editable(widget::Tk_Text, value::Bool) = widget[:state] = value ? "normal" : "disabled"
 
 
 
@@ -429,16 +425,15 @@ MaybeTreeNode = Union(TreeNode, Nothing)
 ## Special Tree cases
 
 ## listbox like interface
-function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String)
+function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String; selected_color::String="gray")
     w = Treeview(widget)
-    tk_configure(w, {:show => "tree headings", :selectmode => "browse"})
-    tcl(w, I"heading #0", {:text => title})
-    tcl(w, I"column  #0", {:anchor => I"w"})
+    configure(w, show="tree headings", selectmode="browse")
+    tcl(w, I"heading #0", text = title)
+    tcl(w, I"column  #0", anchor = I"w")
 
     set_items(w, items)
 
-    color = "gray"
-    tcl_eval("ttk::style map Treeview.Row -background [list selected $color]")
+    tcl_eval("ttk::style map Treeview.Row -background [list selected $selected_color]")
     
     w
 end
@@ -454,7 +449,7 @@ end
 function set_items{T <: String}(widget::Tk_Treeview, items::Vector{T})
     treeview_delete_children(widget)
     for i in items
-        tcl(widget, I"insert {} end", {:text => i})
+        tcl(widget, I"insert {} end", text = i)
     end
 end
 
@@ -469,12 +464,12 @@ function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeV
     sz = size(items)
 
     w = Treeview(widget)
-    tk_configure(w, {:show => "tree headings", :selectmode => "browse", :columns=>[1:(sz[2]-1)]})
+    configure(w, show = "tree headings", selectmode = "browse", columns=[1:(sz[2]-1)])
     ## widths ...
     if isa(widths, Vector)
-        tcl(w, I"column #0", {:width => widths[1]})
+        tcl(w, I"column #0", width = widths[1])
         for k in 2:length(widths)
-            tcl(w, I"column", k - 1, {:width => widths[k]})
+            tcl(w, I"column", k - 1, width=widths[k])
         end
     end
 
@@ -491,7 +486,7 @@ function set_items{T <: String}(widget::Tk_Treeview, items::Array{T,2})
     sz = size(items)
     for i in 1:sz[1]
         vals = String[j for j in items[i,2:end]]
-        tcl(widget, I"insert {} end", {:text => items[i,1], :values => vals})
+        tcl(widget, I"insert {} end", text = items[i,1], values = vals)
     end
 end
 
@@ -516,7 +511,7 @@ set_value(widget::Tk_Treeview, index::Integer) = set_value(widget, index, false)
 ## f = Frame(w)
 ## tr = Treeview(f)
 ## scrollbars_add(f, tr)
-## pack(f, {:expand=>true, :fill=>"both"})
+## pack(f, expand=true, fill="both")
 ## set_size(w, 300, 300)
 
 ## ### Okay, lets make a tree
@@ -590,7 +585,7 @@ node_move(widget::Tk_Treeview, node::TreeNode, parent::MaybeTreeNode) = node_mov
 node_delete(widget::Tk_Treeview, node::TreeNode) = tcl(widget, "delete", node.node)
 
 ## Set or retrieve node open status
-node_open(widget::Tk_Treeview, node::TreeNode, opened::Bool) = tcl(widget, "item", node, {:open => opened})
+node_open(widget::Tk_Treeview, node::TreeNode, opened::Bool) = tcl(widget, "item", node, open=opened)
 function node_open(widget::Tk_Treeview, node::TreeNode)
   tcl(widget, "item", node, "-open") == "true" && tcl(widget, "children", node) != ""
 end
@@ -606,9 +601,9 @@ function tree_headers{T <: String, S<: Integer}(widget::Tk_Treeview, names::Vect
 end
 
 function tree_headers{T <: String}(widget::Tk_Treeview, names::Vector{T})
-    tcl(widget, "configure", {:column => names})
+    tcl(widget, "configure", column=names)
     widget.names = names
-    map(u -> tcl(widget, "heading", u, {:text => u}), names)
+    map(u -> tcl(widget, "heading", u, text=u), names)
 end
 
 ## Set Column widths. Must have set headers first
@@ -618,10 +613,10 @@ function tree_column_widths{T <: Integer}(widget::Tk_Treeview, widths::Vector{T}
     end
     heads = widget.names
     if length(widths) == length(heads) + 1
-        tcl(widget,  I"heading column #0", {:text => widths[1]})
-        map(i -> tcl(widget, " column", heads[i], {:width=>widths[i + 1]}), 1:length(heads))
+        tcl(widget,  I"heading column #0", text=widths[1])
+        map(i -> tcl(widget, " column", heads[i], width=widths[i + 1]), 1:length(heads))
     elseif length(widths) == length(heads)
-        map(i -> tcl(widget, "column", heads[i], {:width=>widths[i]}), 1:length(widths))
+        map(i -> tcl(widget, "column", heads[i], width=widths[i]), 1:length(widths))
     else
         error("Widths must match number of column names or one more")
     end
@@ -629,8 +624,8 @@ end
 
 ## set name and width of key column
 ## a ttk::treeview has a special column for the one which can expand
-tree_key_header(widget::Tk_Treeview, name::String)  = tcl(widget, I"heading #0", {:text => name})
-tree_key_width(widget::Tk_Treeview, width::Integer) = tcl(widget, I"column #0", {:width => width})
+tree_key_header(widget::Tk_Treeview, name::String)  = tcl(widget, I"heading #0", text = name)
+tree_key_width(widget::Tk_Treeview, width::Integer) = tcl(widget, I"column #0", width = width)
 
 
 ## Canvas
@@ -638,7 +633,7 @@ tree_key_width(widget::Tk_Treeview, width::Integer) = tcl(widget, I"column #0", 
 
 ## TkCanvas is plain canvas object, reserve name Canvas for Cairo enhanced one
 function TkCanvas(widget::Tk_Widget, width::Integer, height::Integer)
-    TkCanvas(widget, {:width => width, :height => height})
+    TkCanvas(widget, width = width, height = height)
 end
 
 
@@ -652,16 +647,16 @@ type Tk_CairoCanvas <: Tk_Widget
             if self.device == nothing
                 c = self.w
                 Tk.init_canvas(c)
-                w = tk_winfo(c, "width")  | int
-                h = tk_winfo(c, "height")  | int
+                w = winfo(c, "width")  | int
+                h = winfo(c, "height")  | int
 
                 self.device = Tk.cairo_surface(c)
             end
         end
-        tk_bind(self.w, "<Map>", callback)
-        tk_bind(self.w, "<Configure>", (path) -> begin
+        bind(self.w, "<Map>", callback)
+        bind(self.w, "<Configure>", (path) -> begin
             if !isa(self.device, Nothing)
-                w, h = map(u -> tk_winfo(self.w, u) | int, ("width", "height"))
+                w, h = map(u -> winfo(self.w, u) | int, ("width", "height"))
             end
         end)
         self
@@ -700,10 +695,10 @@ CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
 ## w = Toplevel("Fails")
 ## pack_stop_propagate(w)
 ## f = Frame(w)
-## pack(f, {:expand=>true, :fill=>"both"})
+## pack(f, expand=true, :fill="both")
 ## #
 ## canvas = Tk.CairoCanvas(f)
-## pack(canvas, {:expand=>true, :fill=>"both")
+## pack(canvas, expand=true, fill="both")
 ## #
 ## render(canvas, p)
 
