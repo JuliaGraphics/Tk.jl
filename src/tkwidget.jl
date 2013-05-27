@@ -1,6 +1,9 @@
 if OS_NAME == :Linux
     const libtcl = "libtcl8.5"
     const libtk = "libtk8.5"
+elseif OS_NAME == :Darwin
+    const libtcl = "libtcl8.6"
+    const libtk = "libtk8.6"
 else
     const libtcl = "libtcl"
     const libtk = "libtk"
