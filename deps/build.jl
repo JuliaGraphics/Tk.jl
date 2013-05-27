@@ -83,12 +83,24 @@ function build_wrapper()
     run(s)
 end
 
+function find_library(pkg,libname,filename)
+    dl = dlopen_e(joinpath(Pkg.dir(),pkg,"deps","usr","lib",filename))
+    if dl == C_NULL
+        dl = dlopen_e(libname)
+        if dl == C_NULL; return false; end
+    end
+
+    if dl != C_NULL
+        dlclose(dl)
+        return true
+    end
+end
 
 builddeps = false
 
-if !BinDeps.find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
-if !BinDeps.find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
+if !find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
+if !find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
 
 if builddeps; build(); end
 
-if !BinDeps.find_library("Tk", "libtk_wrapper","libtk_wrapper"); build_wrapper(); end
+if !find_library("Tk", "libtk_wrapper","libtk_wrapper"); build_wrapper(); end
