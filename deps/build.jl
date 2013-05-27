@@ -1,19 +1,5 @@
 using BinDeps
 
-function find_library(libname,filename)
-    try 
-        dl = dlopen(joinpath(Pkg.dir(),"Tk","deps","usr","lib",filename))
-    catch
-        try 
-            dl = dlopen(libname)
-            dlclose(dl)
-        catch
-            return false
-        end
-    end
-    return true
-end
-
 function build()
     s = @build_steps begin
         c=Choices(Choice[Choice(:skip,"Skip Installation - Binaries must be installed manually",nothing)])
@@ -100,9 +86,9 @@ end
 
 builddeps = false
 
-if !find_library(OS_NAME == :Linux ? "libtcl8.5" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
-if !find_library(OS_NAME == :Linux ? "libtk8.5" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
+if !BinDeps.find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
+if !BinDeps.find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
 
 if builddeps; build(); end
 
-if !find_library("libtk_wrapper","libtk_wrapper"); build_wrapper(); end
+if !BinDeps.find_library("Tk", "libtk_wrapper","libtk_wrapper"); build_wrapper(); end
