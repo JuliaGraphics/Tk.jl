@@ -12,9 +12,9 @@ let
             end
         end
     end
-    find_library(OS_NAME == :Linux ? "libtcl8.5" : "libtcl",
+    find_library(OS_NAME == :Linux ? "libtcl8.5" : OS_NAME == :Darwin ? "libtcl8.6" : "libtcl",
                  OS_NAME == :Windows ? "tcl86g" : "libtcl8.6")
-    find_library(OS_NAME == :Linux ? "libtk8.5" : "libtk",
+    find_library(OS_NAME == :Linux ? "libtk8.5" : OS_NAME == :Darwin ? "libk8.6" : "libtk",
                  OS_NAME == :Windows ? "tk86g" : "libtk8.6")
     find_library("libtk_wrapper","libtk_wrapper")
 end
