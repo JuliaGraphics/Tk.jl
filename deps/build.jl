@@ -1,5 +1,9 @@
 using BinDeps
 
+depsdir = joinpath(Pkg.dir(),"Tk","deps")
+prefix=joinpath(depsdir,"usr")
+uprefix = replace(replace(prefix,"\\","/"),"C:/","/c/")
+
 function build()
     s = @build_steps begin
         c=Choices(Choice[Choice(:skip,"Skip Installation - Binaries must be installed manually",nothing)])
@@ -11,7 +15,6 @@ function build()
     end))
 
     ## Prebuilt Binaries
-    depsdir = joinpath(Pkg.dir(),"Tk","deps")
     @windows_only begin
         local_file = joinpath(joinpath(depsdir,"downloads"),"Tk.tar.gz")
                    push!(c,Choice(:binary,"Download prebuilt binary",@build_steps begin
@@ -21,9 +24,6 @@ function build()
          end))
     end
 
-    prefix=joinpath(depsdir,"usr")
-    uprefix = replace(replace(prefix,"\\","/"),"C:/","/c/")
-    
     ## Install from source
     let 
         steps = @build_steps begin ChangeDirectory(depsdir) end
@@ -53,6 +53,8 @@ function build()
 
         push!(c,Choice(:source,"Install depdendency from source",steps))
     end
+
+    run(s)
 end
 
 function build_wrapper()
@@ -75,7 +77,7 @@ function build_wrapper()
             end
         end
     end
-    s |= @build_steps begin
+    s = @build_steps begin
         CreateDirectory(joinpath(prefix,"lib"))
         cc
     end
@@ -96,11 +98,13 @@ function find_library(pkg,libname,filename)
     end
 end
 
+# Build Tcl and Tk
 builddeps = false
 
-if !find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
-if !find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
+if !find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : OS_NAME == :Darwin ? "libtcl8.6" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
+if !find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : OS_NAME == :Darwin ? "libtk8.6" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
 
 if builddeps; build(); end
 
+# Build Tk_wrapper
 if !find_library("Tk", "libtk_wrapper","libtk_wrapper"); build_wrapper(); end
