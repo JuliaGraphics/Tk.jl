@@ -8,6 +8,8 @@ set_position(w, 10, 10)
 set_value(w, "Toplevel 2")
 @assert get_value(w) == "Toplevel 2"
 @assert get_size(w) == [400, 400]
+p = toplevel(w)
+@assert p == w
 destroy(w)
 @assert !exists(w)
 
@@ -17,6 +19,8 @@ pack_stop_propagate(w)
 f = Frame(w)
 pack(f, expand=true, fill="both")
 @assert get_size(w) == [400, 400]
+p = toplevel(f)
+@assert p == w
 destroy(w)
 
 ## Labelframe
@@ -26,6 +30,8 @@ f = Labelframe(w, "Label")
 pack(f, expand=true, fill="both")
 set_value(f, "new label")
 @assert get_value(f) == "new label"
+p = toplevel(f)
+@assert p == w
 destroy(w)
 
 ## notebook
@@ -249,4 +255,13 @@ tree_headers(tr, ["left"], [50])
 scrollbars_add(f, tr)
 set_value(tr, 2)
 @assert get_value(tr)[1] == choices[2]
+destroy(w)
+
+
+## Canvas
+w = Toplevel("Canvas")
+f = Frame(w)
+c = Canvas(f)
+@assert parent(c) == f.w
+@assert toplevel(c) == w
 destroy(w)
