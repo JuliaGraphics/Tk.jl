@@ -5,7 +5,7 @@ type Tk_Labelframe  <: TTk_Container w::TkWidget end
 type Tk_Notebook    <: TTk_Container w::TkWidget end
 type Tk_Panedwindow <: TTk_Container w::TkWidget end
 
-
+isequal(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
 
 ## Toplevel window
 function Toplevel(;title::String="Toplevel Window", width::Integer=200, height::Integer=200, visible::Bool=true)
@@ -197,3 +197,22 @@ function scrollbars_add(parent::Tk_Frame, child::Tk_Widget)
     
 end
 
+# Navigating hierarchies
+
+# parent returns a TkWidget, because we don't know how to wrap it otherwise (?)
+parent(w::TkWidget) = w.parent
+parent(w::Tk_Widget) = parent(w.w)
+parent(c::Canvas) = parent(c.c)
+
+# For toplevel it's obvious how to wrap it...
+function toplevel(w::Union(TkWidget, Tk_Widget, Canvas))
+    p = parent(w)
+    pold = p
+    while !is(p, nothing)
+        pold = p
+        p = parent(p)
+    end
+    Tk_Toplevel(pold)
+end
+
+toplevel(w::Tk_Toplevel) = w
