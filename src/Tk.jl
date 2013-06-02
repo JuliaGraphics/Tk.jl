@@ -17,7 +17,7 @@ using Base
 using Cairo
 
 
-import Base: string, show, getindex, setindex!
+import Base: string, show, getindex, setindex!, isequal
 import Base.Graphics: width, height, getgc
 
 include("tkwidget.jl")                  # old Tk
@@ -60,6 +60,7 @@ export get_value, set_value,
        get_editable, set_editable,
        get_visible, set_visible,
        set_position,
+       parent, toplevel,
        raise, focus, update, destroy
 
 
