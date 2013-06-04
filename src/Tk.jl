@@ -60,7 +60,7 @@ export get_value, set_value,
        get_editable, set_editable,
        get_visible, set_visible,
        set_position,
-       parent, toplevel,
+       parent, toplevel, children
        raise, focus, update, destroy
 
 
