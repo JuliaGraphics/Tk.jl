@@ -1,16 +1,16 @@
 ## Types
-type Tk_Toplevel    <: TTk_Container w::TkWidget end
-type Tk_Frame       <: TTk_Container w::TkWidget end
-type Tk_Labelframe  <: TTk_Container w::TkWidget end
-type Tk_Notebook    <: TTk_Container w::TkWidget end
-type Tk_Panedwindow <: TTk_Container w::TkWidget end
+type Tk_Toplevel    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+type Tk_Frame       <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+type Tk_Labelframe  <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+type Tk_Notebook    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+type Tk_Panedwindow <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
 
 isequal(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
 
 ## Toplevel window
 function Toplevel(;title::String="Toplevel Window", width::Integer=200, height::Integer=200, visible::Bool=true)
     w = Window(title, width, height, visible)
-    Tk_Toplevel(w)
+    Tk_Toplevel(w, Tk_Widget[])
 end
 Toplevel(title::String, width::Integer, height::Integer, visible::Bool) = Toplevel(title=title, width=width, height=height, visible=visible)
 Toplevel(title::String, width::Integer, height::Integer) = Toplevel(title=title, width=width, height=height)
@@ -212,7 +212,10 @@ function toplevel(w::Union(TkWidget, Tk_Widget, Canvas))
         pold = p
         p = parent(p)
     end
-    Tk_Toplevel(pold)
+    Tk_Toplevel(pold, Tk_Widget[])
 end
 
 toplevel(w::Tk_Toplevel) = w
+
+## children (may need means to filter out children that are not in layout?)
+children(w::TTk_Container) = w.children

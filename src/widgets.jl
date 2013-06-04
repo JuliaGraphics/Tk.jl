@@ -46,7 +46,9 @@ for (k, k1, v) in ((:Label, :Tk_Label, "ttk::label"),
     @eval begin
         function $k(parent::Widget; kwargs...)
             w = make_widget(parent, $v; kwargs...)
-            $k1(w)
+            widget = $k1 <: TTk_Container ? $k1(w, Tk_Widget[]) : $k1(w)
+            if isa(parent, TTk_Container) push!(parent.children, widget) end
+            widget
         end
     end
 end
