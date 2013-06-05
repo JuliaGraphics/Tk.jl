@@ -233,7 +233,7 @@ type Canvas
         this.redraw = nothing
         this.mouse = MouseHandler()
         this.initialized = false
-        bind(c.path, "<Map>", x->init_canvas(this))
+        add_canvas_callbacks(this)
         this
     end
 end
@@ -266,29 +266,24 @@ function configure(c::Canvas)
     end
 end
 
+
+function add_canvas_callbacks(c::Canvas)
+    bind(c, "<Map>", path -> init_canvas(c))
+    bind(c, "<Expose>", path -> reveal(c))
+    bind(c, "<Configure>", path -> configure(c))
+    bind(c, "<ButtonPress-1>", (path,x,y)->(c.mouse.button1press(c,int(x),int(y))))
+    bind(c, "<ButtonRelease-1>", (path,x,y)->(c.mouse.button1release(c,int(x),int(y))))
+    bind(c, "<ButtonPress-2>",   (path,x,y)->(c.mouse.button2press(c,int(x),int(y))))
+    bind(c, "<ButtonRelease-2>", (path,x,y)->(c.mouse.button2release(c,int(x),int(y))))
+    bind(c, "<ButtonPress-3>",   (path,x,y)->(c.mouse.button3press(c,int(x),int(y))))
+    bind(c, "<ButtonRelease-3>", (path,x,y)->(c.mouse.button3release(c,int(x),int(y))))
+    bind(c, "<Motion>",          (path,x,y)->(c.mouse.motion(c,int(x),int(y))))       
+    bind(c, "<Button1-Motion>",  (path,x,y)->(c.mouse.button1motion(c,int(x),int(y))))
+end
+
 # some canvas init steps require the widget to fully exist
 # this is called once per Canvas, before doing anything else with it
 function init_canvas(c::Canvas)
-    cb = tcl_callback((x...)->reveal(c))
-    tcl_eval("bind $(c.c.path) <Expose> $(cb)")
-    bp1cb = tcl_callback((path,x,y)->(c.mouse.button1press(c,int(x),int(y))))
-    br1cb = tcl_callback((path,x,y)->(c.mouse.button1release(c,int(x),int(y))))
-    bp2cb = tcl_callback((path,x,y)->(c.mouse.button2press(c,int(x),int(y))))
-    br2cb = tcl_callback((path,x,y)->(c.mouse.button2release(c,int(x),int(y))))
-    bp3cb = tcl_callback((path,x,y)->(c.mouse.button3press(c,int(x),int(y))))
-    br3cb = tcl_callback((path,x,y)->(c.mouse.button3release(c,int(x),int(y))))
-    motcb = tcl_callback((path,x,y)->(c.mouse.motion(c,int(x),int(y))))
-    b1mcb = tcl_callback((path,x,y)->(c.mouse.button1motion(c,int(x),int(y))))
-    tcl_eval("bind $(c.c.path) <ButtonPress-1> {$bp1cb %x %y}")
-    tcl_eval("bind $(c.c.path) <ButtonRelease-1> {$br1cb %x %y}")
-    tcl_eval("bind $(c.c.path) <ButtonPress-2> {$bp2cb %x %y}")
-    tcl_eval("bind $(c.c.path) <ButtonRelease-2> {$br2cb %x %y}")
-    tcl_eval("bind $(c.c.path) <ButtonPress-3> {$bp3cb %x %y}")
-    tcl_eval("bind $(c.c.path) <ButtonRelease-3> {$br3cb %x %y}")
-    tcl_eval("bind $(c.c.path) <Motion> {$motcb %x %y}")
-    tcl_eval("bind $(c.c.path) <Button1-Motion> {$b1mcb %x %y}")
-    cfgcb = tcl_callback((path)->configure(c))
-    tcl_eval("bind $(c.c.path) <Configure> {$cfgcb}")
     c.initialized = true
     configure(c)
     c
