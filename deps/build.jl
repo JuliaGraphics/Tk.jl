@@ -85,19 +85,6 @@ function build_wrapper()
     run(s)
 end
 
-function find_library(pkg,libname,filename)
-    dl = dlopen_e(joinpath(Pkg.dir(),pkg,"deps","usr","lib",filename))
-    if dl == C_NULL
-        dl = dlopen_e(libname)
-        if dl == C_NULL; return false; end
-    end
-
-    if dl != C_NULL
-        dlclose(dl)
-        return true
-    end
-end
-
 # Build Tcl and Tk
 builddeps = false
 
