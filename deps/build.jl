@@ -88,8 +88,26 @@ end
 # Build Tcl and Tk
 builddeps = false
 
-if !find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : OS_NAME == :Darwin ? "libtcl8.6" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
-if !find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : OS_NAME == :Darwin ? "libtk8.6" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
+if OS_NAME == :Linux || OS_NAME == :Darwin
+    tcl8.6 = find_library("Tk", "libtcl8.6", "libtcl8.6")
+    tk8.6  = find_library("Tk", "libtk8.6", "libtk8.6")
+elseif OS_NAME == :Windows
+    tcl8.6 = find_library("Tk", "libtcl", "tcl86g")
+    tk8.6  = find_library("Tk", "libtk", "tk86g")
+end
+
+if !(tcl8.6 && tk8.6)
+    if OS_NAME == :Linux
+            tcl8.5 = find_library("Tk", "libtcl8.5", "libtcl8.5")
+            tk8.5  = find_library("Tk", "libtk8.5", "libtk8.5")
+
+            if !(tcl8.5 && tk8.5)
+                builddeps = true
+            end
+    else
+        builddeps = true
+    end
+end
 
 if builddeps; build(); end
 
