@@ -94,7 +94,8 @@ type TkWidget
 
     ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
-        path = "$(parent.path).jl_$(replace(kind, "::", "_"))$(ID)"; ID += 1
+        underscoredKind = replace(kind, "::", "_")
+        path = "$(parent.path).jl_$(underscoredKind)$(ID)"; ID += 1
         new(path, kind, parent)
     end
     global Window
