@@ -8,7 +8,16 @@ let
                 dl = dlopen(libname)
                 dlclose(dl)
             catch
-                error("Failed to find required library "*libname*". Try re-running the package script using Pkg.runbuildscript(\"pkg\")")
+                if OS_NAME == :Darwin
+                    try
+                        dl = dlopen(joinpath("/usr/local/opt/tcl-tk/lib",filename))
+                        ccall(:add_library_mapping,Int32,(Ptr{Uint8},Ptr{Uint8}),libname,dl)
+                    catch
+                        error("Failed to find required library "*libname*". Try re-running the package script using Pkg.runbuildscript(\"pkg\")")
+                    end
+                else
+                    error("Failed to find required library "*libname*". Try re-running the package script using Pkg.runbuildscript(\"pkg\")")
+                end
             end
         end
     end
