@@ -11,7 +11,7 @@ function build()
 
     ## Homebrew
     @osx_only push!(c,Choice(:brew,"Install depdendency using brew",@build_steps begin
-        HomebrewInstall("tk",ASCIIString["--enable-aqua"])
+        HomebrewInstall("https://raw.github.com/Homebrew/homebrew-dupes/master/tcl-tk.rb",ASCIIString[])
     end))
 
     ## Prebuilt Binaries
@@ -58,10 +58,16 @@ function build()
 end
 
 function build_wrapper()
+    include_paths = ["$prefix/include", "/usr/local/include"]
+    lib_paths = ["$prefix/lib"]
+    @osx_only begin
+        insert!(include_paths, 1, "/usr/local/opt/tcl-tk/include")
+        insert!(lib_paths, 1, "/usr/local/opt/tcl-tk/lib")
+    end
     cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper."*BinDeps.shlib_ext,
                   ["-shared","-g","-fPIC","-I$prefix/include",
-                   "-I/usr/local/include",
-                   "-L$prefix/lib"],
+                   ["-I$path" for path in include_paths]...,
+                   ["-L$path" for path in lib_paths]...],
                   OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
     if(OS_NAME == :Darwin)
 #        push!(cc.options, "-I/opt/X11/include")
