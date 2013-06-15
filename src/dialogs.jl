@@ -1,8 +1,8 @@
 ## dialogs
 
 ## can add arguments if desired. Don't like names or lack of arguments
-GetOpenFile() = tcl("tkGetOpenFile")
-GetSaveFile() = tcl("tkGetSaveFile")
+GetOpenFile() = tcl("tk_getOpenFile")
+GetSaveFile() = tcl("tk_getSaveFile")
 ChooseDirectory() = tcl("tk_chooseDirectory")
 
 ## Message box
