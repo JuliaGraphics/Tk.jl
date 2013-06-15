@@ -1,13 +1,5 @@
-if OS_NAME == :Linux
-    const libtcl = "libtcl8.5"
-    const libtk = "libtk8.5"
-elseif OS_NAME == :Darwin
-    const libtcl = "libtcl8.6"
-    const libtk = "libtk8.6"
-else
-    const libtcl = "libtcl"
-    const libtk = "libtk"
-end
+const libtcl = "libtcl"
+const libtk = "libtk"
 
 #const libX = "libX11"
 
@@ -35,7 +27,7 @@ tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 function init()
     ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
           joinpath(JULIA_HOME, "julia"))
-    ccall((:g_type_init,"libgobject-2.0"),Void,())
+    ccall((:g_type_init,Cairo._jl_libgobject),Void,())
     tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
     if ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp) == TCL_ERROR

@@ -94,10 +94,9 @@ end
 # Build Tcl and Tk
 builddeps = false
 
-if !find_library("Tk", OS_NAME == :Linux ? "libtcl8.5" : OS_NAME == :Darwin ? "libtcl8.6" : "libtcl", OS_NAME == :Windows ? "tcl86g" : "libtcl8.6"); builddeps = true; end
-if !find_library("Tk", OS_NAME == :Linux ? "libtk8.5" : OS_NAME == :Darwin ? "libtk8.6" : "libtk", OS_NAME == :Windows ? "tk86g" : "libtk8.6"); builddeps = true; end
-
+find_library("Tk", "libtcl", ["tcl86g", "libtcl8.6", "libtcl8.5"] || builddeps = true
+find_library("Tk", "libtk", ["tk86g", "libtk8.6", "libtk8.5"] || builddeps = true
 if builddeps; build(); end
 
 # Build Tk_wrapper
-if !find_library("Tk", "libtk_wrapper","libtk_wrapper"); build_wrapper(); end
+find_library("Tk", "libtk_wrapper","libtk_wrapper") || build_wrapper()
