@@ -99,4 +99,4 @@ find_library("Tk", "libtk", ["tk86g", "libtk8.6", "/usr/local/opt/tcl-tk/lib/lib
 if builddeps; build(); end
 
 # Build Tk_wrapper
-find_library("Tk", "libtk_wrapper","libtk_wrapper") || build_wrapper()
+find_library("Tk", "libtk_wrapper",["libtk_wrapper"]) || build_wrapper()
