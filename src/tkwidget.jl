@@ -1,5 +1,5 @@
-const libtcl = "libtcl"
-const libtk = "libtk"
+const libtcl = "libtcl8.6"
+const libtk = "libtk8.6"
 
 #const libX = "libX11"
 
