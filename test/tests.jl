@@ -82,7 +82,6 @@ f = Frame(w)
 g1 = Frame(f)
 g2 = Frame(f)
 map(u -> pack(u, expand=true, fill="both"), (f, g1, g2))
-                  
 
 b11 = Button(g1, "first")
 b12 = Button(g1, "second")
@@ -111,7 +110,7 @@ f = Frame(w); pack(f, expand=true, fill="both")
 map(u -> formlayout(Entry(f, u), u), ["one", "two", "three"])
 destroy(w)
 
-## WIdgets
+## Widgets
 
 ## button, label
 w = Toplevel("Widgets")
@@ -138,7 +137,9 @@ destroy(w)
 
 ## checkbox
 w = Toplevel("Checkbutton")
-check = Checkbutton(w, "check me"); pack(check)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+check = Checkbutton(f, "check me"); pack(check)
 set_value(check, true)
 @assert get_value(check) == true
 set_items(check, "new label")
@@ -152,7 +153,9 @@ destroy(w)
 ## radio
 choices = ["choice one", "choice two", "choice three"]
 w = Toplevel("Radio")
-r = Radio(w, choices); pack(r)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+r = Radio(f, choices); pack(r)
 set_value(r, choices[1])
 @assert get_value(r) == choices[1]
 set_value(r, 2)                         #  by index
@@ -162,7 +165,9 @@ destroy(w)
 
 ## combobox
 w = Toplevel("Combobox")
-combo = Combobox(w, choices); pack(combo)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+combo = Combobox(f, choices); pack(combo)
 set_editable(combo, false)              # default
 set_value(combo, choices[1])
 @assert get_value(combo) == choices[1]
@@ -181,7 +186,9 @@ destroy(w)
 
 ## slider
 w = Toplevel("Slider")
-sl = Slider(w, 1:10, orient="vertical"); pack(sl)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+sl = Slider(f, 1:10, orient="vertical"); pack(sl)
 set_value(sl, 3)
 @assert get_value(sl) == 3
 bind(sl, "command", cb) ## can't test
@@ -189,14 +196,18 @@ destroy(w)
 
 ## spinbox
 w = Toplevel("Spinbox")
-sp = Spinbox(w, 1:10); pack(sp)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+sp = Spinbox(f, 1:10); pack(sp)
 set_value(sp, 3)
 @assert get_value(sp) == 3
 destroy(w)
 
 ## progressbar
 w = Toplevel("Progress bar")
-pb = Progressbar(w, orient="horizontal"); pack(pb)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+pb = Progressbar(f, orient="horizontal"); pack(pb)
 set_value(pb, 50)
 @assert get_value(pb) == 50
 configure(pb, mode = "indeterminate")
@@ -205,7 +216,9 @@ destroy(w)
 
 ## Entry
 w = Toplevel("Entry")
-e = Entry(w, "initial"); pack(e)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+e = Entry(f, "initial"); pack(e)
 set_value(e, "new text")
 @assert get_value(e) == "new text"
 set_visible(e, false)
@@ -227,7 +240,7 @@ destroy(w)
 w = Toplevel("Text")
 pack_stop_propagate(w)
 f = Frame(w); pack(f, expand=true, fill="both")
-txt = Text(w)
+txt = Text(f)
 scrollbars_add(f, txt)
 set_value(txt, "new text\n")
 @assert get_value(txt) == "new text\n"
@@ -244,7 +257,6 @@ set_value(tr, 2)
 set_items(tr, choices[1:2])
 destroy(w)
 
-                   
 ## tree grid
 w = Toplevel("Array")
 pack_stop_propagate(w)
@@ -257,10 +269,10 @@ set_value(tr, 2)
 @assert get_value(tr)[1] == choices[2]
 destroy(w)
 
-
 ## Canvas
 w = Toplevel("Canvas")
-f = Frame(w)
+pack_stop_propagate(w)
+f = Frame(w); pack(f, expand=true, fill="both")
 c = Canvas(f)
 @assert parent(c) == f.w
 @assert toplevel(c) == w
