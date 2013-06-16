@@ -167,7 +167,9 @@ Check boxes are constructed with `Checkbutton`:
 
 ```
 w = Toplevel()
-cb = Checkbutton(w, "I like Julia")
+f = Frame(w)
+pack(f, expand=true, fill="both")
+cb = Checkbutton(f, "I like Julia")
 pack(cb)
 
 function callback(path)		   ## callbacks have at least one argument
@@ -418,7 +420,9 @@ values through a Range object:
 
 ```
 w = Toplevel()
-sc = Slider(w, 1:100)
+f = Frame(w)
+pack(f, expand=true, fill="both")
+sc = Slider(f, 1:100)
 pack(sc)
 bind(sc, "command", path -> println("The value is $(get_value(sc))"))
 ```
@@ -489,7 +493,8 @@ fname = Pkg.dir("Tk", "examples", "logo.gif")
 img = Image(fname)
 
 w = Toplevel("Image")
-l = Label(w, img)
+f = Frame(w); pack(f, expand = true, fill = "both")
+l = Label(f, img)
 pack(l)
 ```
 
@@ -500,7 +505,8 @@ fname = Pkg.dir("Tk", "examples", "weather-overcast.gif") ## https://code.google
 img = Image(fname)
 
 w = Toplevel("Icon in button")
-b = Button(w, "weather", img)   ## or: b = Button(w, text="weather", image=img, compound="left")
+f = Frame(w); pack(f, expand = true, fill = "both")
+b = Button(f, "weather", img)   ## or: b = Button(f, text="weather", image=img, compound="left")
 pack(b)
 ```
 
