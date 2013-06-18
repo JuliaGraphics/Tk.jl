@@ -98,4 +98,4 @@ alllibs = find_library("Tk", "libtcl8.6", ["tcl86g", "libtcl8.6", "/usr/local/op
 if !alllibs; build(); end
 
 # Build Tk_wrapper
-find_library("Tk", "libtk_wrapper",["libtk_wrapper"]) || build_wrapper()
+if !find_library("Tk", "libtk_wrapper",["libtk_wrapper"]); build_wrapper(); end
