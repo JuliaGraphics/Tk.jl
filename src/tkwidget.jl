@@ -208,7 +208,8 @@ type Canvas
     frontcc::CairoContext
     backcc::CairoContext
     mouse::MouseHandler
-    redraw
+    draw
+    resize
     initialized::Bool
 
     Canvas(parent) = Canvas(parent, -1, -1)
@@ -223,7 +224,8 @@ type Canvas
         end
         this = new(c)
         tcl_eval("frame $(c.path) -width $w -height $h -background \"\"")
-        this.redraw = nothing
+        this.draw = x->nothing
+        this.resize = x->nothing
         this.mouse = MouseHandler()
         this.initialized = false
         add_canvas_callbacks(this)
@@ -253,12 +255,17 @@ function configure(c::Canvas)
     end
     c.backcc = CairoContext(c.back)
     # Check c.initialized to prevent infinite recursion if initialized from
-    # c.redraw. This also avoids a double-redraw on the first call.
-    if !is(c.redraw, nothing) && c.initialized
-        c.redraw(c)
+    # c.resize. This also avoids a double-redraw on the first call.
+    if c.initialized
+        c.resize(c)
+        draw(c)
     end
 end
 
+function draw(c::Canvas)
+    c.draw(c)
+    reveal(c)
+end
 
 function add_canvas_callbacks(c::Canvas)
     bind(c, "<Map>", path -> init_canvas(c))
