@@ -32,7 +32,7 @@ include("menu.jl")
 
 export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_surface, getgc,
-    tcl_doevent, MouseHandler
+    tcl_doevent, MouseHandler, draw
 
 export tcl, tclvar, configure, cget, identify, state, instate, winfo, wm, exists,
        tcl_after, bind, bindwheel, callback_add

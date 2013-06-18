@@ -258,9 +258,13 @@ function configure(c::Canvas)
     # c.resize. This also avoids a double-redraw on the first call.
     if c.initialized
         c.resize(c)
-        c.draw(c)
-        reveal(c)
+        draw(c)
     end
+end
+
+function draw(c::Canvas)
+    c.draw(c)
+    reveal(c)
 end
 
 function add_canvas_callbacks(c::Canvas)
