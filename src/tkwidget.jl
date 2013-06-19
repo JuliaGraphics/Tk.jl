@@ -155,7 +155,7 @@ height(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
 
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
-function cairo_surface_for(w::TkWidget)
+function cairo_surface_for(w::TkWidget, initialized::Bool)
     win = nametowindow(w.path)
     if OS_NAME == :Linux
         disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
@@ -170,6 +170,14 @@ function cairo_surface_for(w::TkWidget)
     elseif OS_NAME == :Darwin
         context = ccall((:getView,:libtk_wrapper), Ptr{Void},
                         (Ptr{Void},Int32), win, height(w))
+        if context == C_NULL
+            error("Invalid OS X window at getView")
+        end
+        if !initialized
+            # info("Setting Cairo Axes") # should only happen once
+            context = ccall((:setCairoAxes, :libtk_wrapper), Ptr{Void},
+                            (Ptr{Void}, Int32), context, height(w))
+        end
         return CairoQuartzSurface(context, width(w), height(w))
     elseif OS_NAME == :Windows
 	disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
@@ -244,7 +252,7 @@ function configure(c::Canvas)
         Cairo.destroy(c.front)
         Cairo.destroy(c.back)
     end
-    c.front = cairo_surface_for(c.c)
+    c.front = cairo_surface_for(c.c, c.initialized)
     w = width(c.c)
     h = height(c.c)
     c.frontcc = CairoContext(c.front)
@@ -288,7 +296,7 @@ function init_canvas(c::Canvas)
     configure(c)
     c
 end
-
+    
 get_visible(c::Canvas) = get_visible(c.c.parent)
 
 initialized(c::Canvas) = c.initialized
