@@ -103,21 +103,24 @@ CGContextRef getView(TkWindow *winPtr, int height)
             dontDraw = ![view canDraw];
         }
         if (dontDraw) {
-            goto end;
+            return NULL;
         }
-        //[[view window] disableFlushWindow];
-        view = view;
         context = [[NSGraphicsContext currentContext] graphicsPort];
-        portBounds = NSRectToCGRect([view bounds]);
-        if (clipRgn) {
-            clipBounds = CGContextGetClipBoundingBox(context);
-        }
+        //portBounds = NSRectToCGRect([view bounds]);
+        //if (clipRgn) {
+        //    clipBounds = CGContextGetClipBoundingBox(context);
+        //}
     }
     CGContextTranslateCTM (context, 0.0, height);
     CGContextScaleCTM (context, 1.0, -1.0);
     return context;
- end:
-    return NULL;
+}
+
+CGContextRef setCairoAxes(CGContextRef context, int height)
+{
+  CGContextTranslateCTM(context, 0.0, height);
+  CGContextScaleCTM(context, 1.0, -1.0);
+  return context;
 }
 
 #endif
