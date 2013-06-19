@@ -57,6 +57,14 @@ function build()
     run(s)
 end
 
+function linux_version_check()
+	if find_library("Tk", "libtcl8.6", ["libtcl8.6"]) && find_library("Tk", "libtk8.6", ["libtk8.6"])
+		return ["-ltcl8.6", "-ltk8.6"]
+	elseif find_library("Tk", "libtcl8.5", ["libtcl8.5"]) && find_library("Tk", "libtk8.5", ["libtk8.5"])
+		return ["-ltcl8.5", "-ltk8.5"]
+	end
+end
+
 function build_wrapper()
     include_paths = ["$prefix/include", "/usr/local/include"]
     lib_paths = ["$prefix/lib"]
@@ -68,7 +76,7 @@ function build_wrapper()
                   ["-shared","-g","-fPIC","-I$prefix/include",
                    ["-I$path" for path in include_paths]...,
                    ["-L$path" for path in lib_paths]...],
-                  OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
+                  OS_NAME == :Linux ? linux_version_check() : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
     if(OS_NAME == :Darwin)
 #        push!(cc.options, "-I/opt/X11/include")
         unshift!(cc.options,"-xobjective-c")
@@ -98,4 +106,4 @@ alllibs = find_library("Tk", "libtcl8.6", ["tcl86g", "libtcl8.6", "/usr/local/op
 if !alllibs; build(); end
 
 # Build Tk_wrapper
-if !find_library("Tk", "libtk_wrapper",["libtk_wrapper"]); build_wrapper(); end
+find_library("Tk", "libtk_wrapper",["libtk_wrapper"]) || build_wrapper()
