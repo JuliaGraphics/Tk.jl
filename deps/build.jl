@@ -74,6 +74,7 @@ function build_wrapper()
     end
     cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper."*BinDeps.shlib_ext,
                   ["-shared","-g","-fPIC","-I$prefix/include",
+                   ["-mmacosx-version-min=10.6"],
                    ["-I$path" for path in include_paths]...,
                    ["-L$path" for path in lib_paths]...],
                   OS_NAME == :Linux ? linux_version_check() : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
