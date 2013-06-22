@@ -78,16 +78,20 @@ NSView *drawableView(MacDrawable *macWin)
     return view;
 }
 
+CGContextRef setCairoAxes(CGContextRef context, int height)
+{
+  CGContextTranslateCTM(context, 0.0, height);
+  CGContextScaleCTM(context, 1.0, -1.0);
+  return context;
+}
+
 CGContextRef getView(TkWindow *winPtr, int height)
 {
     CGContextRef context;
     NSView *view;
-    HIShapeRef clipRgn;
-    CGRect portBounds;
     int focusLocked;
-    CGRect clipBounds;
-    int dontDraw = 0, isWin = 0;
-    MacDrawable *macWin =  (MacDrawable *) winPtr->window;
+    int dontDraw = 0;
+    MacDrawable *macWin = (MacDrawable *) winPtr->window;
     view = drawableView(macWin);
 
     if (view) {
@@ -101,22 +105,10 @@ CGContextRef getView(TkWindow *winPtr, int height)
         if (dontDraw) {
             return NULL;
         }
-        context = [[[view window] graphicsContext] graphicsPort];
-        //portBounds = NSRectToCGRect([view bounds]);
-        //if (clipRgn) {
-        //    clipBounds = CGContextGetClipBoundingBox(context);
-        //}
     }
-    CGContextTranslateCTM (context, 0.0, height);
-    CGContextScaleCTM (context, 1.0, -1.0);
+    context = [[[view window] graphicsContext] graphicsPort];
+    context = setCairoAxes(context, height);
     return context;
-}
-
-CGContextRef setCairoAxes(CGContextRef context, int height)
-{
-  CGContextTranslateCTM(context, 0.0, height);
-  CGContextScaleCTM(context, 1.0, -1.0);
-  return context;
 }
 
 #endif
