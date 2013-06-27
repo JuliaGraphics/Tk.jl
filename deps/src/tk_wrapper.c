@@ -57,10 +57,6 @@ void *jl_tkwin_hdc_release(HDC hdc)
 #include "ApplicationServices/ApplicationServices.h"
 #include "tkMacOSXInt.h"
 
-/* This thing is the cause of a lot of pain and suffering. In order to make this work correctly,
- * you need to make sure that the latest cached drawing context is that in which you want cairo to draw.
- */
-
 NSView *drawableView(MacDrawable *macWin)
 {
     NSView *view;
@@ -86,12 +82,9 @@ CGContextRef getView(TkWindow *winPtr, int height)
 {
     CGContextRef context;
     NSView *view;
-    HIShapeRef clipRgn;
-    CGRect portBounds;
     int focusLocked;
-    CGRect clipBounds;
-    int dontDraw = 0, isWin = 0;
-    MacDrawable *macWin =  (MacDrawable *) winPtr->window;
+    int dontDraw = 0;
+    MacDrawable *macWin = (MacDrawable *) winPtr->window;
     view = drawableView(macWin);
 
     if (view) {
@@ -105,22 +98,9 @@ CGContextRef getView(TkWindow *winPtr, int height)
         if (dontDraw) {
             return NULL;
         }
-        context = [[NSGraphicsContext currentContext] graphicsPort];
-        //portBounds = NSRectToCGRect([view bounds]);
-        //if (clipRgn) {
-        //    clipBounds = CGContextGetClipBoundingBox(context);
-        //}
     }
-    CGContextTranslateCTM (context, 0.0, height);
-    CGContextScaleCTM (context, 1.0, -1.0);
+    context = [[[view window] graphicsContext] graphicsPort];
     return context;
-}
-
-CGContextRef setCairoAxes(CGContextRef context, int height)
-{
-  CGContextTranslateCTM(context, 0.0, height);
-  CGContextScaleCTM(context, 1.0, -1.0);
-  return context;
 }
 
 #endif
