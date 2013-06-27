@@ -78,13 +78,6 @@ NSView *drawableView(MacDrawable *macWin)
     return view;
 }
 
-CGContextRef setCairoAxes(CGContextRef context, int height)
-{
-  CGContextTranslateCTM(context, 0.0, height);
-  CGContextScaleCTM(context, 1.0, -1.0);
-  return context;
-}
-
 CGContextRef getView(TkWindow *winPtr, int height)
 {
     CGContextRef context;
@@ -107,7 +100,6 @@ CGContextRef getView(TkWindow *winPtr, int height)
         }
     }
     context = [[[view window] graphicsContext] graphicsPort];
-    context = setCairoAxes(context, height);
     return context;
 }
 
