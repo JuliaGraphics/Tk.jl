@@ -15,6 +15,13 @@ const TCL_DYNAMIC  = convert(Ptr{Void}, 3)
 
 tcl_doevent() = tcl_doevent(0)
 function tcl_doevent(fd)
+    # https://www.tcl.tk/man/tcl8.6/TclLib/DoOneEvent.htm
+    # DONT_WAIT* = 1 shl 1
+    # WINDOW_EVENTS* = 1 shl 2
+    # FILE_EVENTS* = 1 shl 3
+    # TIMER_EVENTS* = 1 shl 4
+    # IDLE_EVENTS* = 1 shl 5
+    # ALL_EVENTS* = not DONT_WAIT
     while (ccall((:Tcl_DoOneEvent,libtcl), Int32, (Int32,), (1<<1))!=0)
     end
 end
@@ -155,7 +162,7 @@ height(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
 
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
-function cairo_surface_for(w::TkWidget, initialized::Bool)
+function cairo_surface_for(w::TkWidget)
     win = nametowindow(w.path)
     if OS_NAME == :Linux
         disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
@@ -172,11 +179,6 @@ function cairo_surface_for(w::TkWidget, initialized::Bool)
                         (Ptr{Void},Int32), win, height(w))
         if context == C_NULL
             error("Invalid OS X window at getView")
-        end
-        if !initialized
-            # info("Setting Cairo Axes") # should only happen once
-            context = ccall((:setCairoAxes, :libtk_wrapper), Ptr{Void},
-                            (Ptr{Void}, Int32), context, height(w))
         end
         return CairoQuartzSurface(context, width(w), height(w))
     elseif OS_NAME == :Windows
@@ -252,7 +254,7 @@ function configure(c::Canvas)
         Cairo.destroy(c.front)
         Cairo.destroy(c.back)
     end
-    c.front = cairo_surface_for(c.c, c.initialized)
+    c.front = cairo_surface_for(c.c)
     w = width(c.c)
     h = height(c.c)
     c.frontcc = CairoContext(c.front)
@@ -276,15 +278,21 @@ function draw(c::Canvas)
 end
 
 function add_canvas_callbacks(c::Canvas)
+    # See Table 15-3 of http://oreilly.com/catalog/mastperltk/chapter/ch15.html
+    # A widget has been mapped onto the display and is visible
     bind(c, "<Map>", path -> init_canvas(c))
-    bind(c, "<Expose>", path -> reveal(c))
+    # All or part of a widget has been uncovered and may need to be redrawn
+    bind(c, "<Expose>", path -> reveal(c)) 
+    # A widget has changed size or position and may need to adjust its layout
     bind(c, "<Configure>", path -> configure(c))
+    # A mouse button was pressed
     bind(c, "<ButtonPress-1>", (path,x,y)->(c.mouse.button1press(c,int(x),int(y))))
     bind(c, "<ButtonRelease-1>", (path,x,y)->(c.mouse.button1release(c,int(x),int(y))))
     bind(c, "<ButtonPress-2>",   (path,x,y)->(c.mouse.button2press(c,int(x),int(y))))
     bind(c, "<ButtonRelease-2>", (path,x,y)->(c.mouse.button2release(c,int(x),int(y))))
     bind(c, "<ButtonPress-3>",   (path,x,y)->(c.mouse.button3press(c,int(x),int(y))))
     bind(c, "<ButtonRelease-3>", (path,x,y)->(c.mouse.button3release(c,int(x),int(y))))
+    # The cursor is in motion over a widget
     bind(c, "<Motion>",          (path,x,y)->(c.mouse.motion(c,int(x),int(y))))       
     bind(c, "<Button1-Motion>",  (path,x,y)->(c.mouse.button1motion(c,int(x),int(y))))
 end
