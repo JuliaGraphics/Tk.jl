@@ -300,8 +300,9 @@ end
 # some canvas init steps require the widget to fully exist
 # this is called once per Canvas, before doing anything else with it
 function init_canvas(c::Canvas)
-    c.initialized = true
     configure(c)
+    configure(c) # fixes initial Mac display
+    c.initialized = true
     c
 end
     
