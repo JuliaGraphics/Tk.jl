@@ -13,8 +13,8 @@ const TCL_VOLATILE = convert(Ptr{Void}, 1)
 const TCL_STATIC   = convert(Ptr{Void}, 0)
 const TCL_DYNAMIC  = convert(Ptr{Void}, 3)
 
-tcl_doevent() = tcl_doevent(0)
-function tcl_doevent(fd)
+tcl_doevent() = tcl_doevent(nothing,0)
+function tcl_doevent(timer,status)
     # https://www.tcl.tk/man/tcl8.6/TclLib/DoOneEvent.htm
     # DONT_WAIT* = 1 shl 1
     # WINDOW_EVENTS* = 1 shl 2
@@ -50,7 +50,7 @@ function init()
     #add_fd_handler(fd, tcl_doevent)
     global timeout
     timeout = Base.TimeoutAsyncWork(tcl_doevent)
-    Base.start_timer(timeout,int64(50),int64(50))
+    Base.start_timer(timeout,0.05,0.05)
     tcl_interp
 end
 
