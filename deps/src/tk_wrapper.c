@@ -39,8 +39,9 @@ void *jl_tkwin_hdc_release(HDC hdc)
 
 #ifdef __APPLE__
 
-#import <Cocoa/Cocoa.h>
 #include "ApplicationServices/ApplicationServices.h"
+#include "objc/objc-runtime.h"
+typedef struct objc_object NSView;
 
 typedef struct TkRegion_ *TkRegion;
 #define MAC_OSX_TK
@@ -53,19 +54,21 @@ CGContextRef getView(Tk_Window *winPtr, int height)
 
     NSView *view = TkMacOSXGetRootControl(Tk_WindowId(winPtr));
 
-    if (view) {
-        if (view != [NSView focusView]) {
-            focusLocked = [view lockFocusIfCanDraw];
-            dontDraw = !focusLocked;
-        }
-        else {
-            dontDraw = ![view canDraw];
-        }
-        if (dontDraw) {
-            return NULL;
-        }
+    if (!view) {
+        return NULL;
     }
-    CGContextRef context = [[[view window] graphicsContext] graphicsPort];
+    NSView *focusView = (NSView*)objc_msgSend((id)objc_getClass("NSView"), sel_getUid("focusView"));
+    if (view != focusView) {
+        focusLocked = (int)(long)objc_msgSend(view, sel_getUid("lockFocusIfCanDraw"));
+        dontDraw = !focusLocked;
+    }
+    else {
+        dontDraw = !(int)(long)objc_msgSend(view, sel_getUid("canDraw"));
+    }
+    if (dontDraw) {
+        return NULL;
+    }
+    CGContextRef context = (CGContextRef)objc_msgSend((id)objc_msgSend((id)objc_msgSend(view, sel_getUid("window")),sel_getUid("graphicsContext")),sel_getUid("graphicsPort"));
     return context;
 }
 
