@@ -287,7 +287,7 @@ function render_to_cairo(f::Function, w::TkWidget)
             ccall(:CGContextSaveGState, Void, (Ptr{Void},), context)
         end
         ##
-        ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(w))
+        ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(toplevel(w)))
         ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
         surf = CairoQuartzSurface(context, width(w), height(w))
         f(surf)
