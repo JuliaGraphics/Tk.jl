@@ -206,9 +206,11 @@ function configure(c::Canvas)
         Cairo.destroy(c.backcc)
         Cairo.destroy(c.back)
     end
-    w = width(c.c)
-    h = height(c.c)
-    c.back = CairoRGBSurface(w, h)
+    render_to_cairo(c.c) do surf
+        w = width(c.c)
+        h = height(c.c)
+        c.back = surface_create_similar(surf, w, h)
+    end
     c.backcc = CairoContext(c.back)
     # Check c.initialized to prevent infinite recursion if initialized from
     # c.resize. This also avoids a double-redraw on the first call.
