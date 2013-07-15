@@ -10,7 +10,6 @@
 # - state-interrogating functions
 # - cleaning up unused callbacks
 
-include(joinpath(Pkg.dir(),"Tk","deps","ext.jl"))
 
 module Tk
 using Base
@@ -19,7 +18,9 @@ using Cairo
 
 import Base: string, show, getindex, setindex!, isequal
 import Base.Graphics: width, height, getgc
+import Cairo: destroy
 
+include(joinpath("..","deps","ext.jl"))
 include("tkwidget.jl")                  # old Tk
 include("types.jl")
 include("core.jl")
