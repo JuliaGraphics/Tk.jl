@@ -1,7 +1,8 @@
-using BinDeps
-
-find_library("Tk", "libtcl8.6", ["tcl86g", "libtcl8.6", "/usr/local/opt/tcl-tk/lib/libtcl8.6", OS_NAME == :Linux ? "libtcl8.5" : ""]) || error("libtcl not found")
-
-find_library("Tk", "libtk8.6", ["tk86g", "libtk8.6", "/usr/local/opt/tcl-tk/lib/libtk8.6", OS_NAME == :Linux ? "libtk8.5": ""]) || error("libtk not found")
-
-find_library("Tk", "libtk_wrapper",["libtk_wrapper"]) || error("libtk_wrapper not found")
+let addSearchDirs = [Pkg.dir("Tk","deps","usr","lib")]
+global const libtcl = find_library(["tcl86g", "libtcl8.6", "tcl85g", "libtcl8.5"], addSearchDirs)
+libtcl != "" || error("libtcl not found")
+global const libtk = find_library(["tk86g", "libtk8.6", "tk85g", "libtk8.5"], addSearchDirs)
+libtk != "" || error("libtk not found")
+global const libtk_wrapper = find_library(["libtk_wrapper"],addSearchDirs)
+libtk_wrapper != "" || error("libtk_wrapper not found")
+end

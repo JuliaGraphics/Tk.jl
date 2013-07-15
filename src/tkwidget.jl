@@ -1,8 +1,3 @@
-const libtcl = "libtcl8.6"
-const libtk = "libtk8.6"
-
-#const libX = "libX11"
-
 const TCL_OK       = int32(0)
 const TCL_ERROR    = int32(1)
 const TCL_RETURN   = int32(2)
@@ -160,38 +155,6 @@ end
 width(w::TkWidget) = int(tcl_eval("winfo width $(w.path)"))
 height(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
 
-# NOTE: This has to be ported to each window environment.
-# But, this should be the only such function needed.
-function cairo_surface_for(w::TkWidget)
-    win = nametowindow(w.path)
-    if OS_NAME == :Linux
-        disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                     win)
-        d = ccall((:jl_tkwin_id,:libtk_wrapper), Int32, (Ptr{Void},), win)
-        vis = ccall((:jl_tkwin_visual,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                    win)
-        if disp==C_NULL || d==0 || vis==C_NULL
-            error("invalid window")
-        end
-        return CairoXlibSurface(disp, d, vis, width(w), height(w))
-    elseif OS_NAME == :Darwin
-        context = ccall((:getView,:libtk_wrapper), Ptr{Void},
-                        (Ptr{Void},Int32), win, height(w))
-        if context == C_NULL
-            error("Invalid OS X window at getView")
-        end
-        return CairoQuartzSurface(context, width(w), height(w))
-    elseif OS_NAME == :Windows
-	disp = ccall((:jl_tkwin_display,:libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                     win)
-        hdc = ccall((:jl_tkwin_hdc,:libtk_wrapper), Ptr{Void}, (Ptr{Void},Ptr{Void}),
-                    win,disp)
-	return CairoWin32Surface(hdc, width(w), height(w))
-    else
-        error("Unsupported Operating System")
-    end
-end
-
 const default_mouse_cb = (w, x, y)->nothing
 
 type MouseHandler
@@ -213,9 +176,7 @@ end
 # and built on Cairo.
 type Canvas
     c::TkWidget
-    front::CairoSurface  # surface for window
     back::CairoSurface   # backing store
-    frontcc::CairoContext
     backcc::CairoContext
     mouse::MouseHandler
     draw
@@ -248,21 +209,13 @@ height(c::Canvas) = height(c.c)
 
 function configure(c::Canvas)
     # this is called e.g. on window resize
-    if isdefined(c,:front)
-        Cairo.destroy(c.frontcc)
+    if isdefined(c,:back)
         Cairo.destroy(c.backcc)
-        Cairo.destroy(c.front)
         Cairo.destroy(c.back)
     end
-    c.front = cairo_surface_for(c.c)
     w = width(c.c)
     h = height(c.c)
-    c.frontcc = CairoContext(c.front)
-    if Base.is_unix(OS_NAME)
-        c.back = surface_create_similar(c.front, w, h)
-    else
-        c.back = CairoRGBSurface(w, h)
-    end
+    c.back = CairoRGBSurface(w, h)
     c.backcc = CairoContext(c.back)
     # Check c.initialized to prevent infinite recursion if initialized from
     # c.resize. This also avoids a double-redraw on the first call.
@@ -275,6 +228,64 @@ end
 function draw(c::Canvas)
     c.draw(c)
     reveal(c)
+end
+
+function reveal(c::Canvas)
+    render_to_cairo(c.c) do front
+        frontcc = CairoContext(front)
+        back = cairo_surface(c)
+        set_source_surface(frontcc, back, 0, 0)
+        paint(frontcc)
+        destroy(frontcc)
+    end
+    tcl_doevent()
+end
+
+if WORD_SIZE == 32
+    typealias CGFloat Float32
+else
+    typealias CGFloat Float64
+end
+# NOTE: This has to be ported to each window environment.
+# But, this should be the only such function needed.
+function render_to_cairo(f::Function, w::TkWidget)
+    win = nametowindow(w.path)
+    if OS_NAME == :Linux
+        disp = ccall((:jl_tkwin_display,libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+                     win)
+        d = ccall((:jl_tkwin_id,libtk_wrapper), Int32, (Ptr{Void},), win)
+        vis = ccall((:jl_tkwin_visual,libtk_wrapper), Ptr{Void}, (Ptr{Void},),
+                    win)
+        if disp==C_NULL || d==0 || vis==C_NULL
+            error("invalid window")
+        end
+        surf = CairoXlibSurface(disp, d, vis, width(w), height(w))
+        f(surf)
+        destroy(surf)
+    elseif OS_NAME == :Darwin
+        context = ccall((:getView,libtk_wrapper), Ptr{Void},
+                        (Ptr{Void},Int32), win, height(w))
+        if context == C_NULL
+            error("Invalid OS X window at getView")
+        end
+        ccall(:CGContextSaveGState, Void, (Ptr{Void},), context)
+        ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(w))
+        ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
+        surf = CairoQuartzSurface(context, width(w), height(w))
+        f(surf)
+        destroy(surf)
+        ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
+    elseif OS_NAME == :Windows
+        disp = ccall((:jl_tkwin_display,libtk_wrapper), Ptr{Void},
+                     (Ptr{Void},),win)
+        hdc = ccall((:jl_tkwin_hdc,libtk_wrapper), Ptr{Void},
+                    (Ptr{Void},Ptr{Void}), win,disp)
+        surf = CairoWin32Surface(hdc, width(w), height(w))
+        f(surf)
+        destroy(surf)
+    else
+        error("Unsupported Operating System")
+    end
 end
 
 function add_canvas_callbacks(c::Canvas)
@@ -300,9 +311,8 @@ end
 # some canvas init steps require the widget to fully exist
 # this is called once per Canvas, before doing anything else with it
 function init_canvas(c::Canvas)
-    configure(c)
-    configure(c) # fixes initial Mac display
     c.initialized = true
+    configure(c)
     c
 end
     
@@ -322,12 +332,6 @@ function place(c::Canvas, x::Int, y::Int)
     place(c.c, x, y)
 end
 
-function reveal(c::Canvas)
-    back = cairo_surface(c)
-    set_source_surface(c.frontcc, back, 0, 0)
-    paint(c.frontcc)
-    tcl_doevent()
-end
 
 function update()
     tcl_eval("update")
