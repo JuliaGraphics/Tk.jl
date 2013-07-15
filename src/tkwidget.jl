@@ -35,14 +35,6 @@ function init()
     if ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp) == TCL_ERROR
         throw(TclError(string("error initializing Tk: ", tcl_result(tcl_interp))))
     end
-    # TODO: for now cheat and use X-specific hack for events
-    #mainwin = mainwindow(tcl_interp)
-    #if mainwin == C_NULL
-    #    error("cannot initialize Tk: window system not available")
-    #end
-    #disp = tk_display(mainwin)
-    #fd = ccall((:XConnectionNumber,libX), Int32, (Ptr{Void},), disp)
-    #add_fd_handler(fd, tcl_doevent)
     global timeout
     timeout = Base.TimeoutAsyncWork(tcl_doevent)
     Base.start_timer(timeout,0.05,0.05)
@@ -257,7 +249,7 @@ objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void}) = ccall(:objc_msgSend, T, (Ptr{Voi
 # But, this should be the only such function needed.
 function render_to_cairo(f::Function, w::TkWidget)
     win = nametowindow(w.path)
-    if OS_NAME == :Linux
+    @linux_only begin
         disp = jl_tkwin_display(win)
         d = jl_tkwin_id(win)
         vis = jl_tkwin_visual(win)
@@ -267,7 +259,9 @@ function render_to_cairo(f::Function, w::TkWidget)
         surf = CairoXlibSurface(disp, d, vis, width(w), height(w))
         f(surf)
         destroy(surf)
-    elseif OS_NAME == :Darwin
+        return
+    end
+    @osx_only begin
         view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Void}, (Int,), jl_tkwin_id(win)) # NSView*
         if view == C_NULL
             error("Invalid OS X window at getView")
@@ -290,8 +284,10 @@ function render_to_cairo(f::Function, w::TkWidget)
         f(surf)
         destroy(surf)
         ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
-    elseif OS_NAME == :Windows
-        state = Array(Uint8, WORD_SIZE/8*2) # 8.4, 8.5, 8.6
+        return
+    end
+    @windows_only begin
+        state = Array(Uint8, sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
         hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Void}, (Ptr{Void}, Int, Ptr{Uint8}),
             jl_tkwin_display(win), drawable, state)
@@ -300,9 +296,9 @@ function render_to_cairo(f::Function, w::TkWidget)
         destroy(surf)
         ccall((:TkWinReleaseDrawableDC,libtk), Void, (Int, Int, Ptr{Uint8}),
             drawable, hdc, state)
-    else
-        error("Unsupported Operating System")
+        return
     end
+    error("Unsupported Operating System")
 end
 
 function add_canvas_callbacks(c::Canvas)

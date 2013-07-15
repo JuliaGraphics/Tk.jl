@@ -1,11 +1,11 @@
 let addSearchDirs = [Pkg.dir("Tk","deps","usr","lib")], tcl, tk
-    tcl = find_library(["tcl86g", "libtcl8.6"], addSearchDirs)
+    tcl = find_library(["libtcl8.6", "tcl86g", "tcl86"], addSearchDirs)
     if tcl != ""
-        tk = find_library(["tk86g", "libtk8.6"], addSearchDirs)
+        tk = find_library(["libtk8.6", "tk86g", "tk86"], addSearchDirs)
     else
-        tcl = find_library(["tcl85g", "libtcl8.5"], addSearchDirs)
+        tcl = find_library(["libtcl8.5", "tcl85g", "tcl85"], addSearchDirs)
         if tcl != ""
-            tk = find_library(["tk85g", "libtk8.5"], addSearchDirs)
+            tk = find_library(["libtk8.5", "tk85g", "tk85"], addSearchDirs)
         end
     end
     if tcl == "" || tk == ""
