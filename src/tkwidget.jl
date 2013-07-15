@@ -262,11 +262,13 @@ function render_to_cairo(f::Function, w::TkWidget)
         return
     end
     @osx_only begin
+        ## TkMacOSXSetupDrawingContext()
         view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Void}, (Int,), jl_tkwin_id(win)) # NSView*
         if view == C_NULL
             error("Invalid OS X window at getView")
         end
         focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Void}, (Ptr{Uint8},), "NSView"), "focusView");
+        focusLocked = false
         if view != focusView
             focusLocked = bool(objc_msgSend(view, "lockFocusIfCanDraw", Int32))
             dontDraw = !focusLocked
@@ -276,14 +278,27 @@ function render_to_cairo(f::Function, w::TkWidget)
         if dontDraw
             error("Cannot draw to OS X Window")
         end
-        context = objc_msgSend(objc_msgSend(objc_msgSend(view, "window"), "graphicsContext"), "graphicsPort")
-        ccall(:CGContextSaveGState, Void, (Ptr{Void},), context)
+        window = objc_msgSend(view, "window")
+        objc_msgSend(window, "disableFlushWindow")
+        context = objc_msgSend(objc_msgSend(window, "graphicsContext"), "graphicsPort")
+        if !focusLocked
+            ccall(:CGContextSaveGState, Void, (Ptr{Void},), context)
+        end
+        ##
         ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(w))
         ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
         surf = CairoQuartzSurface(context, width(w), height(w))
         f(surf)
         destroy(surf)
-        ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
+        ## TkMacOSXRestoreDrawingContext
+        ccall(:CGContextSynchronize, Void, (Ptr{Void},), context)
+        objc_msgSend(window, "enableFlushWindow")
+        if focusLocked
+            objc_msgSend(view, "unlockFocus")
+        else
+            ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
+        end
+        ##
         return
     end
     @windows_only begin
