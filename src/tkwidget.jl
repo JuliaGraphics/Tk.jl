@@ -246,16 +246,20 @@ if WORD_SIZE == 32
 else
     typealias CGFloat Float64
 end
+jl_tkwin_display(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 1) # 8.4, 8.5, 8.6
+jl_tkwin_visual(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 4) # 8.4, 8.5, 8.6
+jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(pointer(Int,tkwin), 6) # 8.4, 8.5, 8.6
+objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void}) = ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}),
+    id, ccall(:sel_getUid, Ptr{Void}, (Ptr{Uint8},), uid))
+
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
 function render_to_cairo(f::Function, w::TkWidget)
     win = nametowindow(w.path)
     if OS_NAME == :Linux
-        disp = ccall((:jl_tkwin_display,libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                     win)
-        d = ccall((:jl_tkwin_id,libtk_wrapper), Int32, (Ptr{Void},), win)
-        vis = ccall((:jl_tkwin_visual,libtk_wrapper), Ptr{Void}, (Ptr{Void},),
-                    win)
+        disp = jl_tkwin_display(win)
+        d = jl_tkwin_id(win)
+        vis = jl_tkwin_visual(win)
         if disp==C_NULL || d==0 || vis==C_NULL
             error("invalid window")
         end
@@ -263,11 +267,21 @@ function render_to_cairo(f::Function, w::TkWidget)
         f(surf)
         destroy(surf)
     elseif OS_NAME == :Darwin
-        context = ccall((:getView,libtk_wrapper), Ptr{Void},
-                        (Ptr{Void},Int32), win, height(w))
-        if context == C_NULL
+        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Void}, (Int,), jl_tkwin_id(win)) # NSView*
+        if view == C_NULL
             error("Invalid OS X window at getView")
         end
+        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Void}, (Ptr{Uint8},), "NSView"), "focusView");
+        if view != focusView
+            focusLocked = bool(objc_msgSend(view, "lockFocusIfCanDraw", Int32))
+            dontDraw = !focusLocked
+        else
+            dontDraw = !bool(objc_msgSend(view, "canDraw", Int32))
+        end
+        if dontDraw
+            error("Cannot draw to OS X Window")
+        end
+        context = objc_msgSend(objc_msgSend(objc_msgSend(view, "window"), "graphicsContext"), "graphicsPort")
         ccall(:CGContextSaveGState, Void, (Ptr{Void},), context)
         ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(w))
         ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
@@ -276,13 +290,15 @@ function render_to_cairo(f::Function, w::TkWidget)
         destroy(surf)
         ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
     elseif OS_NAME == :Windows
-        disp = ccall((:jl_tkwin_display,libtk_wrapper), Ptr{Void},
-                     (Ptr{Void},),win)
-        hdc = ccall((:jl_tkwin_hdc,libtk_wrapper), Ptr{Void},
-                    (Ptr{Void},Ptr{Void}), win,disp)
+        state = Array(Uint8, WORD_SIZE/8*2) # 8.4, 8.5, 8.6
+        drawable = jl_tkwin_id(win)
+        hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Void}, (Ptr{Void}, Int, Ptr{Uint8}),
+            jl_tkwin_display(win), drawable, state)
         surf = CairoWin32Surface(hdc, width(w), height(w))
         f(surf)
         destroy(surf)
+        ccall((:TkWinReleaseDrawableDC,libtk), Void, (Int, Int, Ptr{Uint8}),
+            drawable, hdc, state)
     else
         error("Unsupported Operating System")
     end

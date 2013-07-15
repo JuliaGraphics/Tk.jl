@@ -9,10 +9,6 @@ function build()
         c=Choices(Choice[Choice(:skip,"Skip Installation - Binaries must be installed manually",nothing)])
     end
 
-    ## Homebrew
-    @osx_only push!(c,Choice(:brew,"Install depdendency using brew",@build_steps begin
-        HomebrewInstall("https://raw.github.com/Homebrew/homebrew-dupes/master/tcl-tk.rb",ASCIIString[])
-    end))
 
     ## Prebuilt Binaries
     @windows_only begin
@@ -57,54 +53,12 @@ function build()
     run(s)
 end
 
-function linux_version_check()
-	if find_library("Tk", "libtcl8.6", ["libtcl8.6"]) && find_library("Tk", "libtk8.6", ["libtk8.6"])
-		return ["-ltcl8.6", "-ltk8.6"]
-	elseif find_library("Tk", "libtcl8.5", ["libtcl8.5"]) && find_library("Tk", "libtk8.5", ["libtk8.5"])
-		return ["-ltcl8.5", "-ltk8.5"]
-	end
-end
-
-function build_wrapper()
-    include_paths = ["$prefix/include", "/usr/local/include"]
-    lib_paths = ["$prefix/lib"]
-    @osx_only begin
-        insert!(include_paths, 1, "/usr/local/opt/tcl-tk/include")
-        insert!(lib_paths, 1, "/usr/local/opt/tcl-tk/lib")
-    end
-    cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper."*BinDeps.shlib_ext,
-                  ["-shared","-g","-fPIC","-I$prefix/include",
-                   ["-I$path" for path in include_paths]...,
-                   ["-L$path" for path in lib_paths]...],
-                  OS_NAME == :Linux ? linux_version_check() : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
-    if(OS_NAME == :Darwin)
-#        push!(cc.options, "-I/opt/X11/include")
-        unshift!(cc.options, "-mmacosx-version-min=10.6")
-        unshift!(cc.options,"-xobjective-c")
-        append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
-    elseif(OS_NAME == :Windows)
-        push!(cc.libs,"-lGdi32")
-    elseif(OS_NAME == :Linux)
-        for idir in ("/usr/include/tcl8.5", "/usr/include/tcl")
-            if isdir(idir)
-                push!(cc.options, "-I$idir")
-                break
-            end
-        end
-    end
-    s = @build_steps begin
-        CreateDirectory(joinpath(prefix,"lib"))
-        cc
-    end
-
-    run(s)
-end
-
 # Build Tcl and Tk
-alllibs = find_library("Tk", "libtcl8.6", ["tcl86g", "libtcl8.6", "/usr/local/opt/tcl-tk/lib/libtcl8.6", OS_NAME == :Linux ? "libtcl8.5" : ""]) ||
-          find_library("Tk", "libtk8.6", ["tk86g", "libtk8.6", "/usr/local/opt/tcl-tk/lib/libtk8.6", OS_NAME == :Linux ? "libtk8.5": ""])
+alllibs = try
+    evalfile("ext.jl")
+    true
+catch
+    false
+end
 
 if !alllibs; build(); end
-
-# Build Tk_wrapper
-find_library("Tk", "libtk_wrapper",["libtk_wrapper"]) || build_wrapper()
