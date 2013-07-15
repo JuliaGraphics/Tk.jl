@@ -33,7 +33,7 @@ function init()
     tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
     if ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp) == TCL_ERROR
-        throw(TclError(string("error initializing Tk: ", tcl_result())))
+        throw(TclError(string("error initializing Tk: ", tcl_result(tcl_interp))))
     end
     # TODO: for now cheat and use X-specific hack for events
     #mainwin = mainwindow(tcl_interp)
@@ -57,7 +57,8 @@ type TclError <: Exception
     msg::String
 end
 
-function tcl_result()
+tcl_result() = tcl_result(tcl_interp)
+function tcl_result(tcl_interp)
     bytestring(ccall((:Tcl_GetStringResult,libtcl),
                      Ptr{Uint8}, (Ptr{Void},), tcl_interp))
 end
