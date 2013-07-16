@@ -1,4 +1,5 @@
-let addSearchDirs = [Pkg.dir("Tk","deps","usr","lib")], tcl, tk
+let addSearchDirs = [Pkg.dir("Tk","deps","usr","lib"),
+                     "/usr/local/opt/tcl-tk/lib/"], tcl, tk
     tcl = find_library(["libtcl8.6", "tcl86g", "tcl86"], addSearchDirs)
     if tcl != ""
         tk = find_library(["libtk8.6", "tk86g", "tk86"], addSearchDirs)
