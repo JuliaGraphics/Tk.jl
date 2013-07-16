@@ -303,7 +303,7 @@ function Progressbar(widget::Widget, mode::String)
     w
 end
 
-get_value(widget::Tk_Progressbar) = widget[:value] | float | int
+get_value(widget::Tk_Progressbar) = int(float(widget[:value]))
 set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image
@@ -399,7 +399,7 @@ function Scrollbar(parent::Widget, child::Widget, orient::String)
 end
 
 ## Text
-get_value(widget::Tk_Text) = tcl(widget, I"get 0.0 end") | chomp
+get_value(widget::Tk_Text) = chomp(tcl(widget, I"get 0.0 end"))
 
 function set_value(widget::Tk_Text, value::String)
     path = get_path(widget)
@@ -649,8 +649,8 @@ type Tk_CairoCanvas <: Tk_Widget
             if self.device == nothing
                 c = self.w
                 Tk.init_canvas(c)
-                w = winfo(c, "width")  | int
-                h = winfo(c, "height")  | int
+                w = int(winfo(c, "width"))
+                h = int(winfo(c, "height"))
 
                 self.device = Tk.cairo_surface(c)
             end
@@ -658,7 +658,7 @@ type Tk_CairoCanvas <: Tk_Widget
         bind(self.w, "<Map>", callback)
         bind(self.w, "<Configure>", (path) -> begin
             if !isa(self.device, Nothing)
-                w, h = map(u -> winfo(self.w, u) | int, ("width", "height"))
+                w, h = map(u -> int(winfo(self.w, u)), ("width", "height"))
             end
         end)
         self

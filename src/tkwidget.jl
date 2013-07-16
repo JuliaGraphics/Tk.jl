@@ -118,7 +118,8 @@ function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
     try
         result = f(args...)
     catch e
-        println("error during Tk callback: ", e)
+        println("error during Tk callback: ")
+        Base.display_error(e,catch_backtrace())
         return TCL_ERROR
     end
     if isa(result,ByteString)
@@ -206,7 +207,7 @@ function configure(c::Canvas)
         Cairo.destroy(c.backcc)
         Cairo.destroy(c.back)
     end
-    render_to_cairo(c.c) do surf
+    render_to_cairo(c.c, false) do surf
         w = width(c.c)
         h = height(c.c)
         c.back = surface_create_similar(surf, w, h)
@@ -236,20 +237,19 @@ function reveal(c::Canvas)
     tcl_doevent()
 end
 
+@osx_only begin
 if WORD_SIZE == 32
     typealias CGFloat Float32
 else
     typealias CGFloat Float64
 end
-jl_tkwin_display(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 1) # 8.4, 8.5, 8.6
-jl_tkwin_visual(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 4) # 8.4, 8.5, 8.6
-jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(pointer(Int,tkwin), 6) # 8.4, 8.5, 8.6
 objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void}) = ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}),
     id, ccall(:sel_getUid, Ptr{Void}, (Ptr{Uint8},), uid))
+end
 
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
-function render_to_cairo(f::Function, w::TkWidget)
+function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
     win = nametowindow(w.path)
     @linux_only begin
         disp = jl_tkwin_display(win)
@@ -265,7 +265,8 @@ function render_to_cairo(f::Function, w::TkWidget)
     end
     @osx_only begin
         ## TkMacOSXSetupDrawingContext()
-        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Void}, (Int,), jl_tkwin_id(win)) # NSView*
+        drawable = jl_tkwin_id(win)
+        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Void}, (Int,), drawable) # NSView*
         if view == C_NULL
             error("Invalid OS X window at getView")
         end
@@ -286,19 +287,53 @@ function render_to_cairo(f::Function, w::TkWidget)
         if !focusLocked
             ccall(:CGContextSaveGState, Void, (Ptr{Void},), context)
         end
-        ##
-        ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(toplevel(w)))
-        ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
-        surf = CairoQuartzSurface(context, width(w), height(w))
-        f(surf)
-        destroy(surf)
-        ## TkMacOSXRestoreDrawingContext
-        ccall(:CGContextSynchronize, Void, (Ptr{Void},), context)
-        objc_msgSend(window, "enableFlushWindow")
-        if focusLocked
-            objc_msgSend(view, "unlockFocus")
-        else
-            ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
+        try
+            ## TkMacOSXGetClipRgn
+            wi, hi = width(w), height(w)
+            if clipped
+                macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
+                if macDraw.winPtr != C_NULL
+                    TK_CLIP_INVALID = 0x02 # 8.4, 8.5, 8.6
+                    if macDraw.flags & TK_CLIP_INVALID != 0
+                        ccall((:TkMacOSXUpdateClipRgn,libtk), Void, (Ptr{Void},), macDraw.winPtr)
+                        macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
+                    end
+                    clipRgn = if macDraw.drawRgn != C_NULL
+                        macDraw.drawRgn
+                    elseif macDraw.visRgn != C_NULL
+                        macDraw.visRgn
+                    else
+                        C_NULL
+                    end
+                end
+                ##
+                ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(toplevel(w)))
+                ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
+                if clipRgn != C_NULL
+                    if ccall(:HIShapeIsEmpty, Uint8, (Ptr{Void},), clipRgn) != 0
+                        return
+                    end
+                    @assert 0 == ccall(:HIShapeReplacePathInCGContext, Cint, (Ptr{Void}, Ptr{Void}), clipRgn, context)
+                    ccall(:CGContextEOClip, Void, (Ptr{Void},), context)
+                end
+                ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, macDraw.xOff, macDraw.yOff)
+                ##
+            end
+            surf = CairoQuartzSurface(context, wi, hi)
+            try
+                f(surf)
+            finally
+                destroy(surf)
+            end
+        finally
+            ## TkMacOSXRestoreDrawingContext
+            ccall(:CGContextSynchronize, Void, (Ptr{Void},), context)
+            objc_msgSend(window, "enableFlushWindow")
+            if focusLocked
+                objc_msgSend(view, "unlockFocus")
+            else
+                ccall(:CGContextRestoreGState, Void, (Ptr{Void},), context)
+            end
         end
         ##
         return
@@ -388,5 +423,48 @@ function cairo_surface(c::Canvas)
     c.back
 end
 
-tcl_interp = init()
+const tcl_interp = init()
+const tk_version = convert(VersionNumber,tcl_eval("return \$tk_version"))
 tcl_eval("wm withdraw .")
+
+if tk_version >= v"8.4-" && tk_version < v"8.7-"
+jl_tkwin_display(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 1) # 8.4, 8.5, 8.6
+jl_tkwin_visual(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 4) # 8.4, 8.5, 8.6
+jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(pointer(Int,tkwin), 6) # 8.4, 8.5, 8.6
+@osx_only if tk_version >= v"8.5-"
+    immutable TkWindowPrivate
+        winPtr::Ptr{Void}
+        view::Ptr{Void}
+        context::Ptr{Void}
+        xOff::Cint
+        yOff::Cint
+        sizeX::CGFloat;
+        sizeY::CGFloat;
+        visRgn::Ptr{Void}
+        aboveVisRgn::Ptr{Void}
+        drawRgn::Ptr{Void}
+        referenceCount::Ptr{Void}
+        toplevel::Ptr{Void}
+        flags::Cint
+    end
+    else
+    immutable TkWindowPrivate
+        winPtr::Ptr{Void}
+        grafPtr::Ptr{Void}
+        view::Ptr{Void}
+        context::Ptr{Void}
+        xOff::Cint
+        yOff::Cint
+        sizeX::CGFloat;
+        sizeY::CGFloat;
+        visRgn::Ptr{Void}
+        aboveVisRgn::Ptr{Void}
+        drawRgn::Ptr{Void}
+        referenceCount::Ptr{Void}
+        toplevel::Ptr{Void}
+        flags::Cint
+    end
+    end
+else
+error("Tk.jl needs to be updated for tk version $tk_version")
+end

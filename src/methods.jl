@@ -15,8 +15,8 @@ set_items(widget::Widget, items) = XXX()
 ## reqwidth -- may not be satisfied by window sizing algorithm. 
 ## that reported by -width property
 ## width, height, get_size refer to that drawn:
-width(widget::Widget) = winfo(widget, "width") | float | int
-height(widget::Widget) = winfo(widget, "height") | float | int
+width(widget::Widget) = int(float(winfo(widget, "width")))
+height(widget::Widget) = int(float(winfo(widget, "height")))
 get_size(widget::Widget) = [width(widget), height(widget)]
 
 ## setting is different. 

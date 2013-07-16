@@ -19,8 +19,8 @@ Toplevel(title::String) = Toplevel(title=title)
 
 
 ## Sizing of toplevel windows should refer to the geometry
-width(widget::Tk_Toplevel) = winfo(widget, "width") | int
-height(widget::Tk_Toplevel) = winfo(widget, "height") | int
+width(widget::Tk_Toplevel) = int(winfo(widget, "width"))
+height(widget::Tk_Toplevel) = int(winfo(widget, "height"))
 get_size(widget::Tk_Toplevel) = [width(widget), height(widget)]
 set_size(widget::Tk_Toplevel,  width::Integer, height::Integer) = wm(widget, "geometry", "$(string(width))x$(string(height))")
 set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(widget, widthheight[1], widthheight[2])
@@ -97,7 +97,7 @@ end
 ## value is sash position as percentage of first pane
 function get_value(widget::Tk_Panedwindow)
     sz = (cget(widget, "orient") == "horizontal") ? width(widget) : height(widget)
-    pos = tcl(widget, "sashpos", 0) | int
+    pos = int(tcl(widget, "sashpos", 0))
     floor(pos/sz*100)
 end
 ## can set with Integer -- pixels, or real (proportion in [0,1])
