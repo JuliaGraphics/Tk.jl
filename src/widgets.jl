@@ -338,7 +338,7 @@ end
 
 function x11encode(data::BitArray{2})
     # Not efficient, but easy
-    s = memio()
+    s = IOBuffer()
     x11header(s, data)
     u8 = zeros(Uint8, iceil(size(data, 1)/8), size(data, 2))
     for i = 1:size(data,1)
