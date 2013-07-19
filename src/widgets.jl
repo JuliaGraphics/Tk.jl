@@ -248,13 +248,20 @@ function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizont
     w
 end
 
+function Slider{T <: Real}(parent::Widget, lo::T, hi::T; orient = "horizontal")
+    w = Slider(parent, orient = orient)
+    var = tclvar()
+    tclvar(var, lo)
+    configure(w, from = lo, to = hi, variable = var)
+    w
+end
 
 get_value(widget::Tk_Scale) = int(float(widget[:value]))
-function set_value(widget::Tk_Scale, value::Integer)
+
+function set_value(widget::Tk_Scale, value::Real)
     variable = widget[:variable]
     (variable == "") ? widget[:value] = value : tclvar(variable, value)
 end
-
 
 ## bind needs extra args for command
 function bind(widget::Tk_Scale, event::String, callback::Function)
