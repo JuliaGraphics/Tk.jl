@@ -256,7 +256,7 @@ function Slider{T <: Real}(parent::Widget, lo::T, hi::T; orient = "horizontal")
     w
 end
 
-get_value(widget::Tk_Scale) = int(float(widget[:value]))
+get_value(widget::Tk_Scale) = float(widget[:value])
 
 function set_value(widget::Tk_Scale, value::Real)
     variable = widget[:variable]
