@@ -416,15 +416,22 @@ One can bind a callback to an event in tcltk. There are few things to know:
 
 The `Slider` widget presents a slider for selection from a range of
 values. The convenience constructor allows one to specify the range of
-values through a Range object:
+values through a `Range` object, or the low and high `float` values of the range.  Note
+that `get_value` returns a `float`, even if used with an integer range.
 
-```
+``` 
 w = Toplevel()
 f = Frame(w)
 pack(f, expand=true, fill="both")
-sc = Slider(f, 1:100)
-pack(sc)
-bind(sc, "command", path -> println("The value is $(get_value(sc))"))
+pack(Label(f, "Int Range slider"), side="top")
+s_range = Slider(f, 1:100)
+pack(s_range, side="top", expand=true, fill="both", anchor="w")
+bind(s_range, "command", path -> println("The range value is $(int(get_value(s_range)))"))
+
+pack(Label(f, "Float slider"), side="top")
+s_float = Slider(f, 0.0, 1.0)
+pack(s_float, side="top", expand=true, fill="both", anchor="w")
+bind(s_float, "command", path -> println("The float value is $(get_value(s_float))"))
 ```
 
 
@@ -447,16 +454,15 @@ any indication as to the value, we remedy this with a label.
 
 ```
 w = Toplevel("Slider and label", 300, 200)
-pack_stop_propagate(w)
 f = Frame(w); pack(f, expand = true, fill = "both")
 
 sc = Slider(f, 1:20)
 l = Label(f)
 l[:textvariable] = sc[:variable]
 
-
-pack(sc, side="left", expand=true, fill="x", anchor="w")
-pack(l,  side="left", anchor="w")
+grid(sc, 1, 1, sticky="ew")
+grid(l,  2, 1, sticky="nw")
+grid_columnconfigure(f, 1, weight=1)
 ```
 
 This combination above is not ideal, as the length of the label is not
@@ -512,11 +518,11 @@ pack(b)
 
 ### Graphics
 
-The `Canvas` widget can be placed in a GUI to embed a graphics device
-(though the display is flaky with a Mac) In the examples directory you
-can find an implementation of RStudio's `manipulate` function.  This
-functions makes it very straightforward to define basic interactive
-GUIs for plotting with `Winston`.
+The `Canvas` widget can be placed in a GUI to embed a graphics device. In the
+examples directory you can find an implementation of RStudio's `manipulate`
+function.  This functions makes it very straightforward to define basic
+interactive GUIs for plotting with `Winston`.
+
 
 To try it, run
 
