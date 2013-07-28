@@ -27,6 +27,10 @@ global timeout = nothing
 tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 
 function init()
+    @osx_only ccall(:CFBundleCreate, Ptr{Void}, (Ptr{Void}, Ptr{Void}), C_NULL,
+        ccall(:CFURLCreateWithFileSystemPath, Ptr{Void}, (Ptr{Void}, Ptr{Void}, Cint, Cint), C_NULL,
+            ccall(:CFStringCreateWithFileSystemRepresentation, Ptr{Void}, (Ptr{Void}, Ptr{Uint8}), C_NULL, "/System/Library/Frameworks/Tk.framework"),
+            0, 1))
     ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
           joinpath(JULIA_HOME, "julia"))
     ccall((:g_type_init,Cairo._jl_libgobject),Void,())
@@ -37,7 +41,7 @@ function init()
     end
     global timeout
     timeout = Base.TimeoutAsyncWork(tcl_doevent)
-    Base.start_timer(timeout,0.05,0.05)
+    Base.start_timer(timeout,0.1,0.01)
     tcl_interp
 end
 
