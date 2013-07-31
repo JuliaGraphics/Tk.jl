@@ -14,13 +14,14 @@
 module Tk
 using Base
 using Cairo
+using BinDeps
 
+@BinDeps.load_dependencies [:tk => :libtk, :tcl=>:libtcl]
 
 import Base: string, show, getindex, setindex!, isequal
 import Base.Graphics: width, height, getgc
 import Cairo: destroy
 
-include(joinpath("..","deps","ext.jl"))
 include("tkwidget.jl")                  # old Tk
 include("types.jl")
 include("core.jl")
