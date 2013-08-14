@@ -205,8 +205,8 @@ function callback_add(widget::Tk_Widget, callback::Function)
             bind(widget, event, callback)
         end
     end
-end        
-    
+end
+
 
 ## Need this pattern to make a widget
 ## Parent is not a string, but TkWidget or Tk_Widget instance
@@ -220,7 +220,7 @@ end
 
 ## tcl after ... 
 ## Better likely to use julia's
-## timer = Base.TimeoutAsyncWork(next_frame)
+## timer = Base.Timer(next_frame)
 ## Base.start_timer(timer,int64(50),int64(50))
 ## create an object that will repeatedly call a
 ## function after a delay of ms milliseconds. This is started with

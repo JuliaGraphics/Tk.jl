@@ -40,7 +40,7 @@ function init()
         throw(TclError(string("error initializing Tk: ", tcl_result(tcl_interp))))
     end
     global timeout
-    timeout = Base.TimeoutAsyncWork(tcl_doevent)
+    timeout = Base.Timer(tcl_doevent)
     Base.start_timer(timeout,0.1,0.01)
     tcl_interp
 end
