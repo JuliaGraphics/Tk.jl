@@ -373,8 +373,11 @@ end
 ### methods
 get_value(widget::Tk_Entry) = tcl(widget, "get")
 function set_value(widget::Tk_Entry, val::String)
+    ## http://stackoverflow.com/questions/5302120/general-string-quoting-for-tcl
+    ## still need to escape \ (but not {})
+    tcl_eval("set s [subst -nocommands -novariables {$val}]")
     tcl(widget, I"delete @0 end")
-    tcl(widget, I"insert @0", val == "" ? "{}" : val)
+    tcl(widget, I"insert @0", "\$s")
 end
 
 get_editable(widget::Tk_Entry) = widget[:state] == "normal"
@@ -406,14 +409,27 @@ function Scrollbar(parent::Widget, child::Widget, orient::String)
 end
 
 ## Text
-get_value(widget::Tk_Text) = chomp(tcl(widget, I"get 0.0 end"))
 
+## non-exported helpers
+get_text(widget::Tk_Text, start_index, end_index) = tcl(widget, "get", start_index, end_index)
+function set_text(widget::Tk_Text, value::String, index)
+    ## http://stackoverflow.com/questions/5302120/general-string-quoting-for-tcl
+    ## still need to escape \ (but not {})
+    tcl_eval("set s [subst -nocommands -novariables {$value}]")
+    tcl(widget, "insert", index, "\$s")
+end
+
+get_value(widget::Tk_Text) = chomp(get_text(widget, "0.0", "end"))
 function set_value(widget::Tk_Text, value::String)
     path = get_path(widget)
     tcl(widget, I"delete 0.0 end")
-    tcl(widget, I"insert end", value)
+    set_text(widget, value, "end")
     tcl(widget, I"see 0.0")
 end
+
+
+
+
 
 get_editable(widget::Tk_Text) = widget[:state] != "disabled"
 set_editable(widget::Tk_Text, value::Bool) = widget[:state] = value ? "normal" : "disabled"
@@ -647,32 +663,47 @@ end
 
 
 ## Bring Canvas object into Tk_Widget level.
-type Tk_CairoCanvas <: Tk_Widget
-    w::Union(Nothing, Canvas)
-    device::Union(Nothing, Cairo.CairoSurface)
-    function Tk_CairoCanvas(widget::Widget)
-        self = new(Tk.Canvas(widget.w), nothing)
-        function callback(path)
-            if self.device == nothing
-                c = self.w
-                Tk.init_canvas(c)
-                w = int(winfo(c, "width"))
-                h = int(winfo(c, "height"))
-
-                self.device = Tk.cairo_surface(c)
-            end
-        end
-        bind(self.w, "<Map>", callback)
-        bind(self.w, "<Configure>", (path) -> begin
-            if !isa(self.device, Nothing)
-                w, h = map(u -> int(winfo(self.w, u)), ("width", "height"))
-            end
-        end)
-        self
-    end
+type Tk_CairoCanvas       <: TTk_Widget
+    w::Canvas
+end
+function TkCairoCanvas(Widget::Tk_Widget; width::Int=-1, height::Int=-1)
+    c = Canvas(Widget.w, width, height)
+    Tk_CairoCanvas(c)
 end
 
-CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
+function Canvas(parent::TTk_Container, args...) 
+    c = Canvas(parent.w, args...)
+    push!(parent.children, Tk_CairoCanvas(c))
+    c
+end
+
+
+# type Tk_CairoCanvas <: Tk_Widget
+#     w::Union(Nothing, Canvas)
+#     device::Union(Nothing, Cairo.CairoSurface)
+#     function Tk_CairoCanvas(widget::Widget)
+#         self = new(Tk.Canvas(widget.w), nothing)
+#         function callback(path)
+#             if self.device == nothing
+#                 c = self.w
+#                 Tk.init_canvas(c)
+#                 w = int(winfo(c, "width"))
+#                 h = int(winfo(c, "height"))
+
+#                 self.device = Tk.cairo_surface(c)
+#             end
+#         end
+#         bind(self.w, "<Map>", callback)
+#         bind(self.w, "<Configure>", (path) -> begin
+#             if !isa(self.device, Nothing)
+#                 w, h = map(u -> int(winfo(self.w, u)), ("width", "height"))
+#             end
+#         end)
+#         self
+#     end
+# end
+
+#CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
 
 ## This would be used with the following, but it only works directly if the
 ## canvas is packed in a window. It doesn't show in a themed widget (Frame, Panedwindow)

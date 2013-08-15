@@ -28,7 +28,6 @@ set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(w
 
 
 
-Canvas(parent::TTk_Container, args...) = Canvas(parent.w, args...)
 
 get_value(widget::Tk_Toplevel) = wm(widget, "title")
 set_value(widget::Tk_Toplevel, value::String) = wm(widget, "title", value)
@@ -122,8 +121,16 @@ pack_configure(widget::Widget, kwargs...) = tcl(I"pack configure", widget; kwarg
 pack_stop_propagate(widget::Widget) = tcl(I"pack propagate", widget, false)
 
 ## remove a page from display
-forget(widget::Widget) = tcl(widget, "forget")
-forget(parent::Widget, child::Widget) = tcl(widget, "forget", child)
+function forget(widget::Widget)
+    manager = winfo(widget, "manager")
+    tcl(manager, "forget", widget)
+end
+
+function forget(parent::TTk_Container, child::Widget) 
+    forget(child)
+    ## remove from children
+    parent.children[:] = filter(x -> get_path(x) != get_path(child), parent.children)
+end
 
 ## grid ...
 IntOrRange = Union(Integer, Range1)
