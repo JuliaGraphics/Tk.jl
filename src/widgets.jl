@@ -57,22 +57,22 @@ end
 ## Now customize
 
 ## Label constructors
-Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=text, image=image, compound="left")
-Label(parent::Widget, text::String) = Label(parent, text=text)
+Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=tk_string_escape(text), image=image, compound="left")
+Label(parent::Widget, text::String) = Label(parent, text=tk_string_escape(text))
 Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
 get_value(widget::Union(Tk_Button, Tk_Label)) = widget[:text]
 function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
     variable = cget(widget, "textvariable")
-    (variable == "") ? widget[:text] =  value : tclvar(variable, value)
+    (variable == "") ? widget[:text] =  tk_string_escape(value) : tclvar(variable, value)
 end
 
 ## Button constructors
 Button(parent::Widget, text::String, command::Function, image::Tk_Image) =
-    Button(parent, text = text, command=command, image=image, compound="left")
+    Button(parent, text = tk_string_escape(text), command=command, image=image, compound="left")
 Button(parent::Widget, text::String, image::Tk_Image) =
-    Button(parent, text = text, image=image, compound="left")
-Button(parent::Widget, text::String, command::Function) = Button(parent, text=text, command=command)
-Button(parent::Widget, text::String) = Button(parent, text=text)
+    Button(parent, text = tk_string_escape(text), image=image, compound="left")
+Button(parent::Widget, text::String, command::Function) = Button(parent, text=tk_string_escape(text), command=command)
+Button(parent::Widget, text::String) = Button(parent, text=tk_string_escape(text))
 Button(parent::Widget, command::Function, image::Tk_Image) =
     Button(parent, command=command, image=image, compound="image")
 Button(parent::Widget, image::Tk_Image) =
@@ -97,7 +97,7 @@ function set_value(widget::Tk_Checkbutton, value::Bool)
     tclvar(var, value ? 1 : 0)
 end
 get_items(widget::Tk_Checkbutton) = widget[:text]
-set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = value
+set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = tk_string_escape(value)
 
 ## RadioButton
 type Tk_Radiobutton <: TTk_Widget
@@ -133,10 +133,10 @@ function Radio{T<:String}(parent::Widget, labels::Vector{T}, orient::String)
     rbs = Array(Tk_Radiobutton, n)
     frame = Frame(parent)
     
-    rbs[1] = Radiobutton(frame, labels[1])
+    rbs[1] = Radiobutton(frame, tk_string_escape(labels[1]))
     if n > 1
         for j in 2:n
-            rbs[j] = Radiobutton(frame, rbs[1], labels[j])
+            rbs[j] = Radiobutton(frame, rbs[1], tk_string_escape(labels[j]))
         end
     end
 
@@ -372,11 +372,9 @@ end
 ### methods
 get_value(widget::Tk_Entry) = tcl(widget, "get")
 function set_value(widget::Tk_Entry, val::String)
-    ## http://stackoverflow.com/questions/5302120/general-string-quoting-for-tcl
-    ## still need to escape \ (but not {})
-    tcl_eval("set s [subst -nocommands -novariables {$val}]")
+   
     tcl(widget, I"delete @0 end")
-    tcl(widget, I"insert @0", "\$s")
+    tcl(widget, I"insert @0", tk_string_escape(val))
 end
 
 get_editable(widget::Tk_Entry) = widget[:state] == "normal"
@@ -412,10 +410,7 @@ end
 ## non-exported helpers
 get_text(widget::Tk_Text, start_index, end_index) = tcl(widget, "get", start_index, end_index)
 function set_text(widget::Tk_Text, value::String, index)
-    ## http://stackoverflow.com/questions/5302120/general-string-quoting-for-tcl
-    ## still need to escape \ (but not {})
-    tcl_eval("set s [subst -nocommands -novariables {$value}]")
-    tcl(widget, "insert", index, "\$s")
+    tcl(widget, "insert", index, tk_string_escape(value))
 end
 
 get_value(widget::Tk_Text) = chomp(get_text(widget, "0.0", "end"))
