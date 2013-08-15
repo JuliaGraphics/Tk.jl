@@ -172,7 +172,7 @@ function formlayout(child::Tk_Widget, label::MaybeString)
     if isa(label, String)
         l = Label(child.w.parent, label)
         grid(l, nrows + 1, 1)
-        grid_configure(l, sticky = "e")
+        grid_configure(l, sticky = "ne")
     end
     grid(child, nrows + 1, 2)
     grid_configure(child, sticky = "we", padx=5, pady=2)
@@ -224,5 +224,15 @@ end
 
 toplevel(w::Tk_Toplevel) = w
 
-## children (may need means to filter out children that are not in layout?)
-children(w::TTk_Container) = w.children
+## children 
+## @param ismapped::Bool. If true, will only return currently mapped children. (Forgotten children are dropped)
+function children(w::TTk_Container; ismapped::Bool=false) 
+    kids = w.children
+    if ismapped
+        ids = filter(u->winfo(u, "ismapped") == "1", split(winfo(w, "children")))
+        kids = filter(child -> contains(ids, get_path(child)), w.children)
+    end
+    kids
+end
+        
+

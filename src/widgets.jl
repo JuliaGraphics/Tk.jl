@@ -238,8 +238,7 @@ set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "norma
     
 
 ## Slider
-## Restricted to integer ranges stepping by 1!
-
+## deprecate this interface as integer values are not guaranteed in return.
 function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizontal")
     w = Slider(parent, orient=orient)
     var = tclvar()
@@ -666,6 +665,7 @@ end
 type Tk_CairoCanvas       <: TTk_Widget
     w::Canvas
 end
+
 function TkCairoCanvas(Widget::Tk_Widget; width::Int=-1, height::Int=-1)
     c = Canvas(Widget.w, width, height)
     Tk_CairoCanvas(c)
@@ -676,69 +676,4 @@ function Canvas(parent::TTk_Container, args...)
     push!(parent.children, Tk_CairoCanvas(c))
     c
 end
-
-
-# type Tk_CairoCanvas <: Tk_Widget
-#     w::Union(Nothing, Canvas)
-#     device::Union(Nothing, Cairo.CairoSurface)
-#     function Tk_CairoCanvas(widget::Widget)
-#         self = new(Tk.Canvas(widget.w), nothing)
-#         function callback(path)
-#             if self.device == nothing
-#                 c = self.w
-#                 Tk.init_canvas(c)
-#                 w = int(winfo(c, "width"))
-#                 h = int(winfo(c, "height"))
-
-#                 self.device = Tk.cairo_surface(c)
-#             end
-#         end
-#         bind(self.w, "<Map>", callback)
-#         bind(self.w, "<Configure>", (path) -> begin
-#             if !isa(self.device, Nothing)
-#                 w, h = map(u -> int(winfo(self.w, u)), ("width", "height"))
-#             end
-#         end)
-#         self
-#     end
-# end
-
-#CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
-
-## This would be used with the following, but it only works directly if the
-## canvas is packed in a window. It doesn't show in a themed widget (Frame, Panedwindow)
-## and loosk funny when sharing the stage with a button.
-
-
-## add to Winston.jl:
-## function render(cnv::Tk_CairoCanvas, p::Winston.PlotContainer)
-##     if !isa(cnv.device, Nothing)
-##         Winston.page_compose(p, cnv.device, false)
-##         cnv.device.on_close()
-##     else
-##         println("Device not initialized yet. Did you manage its layout?")
-##     end
-## end
-
-## ## This works:
-## using Winston 
-## w = Toplevel("works")
-## canvas = Tk.CairoCanvas(w)
-## pack(canvas)
-
-## x = linspace(0, pi, 1000); y = cos(x); p = FramedPlot(); add(p, Curve(x,y))
-## render(canvas, p)
-
-
-## ## This fails:
-
-## w = Toplevel("Fails")
-## pack_stop_propagate(w)
-## f = Frame(w)
-## pack(f, expand=true, :fill="both")
-## #
-## canvas = Tk.CairoCanvas(f)
-## pack(canvas, expand=true, fill="both")
-## #
-## render(canvas, p)
 
