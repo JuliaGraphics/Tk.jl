@@ -57,22 +57,22 @@ end
 ## Now customize
 
 ## Label constructors
-Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=text, image=image, compound="left")
-Label(parent::Widget, text::String) = Label(parent, text=text)
+Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=tk_string_escape(text), image=image, compound="left")
+Label(parent::Widget, text::String) = Label(parent, text=tk_string_escape(text))
 Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
 get_value(widget::Union(Tk_Button, Tk_Label)) = widget[:text]
 function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
     variable = cget(widget, "textvariable")
-    (variable == "") ? widget[:text] =  value : tclvar(variable, value)
+    (variable == "") ? widget[:text] =  tk_string_escape(value) : tclvar(variable, value)
 end
 
 ## Button constructors
 Button(parent::Widget, text::String, command::Function, image::Tk_Image) =
-    Button(parent, text = text, command=command, image=image, compound="left")
+    Button(parent, text = tk_string_escape(text), command=command, image=image, compound="left")
 Button(parent::Widget, text::String, image::Tk_Image) =
-    Button(parent, text = text, image=image, compound="left")
-Button(parent::Widget, text::String, command::Function) = Button(parent, text=text, command=command)
-Button(parent::Widget, text::String) = Button(parent, text=text)
+    Button(parent, text = tk_string_escape(text), image=image, compound="left")
+Button(parent::Widget, text::String, command::Function) = Button(parent, text=tk_string_escape(text), command=command)
+Button(parent::Widget, text::String) = Button(parent, text=tk_string_escape(text))
 Button(parent::Widget, command::Function, image::Tk_Image) =
     Button(parent, command=command, image=image, compound="image")
 Button(parent::Widget, image::Tk_Image) =
@@ -97,7 +97,7 @@ function set_value(widget::Tk_Checkbutton, value::Bool)
     tclvar(var, value ? 1 : 0)
 end
 get_items(widget::Tk_Checkbutton) = widget[:text]
-set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = value
+set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = tk_string_escape(value)
 
 ## RadioButton
 type Tk_Radiobutton <: TTk_Widget
@@ -133,10 +133,10 @@ function Radio{T<:String}(parent::Widget, labels::Vector{T}, orient::String)
     rbs = Array(Tk_Radiobutton, n)
     frame = Frame(parent)
     
-    rbs[1] = Radiobutton(frame, labels[1])
+    rbs[1] = Radiobutton(frame, tk_string_escape(labels[1]))
     if n > 1
         for j in 2:n
-            rbs[j] = Radiobutton(frame, rbs[1], labels[j])
+            rbs[j] = Radiobutton(frame, rbs[1], tk_string_escape(labels[j]))
         end
     end
 
@@ -238,8 +238,7 @@ set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "norma
     
 
 ## Slider
-## Restricted to integer ranges stepping by 1!
-
+## deprecate this interface as integer values are not guaranteed in return.
 function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizontal")
     w = Slider(parent, orient=orient)
     var = tclvar()
@@ -373,8 +372,9 @@ end
 ### methods
 get_value(widget::Tk_Entry) = tcl(widget, "get")
 function set_value(widget::Tk_Entry, val::String)
+   
     tcl(widget, I"delete @0 end")
-    tcl(widget, I"insert @0", val == "" ? "{}" : val)
+    tcl(widget, I"insert @0", tk_string_escape(val))
 end
 
 get_editable(widget::Tk_Entry) = widget[:state] == "normal"
@@ -406,14 +406,24 @@ function Scrollbar(parent::Widget, child::Widget, orient::String)
 end
 
 ## Text
-get_value(widget::Tk_Text) = chomp(tcl(widget, I"get 0.0 end"))
 
+## non-exported helpers
+get_text(widget::Tk_Text, start_index, end_index) = tcl(widget, "get", start_index, end_index)
+function set_text(widget::Tk_Text, value::String, index)
+    tcl(widget, "insert", index, tk_string_escape(value))
+end
+
+get_value(widget::Tk_Text) = chomp(get_text(widget, "0.0", "end"))
 function set_value(widget::Tk_Text, value::String)
     path = get_path(widget)
     tcl(widget, I"delete 0.0 end")
-    tcl(widget, I"insert end", value)
+    set_text(widget, value, "end")
     tcl(widget, I"see 0.0")
 end
+
+
+
+
 
 get_editable(widget::Tk_Text) = widget[:state] != "disabled"
 set_editable(widget::Tk_Text, value::Bool) = widget[:state] = value ? "normal" : "disabled"
@@ -647,67 +657,18 @@ end
 
 
 ## Bring Canvas object into Tk_Widget level.
-type Tk_CairoCanvas <: Tk_Widget
-    w::Union(Nothing, Canvas)
-    device::Union(Nothing, Cairo.CairoSurface)
-    function Tk_CairoCanvas(widget::Widget)
-        self = new(Tk.Canvas(widget.w), nothing)
-        function callback(path)
-            if self.device == nothing
-                c = self.w
-                Tk.init_canvas(c)
-                w = int(winfo(c, "width"))
-                h = int(winfo(c, "height"))
-
-                self.device = Tk.cairo_surface(c)
-            end
-        end
-        bind(self.w, "<Map>", callback)
-        bind(self.w, "<Configure>", (path) -> begin
-            if !isa(self.device, Nothing)
-                w, h = map(u -> int(winfo(self.w, u)), ("width", "height"))
-            end
-        end)
-        self
-    end
+type Tk_CairoCanvas       <: TTk_Widget
+    w::Canvas
 end
 
-CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
+function TkCairoCanvas(Widget::Tk_Widget; width::Int=-1, height::Int=-1)
+    c = Canvas(Widget.w, width, height)
+    Tk_CairoCanvas(c)
+end
 
-## This would be used with the following, but it only works directly if the
-## canvas is packed in a window. It doesn't show in a themed widget (Frame, Panedwindow)
-## and loosk funny when sharing the stage with a button.
-
-
-## add to Winston.jl:
-## function render(cnv::Tk_CairoCanvas, p::Winston.PlotContainer)
-##     if !isa(cnv.device, Nothing)
-##         Winston.page_compose(p, cnv.device, false)
-##         cnv.device.on_close()
-##     else
-##         println("Device not initialized yet. Did you manage its layout?")
-##     end
-## end
-
-## ## This works:
-## using Winston 
-## w = Toplevel("works")
-## canvas = Tk.CairoCanvas(w)
-## pack(canvas)
-
-## x = linspace(0, pi, 1000); y = cos(x); p = FramedPlot(); add(p, Curve(x,y))
-## render(canvas, p)
-
-
-## ## This fails:
-
-## w = Toplevel("Fails")
-## pack_stop_propagate(w)
-## f = Frame(w)
-## pack(f, expand=true, :fill="both")
-## #
-## canvas = Tk.CairoCanvas(f)
-## pack(canvas, expand=true, fill="both")
-## #
-## render(canvas, p)
+function Canvas(parent::TTk_Container, args...) 
+    c = Canvas(parent.w, args...)
+    push!(parent.children, Tk_CairoCanvas(c))
+    c
+end
 

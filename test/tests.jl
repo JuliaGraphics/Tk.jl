@@ -221,6 +221,8 @@ pack(f, expand=true, fill="both")
 e = Entry(f, "initial"); pack(e)
 set_value(e, "new text")
 @assert get_value(e) == "new text"
+set_value(e, "[1,2,3]")
+@assert get_value(e) == "[1,2,3]"
 set_visible(e, false)
 set_visible(e, true)
 ## Validation
@@ -244,6 +246,8 @@ txt = Text(f)
 scrollbars_add(f, txt)
 set_value(txt, "new text\n")
 @assert get_value(txt) == "new text\n"
+set_value(txt, "[1,2,3]")
+@assert get_value(txt) == "[1,2,3]"
 destroy(w)
 
 ## tree. Listbox

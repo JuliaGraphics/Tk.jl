@@ -48,7 +48,13 @@ function tcl(xs...; kwargs...)
     tcl_eval(cmd)
 end
 
-
+## escape a string
+## http://stackoverflow.com/questions/5302120/general-string-quoting-for-tcl
+## still need to escape \ (but not {})
+function tk_string_escape(x::String)
+    tcl_eval("set stringescapevariable [subst -nocommands -novariables {$x}]")
+    "\$stringescapevariable"
+end
 ## tclvar for textvariables
 ## Work with a text variable. Stores values as strings. Must coerce!
 ## getter -- THIS FAILS IN A CALLBACK!!!
