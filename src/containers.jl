@@ -28,7 +28,6 @@ set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(w
 
 
 
-Canvas(parent::TTk_Container, args...) = Canvas(parent.w, args...)
 
 get_value(widget::Tk_Toplevel) = wm(widget, "title")
 set_value(widget::Tk_Toplevel, value::String) = wm(widget, "title", value)
@@ -122,8 +121,16 @@ pack_configure(widget::Widget, kwargs...) = tcl(I"pack configure", widget; kwarg
 pack_stop_propagate(widget::Widget) = tcl(I"pack propagate", widget, false)
 
 ## remove a page from display
-forget(widget::Widget) = tcl(widget, "forget")
-forget(parent::Widget, child::Widget) = tcl(widget, "forget", child)
+function forget(widget::Widget)
+    manager = winfo(widget, "manager")
+    tcl(manager, "forget", widget)
+end
+
+function forget(parent::TTk_Container, child::Widget) 
+    forget(child)
+    ## remove from children
+    parent.children[:] = filter(x -> get_path(x) != get_path(child), parent.children)
+end
 
 ## grid ...
 IntOrRange = Union(Integer, Range1)
@@ -165,7 +172,7 @@ function formlayout(child::Tk_Widget, label::MaybeString)
     if isa(label, String)
         l = Label(child.w.parent, label)
         grid(l, nrows + 1, 1)
-        grid_configure(l, sticky = "e")
+        grid_configure(l, sticky = "ne")
     end
     grid(child, nrows + 1, 2)
     grid_configure(child, sticky = "we", padx=5, pady=2)
@@ -217,5 +224,15 @@ end
 
 toplevel(w::Tk_Toplevel) = w
 
-## children (may need means to filter out children that are not in layout?)
-children(w::TTk_Container) = w.children
+## children 
+## @param ismapped::Bool. If true, will only return currently mapped children. (Forgotten children are dropped)
+function children(w::TTk_Container; ismapped::Bool=false) 
+    kids = w.children
+    if ismapped
+        ids = filter(u->winfo(u, "ismapped") == "1", split(winfo(w, "children")))
+        kids = filter(child -> contains(ids, get_path(child)), w.children)
+    end
+    kids
+end
+        
+
