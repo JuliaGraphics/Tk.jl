@@ -183,7 +183,6 @@ type Canvas
 
     Canvas(parent) = Canvas(parent, -1, -1)
     function Canvas(parent, w, h)
-        tcl_doevent()   # magically fixes ImageView issue #13
         c = TkWidget(parent, "ttk::frame")
         # frame supports empty background, allowing us to control drawing
         if w < 0
