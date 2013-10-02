@@ -56,3 +56,18 @@ raise(widget::Widget) = tcl("raise", widget)
 
 ## does widget exist?
 exists(widget::Widget) = winfo(widget, "exists") == "1"
+
+## Determine the position of the mouse pointer within the window.
+# Returns -1,-1 when the window is not on the screen (e.g., the active desktop).
+function pointerxy(window)
+    # Get position within the screen
+    xy = split(winfo(window, "pointerxy"))
+    x,y = int(xy[1]), int(xy[2])
+    if x == -1 && y == -1
+        return x,y  # not on same desktop
+    end
+    # Compensate for window position
+    winx = int(winfo(window, "x"))
+    winy = int(winfo(window, "y"))
+    x-winx, y-winy
+end
