@@ -242,8 +242,8 @@ set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "norma
 function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizontal")
     w = Slider(parent, orient=orient)
     var = tclvar()
-    tclvar(var, min(range))
-    configure(w, from=min(range), to = max(range), variable=var)
+    tclvar(var, minimum(range))
+    configure(w, from=minimum(range), to = maximum(range), variable=var)
     w
 end
 
@@ -282,7 +282,7 @@ end
 function Spinbox{T <: Integer}(parent, range::Range1{T})
     w = Spinbox(parent)
     set_items(w, range)
-    set_value(w, min(range))
+    set_value(w, minimum(range))
     w
 end
 
@@ -291,7 +291,7 @@ set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
 function set_items{T <: Integer}(widget::Tk_Spinbox, range::Range1{T})
-    configure(widget, from=min(range), to = max(range), increment = step(range))
+    configure(widget, from=minimum(range), to = maximum(range), increment = step(range))
     widget.range = range
 end
 

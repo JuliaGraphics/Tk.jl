@@ -136,11 +136,11 @@ end
 IntOrRange = Union(Integer, Range1)
 function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
     path = get_path(child)
-    if isa(row, Range1) rowspan = 1 + max(row) - min(row)  else rowspan = 1 end
-    if isa(column, Range1) columnspan = 1 + max(column) - min(column) else columnspan = 1 end
+    if isa(row, Range1) rowspan = 1 + maximum(row) - minimum(row)  else rowspan = 1 end
+    if isa(column, Range1) columnspan = 1 + maximum(column) - minimum(column) else columnspan = 1 end
 
-    row = min(row) - 1
-    column = min(column) - 1
+    row = minimum(row) - 1
+    column = minimum(column) - 1
     
     grid_configure(child,  row=row, column=column, rowspan=rowspan, columnspan=columnspan; kwargs...)
 end
