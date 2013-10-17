@@ -34,15 +34,36 @@ function init()
     ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
           joinpath(JULIA_HOME, "julia"))
     ccall((:g_type_init,Cairo._jl_libgobject),Void,())
-    tcl_interp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
-    ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tcl_interp)
-    if ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tcl_interp) == TCL_ERROR
-        throw(TclError(string("error initializing Tk: ", tcl_result(tcl_interp))))
+    tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
+    @windows_only begin
+        htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
+            (Ptr{Uint8},),libtcl)
+        tclfile = Array(Uint8,260)
+        len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
+            (Csize_t,Ptr{Uint8},Cint),htcl,tclfile,length(tclfile))
+        if len > 0
+            tcldir = dirname(bytestring(tclfile[1:len]))
+            libpath = IOBuffer()
+            print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
+            print_escaped(libpath,abspath(tcldir,"..","share","tcl"),"{}")
+            print(libpath,"}]")
+            tcl_eval(takebuf_string(libpath),tclinterp)
+            print(libpath,"set env(TK_LIBRARY) [subst -nocommands -novariables {")
+            print_escaped(libpath,abspath(tcldir,"..","share","tk"),"{}")
+            print(libpath,"}]")
+            tcl_eval(takebuf_string(libpath),tclinterp)
+        end
+    end
+    if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tclinterp) == TCL_ERROR
+        throw(TclError(string("error initializing Tcl: ", tcl_result(tclinterp))))
+    end
+    if ccall((:Tk_Init,libtk), Int32, (Ptr{Void},), tclinterp) == TCL_ERROR
+        throw(TclError(string("error initializing Tk: ", tcl_result(tclinterp))))
     end
     global timeout
     timeout = Base.Timer(tcl_doevent)
     Base.start_timer(timeout,0.1,0.01)
-    tcl_interp
+    tclinterp
 end
 
 mainwindow(interp) =
@@ -67,10 +88,11 @@ function tcl_evalfile(name)
     nothing
 end
 
-function tcl_eval(cmd)
+tcl_eval(cmd) = tcl_eval(cmd,tcl_interp)
+function tcl_eval(cmd,tclinterp)
     code = ccall((:Tcl_Eval,libtcl), Int32, (Ptr{Void}, Ptr{Uint8}),
-                 tcl_interp, cmd)
-    result = tcl_result()
+                 tclinterp, cmd)
+    result = tcl_result(tclinterp)
     if code != 0
         throw(TclError(result))
     else
