@@ -55,4 +55,5 @@ else
         provides(BuildProcess,Autotools(libtarget = "tk86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Windows)
 end
 
-@BinDeps.install
+@BinDeps.install [:tk => :libtk, :tcl=>:libtcl]
+

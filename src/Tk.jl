@@ -16,7 +16,7 @@ using Base
 using Cairo
 using BinDeps
 
-@BinDeps.load_dependencies [:tk => :libtk, :tcl=>:libtcl]
+include("../deps/deps.jl")
 
 import Base: string, show, getindex, setindex!, isequal
 import Base.Graphics: width, height, getgc
