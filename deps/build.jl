@@ -12,10 +12,9 @@ else
 end
 
 @windows_only begin
-    Pkg.installed("RPMmd") === nothing && Pkg.add("RPMmd")
-    using RPMmd
-    provides(RPMmd.RPM,"tk",tk,os = :Windows)
-    provides(RPMmd.RPM,"tcl",tcl,os = :Windows)
+    using WinRPM
+    provides(WinRPM.RPM,"tk",tk,os = :Windows)
+    provides(WinRPM.RPM,"tcl",tcl,os = :Windows)
 end
 
 provides(AptGet,"tcl8.6",tcl)
