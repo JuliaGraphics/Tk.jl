@@ -1,2 +1,4 @@
 Cairo
 BinDeps 0.2.2-
+@osx Homebrew
+@windows WinRPM
