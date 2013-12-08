@@ -8,12 +8,6 @@ tk = library_dependency("tk",aliases=["libtk8.6","libtk","libtk8.6.so.0","libtk8
     return true
 end)
 
-if WORD_SIZE == 32
-        provides(Binaries,URI("http://julialang.googlecode.com/files/Tk.tar.gz"),[tcl,tk],os = :Windows)
-else
-        provides(Binaries,URI("http://julialang.googlecode.com/files/Tk64.7z"),[tcl,tk],os = :Windows)
-end
-
 @windows_only begin
     using WinRPM
     provides(WinRPM.RPM,"tk",tk,os = :Windows)
