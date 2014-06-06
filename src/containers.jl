@@ -5,6 +5,9 @@ type Tk_Labelframe  <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} en
 type Tk_Notebook    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
 type Tk_Panedwindow <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
 
+==(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
+
+## Julia 0.2 compatibility
 isequal(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
 
 ## Toplevel window
