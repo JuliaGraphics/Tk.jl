@@ -9,7 +9,7 @@ const TCL_STATIC   = convert(Ptr{Void}, 0)
 const TCL_DYNAMIC  = convert(Ptr{Void}, 3)
 
 tcl_doevent() = tcl_doevent(nothing,0)
-function tcl_doevent(timer,status)
+function tcl_doevent(timer,status=0)
     # https://www.tcl.tk/man/tcl8.6/TclLib/DoOneEvent.htm
     # DONT_WAIT* = 1 shl 1
     # WINDOW_EVENTS* = 1 shl 2
