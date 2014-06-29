@@ -454,9 +454,9 @@ const tk_version = convert(VersionNumber,tcl_eval("return \$tk_version"))
 tcl_eval("wm withdraw .")
 
 if tk_version >= v"8.4-" && tk_version < v"8.7-"
-jl_tkwin_display(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 1) # 8.4, 8.5, 8.6
-jl_tkwin_visual(tkwin::Ptr{Void}) = unsafe_load(pointer(Ptr{Void},tkwin), 4) # 8.4, 8.5, 8.6
-jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(pointer(Int,tkwin), 6) # 8.4, 8.5, 8.6
+jl_tkwin_display(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Ptr{Void}},tkwin), 1) # 8.4, 8.5, 8.6
+jl_tkwin_visual(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Ptr{Void}},tkwin), 4) # 8.4, 8.5, 8.6
+jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Int},tkwin), 6) # 8.4, 8.5, 8.6
 @osx_only if tk_version >= v"8.5-"
     immutable TkWindowPrivate
         winPtr::Ptr{Void}
