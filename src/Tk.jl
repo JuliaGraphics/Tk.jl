@@ -14,7 +14,6 @@
 module Tk
 using Base
 using Cairo
-using BinDeps
 
 include("../deps/deps.jl")
 
