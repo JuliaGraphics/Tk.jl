@@ -203,7 +203,7 @@ function callback_add(widget::Tk_Widget, callback::Function)
            :Tk_Treeview => "<<TreeviewSelect>>"
            }
     key = Base.symbol(string(typeof(widget)))
-    if has(events, key)
+    if haskey(events, key)
         event = events[key]
         if event == nothing
             return()
