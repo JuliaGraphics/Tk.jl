@@ -277,6 +277,7 @@ end
 # But, this should be the only such function needed.
 function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
     win = nametowindow(w.path)
+    win == C_NULL && error("invalid window")
     @linux_only begin
         disp = jl_tkwin_display(win)
         d = jl_tkwin_id(win)
