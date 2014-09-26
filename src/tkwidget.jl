@@ -162,7 +162,7 @@ jl_tcl_callback_ptr = cfunction(jl_tcl_callback,
                                 Int32, (Function, Ptr{Void}, Int32, Ptr{Ptr{Uint8}}))
 
 function tcl_callback(f)
-    cname = string("jl_cb", repr(uint32(object_id(f))))
+    cname = string("jl_cb", repr(object_id(f)))
     # TODO: use Tcl_CreateObjCommand instead
     ccall((:Tcl_CreateCommand,libtcl), Ptr{Void},
           (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Any, Ptr{Void}),
