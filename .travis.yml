@@ -3,11 +3,15 @@ compiler:
   - clang
 notifications:
   email: false
+env:
+  matrix:
+    - JULIAVERSION="juliareleases"
+    - JULIAVERSION="julianightlies"
 before_install:
   - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/julianightlies -y
+  - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Tk"))`); Pkg.pin("Tk"); Pkg.resolve()'
-  - julia -e 'using Tk; @assert isdefined(:Tk); @assert typeof(Tk) === Module'
+  - julia -e 'versioninfo(); Pkg.init(); Pkg.clone(pwd()); Pkg.build("Tk"); Pkg.test("Tk")'
