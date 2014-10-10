@@ -1,4 +1,4 @@
-using BinDeps, Compat
+using BinDeps
 
 @BinDeps.setup
 
@@ -51,5 +51,4 @@ else
         provides(BuildProcess,Autotools(libtarget = "tk86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Windows)
 end
 
-@BinDeps.install Compat.@Dict(:tk => :libtk, :tcl=>:libtcl)
-
+@BinDeps.install Dict([:tk => :libtk, :tcl=>:libtcl])
