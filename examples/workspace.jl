@@ -41,7 +41,7 @@ MaybeType = Union(Nothing, DataType, UnionType)
 ## dtypefilter: If true not these types, if false only these types
 function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtypefilter::Bool)
     nms = get_names(m)
-    
+
     if pat != nothing
         nms = filter(s -> ismatch(pat, s), nms)
     end
@@ -50,7 +50,7 @@ function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtype
         nms = filter(u -> isdefined(m, symbol(u)) && negate(isa(eval(m,symbol(u)), dtype), dtypefilter), nms)
     end
     summaries = map(u -> isdefined(m, symbol(u)) ? short_summary(eval(m,symbol(u))) : "undefined", nms)
-    
+
     if length(nms) == length(summaries)
         return [nms summaries]
     else
@@ -82,7 +82,7 @@ end)
 ## Update values after 1000ms. Call aft.stop() to stop
 function cb()
     tk_exists(tv) ? nothing : aft.stop()
-    if update_ids(Main) 
+    if update_ids(Main)
         set_items(tv, get_names_summaries(Main, nothing, (Module), true))
     end
 end

@@ -13,7 +13,7 @@ function Messagebox(parent::MaybeWidget; title::String="", message::String="", d
     if length(message) > 0 args["message"] = message end
     if length(detail) > 0 args["detail"] = detail end
     args["type"] = "okcancel"
-    
+
     tcl("tk_messageBox", args)
 end
 Messagebox(;kwargs...) = Messagebox(nothing; kwargs...)

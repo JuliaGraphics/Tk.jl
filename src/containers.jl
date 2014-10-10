@@ -67,7 +67,7 @@ destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 ## Labelframe
 Labelframe(parent::Widget, text::String) = Labelframe(parent, text=text)
 get_value(widget::Tk_Labelframe) = cget(widget, "text")
-set_value(widget::Tk_Labelframe, text::String) = configure(widget, {:text=> text})
+set_value(widget::Tk_Labelframe, text::String) = configure(widget, Compat.@Dict(:text=> text))
 
 
 ## Notebook
@@ -108,13 +108,13 @@ function set_value(widget::Tk_Panedwindow, value::Real)
     if value <= 1 && value >= 0
         sz = (cget(widget, "orient") == "horizontal") ? width(widget) : height(widget)
         set_value(widget, int(value * sz/100))
-    end        
+    end
 end
 
 
 page_add(child::Widget) = page_add(child, 1)
-        
-        
+
+
 ## Container methods
 
 ## pack(widget, {:expand => true, :anchor => "w"})
@@ -129,7 +129,7 @@ function forget(widget::Widget)
     tcl(manager, "forget", widget)
 end
 
-function forget(parent::TTk_Container, child::Widget) 
+function forget(parent::TTk_Container, child::Widget)
     forget(child)
     ## remove from children
     parent.children[:] = filter(x -> get_path(x) != get_path(child), parent.children)
@@ -144,7 +144,7 @@ function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
 
     row = minimum(row) - 1
     column = minimum(column) - 1
-    
+
     grid_configure(child,  row=row, column=column, rowspan=rowspan, columnspan=columnspan; kwargs...)
 end
 
@@ -182,7 +182,7 @@ function formlayout(child::Tk_Widget, label::MaybeString)
     grid_columnconfigure(master, 1, weight = 1)
 end
 
-  
+
 ## Wrap child in frame, return frame to pack (or grid) into parent of child
 ##
 ## w = Toplevel()
@@ -195,7 +195,7 @@ function scrollbars_add(parent::Tk_Frame, child::Tk_Widget)
     grid_stop_propagate(parent)
     xscr = Scrollbar(parent, child, "horizontal")
     yscr = Scrollbar(parent, child, "vertical")
-    
+
     grid(child, 1, 1)
     grid(yscr, 1, 2)
     grid(xscr, 2, 1)
@@ -204,7 +204,7 @@ function scrollbars_add(parent::Tk_Frame, child::Tk_Widget)
     grid_configure(xscr, sticky = "ew")
     grid_rowconfigure(parent, 1, weight = 1)
     grid_columnconfigure(parent, 1, weight = 1)
-    
+
 end
 
 # Navigating hierarchies
@@ -227,9 +227,9 @@ end
 
 toplevel(w::Tk_Toplevel) = w
 
-## children 
+## children
 ## @param ismapped::Bool. If true, will only return currently mapped children. (Forgotten children are dropped)
-function children(w::TTk_Container; ismapped::Bool=false) 
+function children(w::TTk_Container; ismapped::Bool=false)
     kids = w.children
     if ismapped
         ids = filter(u->winfo(u, "ismapped") == "1", split(winfo(w, "children")))
@@ -237,5 +237,5 @@ function children(w::TTk_Container; ismapped::Bool=false)
     end
     kids
 end
-        
+
 

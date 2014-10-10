@@ -40,4 +40,4 @@ change_handler(path,xs...) = println(map(get_value, widgets))
 map(u -> callback_add(u, change_handler), widgets)
 
 set_visible(w, true)
-    
+

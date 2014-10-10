@@ -12,14 +12,14 @@ set_items(widget::Widget, items) = XXX()
 
 ## size of widgets have three possible values:
 ## geometry -- actual size when drawn (winfo info)
-## reqwidth -- may not be satisfied by window sizing algorithm. 
+## reqwidth -- may not be satisfied by window sizing algorithm.
 ## that reported by -width property
 ## width, height, get_size refer to that drawn:
 width(widget::Widget) = int(float(winfo(widget, "width")))
 height(widget::Widget) = int(float(winfo(widget, "height")))
 get_size(widget::Widget) = [width(widget), height(widget)]
 
-## setting is different. 
+## setting is different.
 ## Toplevel windows are set by geometry and wm
 ## Other widgets *may* have a -width, -height property for setting a requested width and height that gets set
 ## may or may not be in pixels
@@ -37,7 +37,7 @@ get_enabled(widget::TTk_Widget) = instate(widget, "!disabled")
 
 set_enabled(widget::Widget, value::Bool) = XXX()
 set_enabled(widget::TTk_Widget, value::Bool) = widget[:state] = value ? "!disabled" : "disabled"
-    
+
 
 ## can be edited
 get_editable(widget::Widget) = XXX()

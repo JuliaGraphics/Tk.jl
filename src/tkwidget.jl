@@ -139,7 +139,7 @@ const _callbacks = ObjectIdDict()
 const empty_str = ""
 
 function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
-    args = { bytestring(unsafe_load(argv,i)) for i=1:argc }
+    args = [bytestring(unsafe_load(argv,i)) for i=1:argc]
     local result
     try
         result = f(args...)
@@ -385,7 +385,7 @@ function add_canvas_callbacks(c::Canvas)
     # A widget has been mapped onto the display and is visible
     bind(c, "<Map>", path -> init_canvas(c))
     # All or part of a widget has been uncovered and may need to be redrawn
-    bind(c, "<Expose>", path -> reveal(c)) 
+    bind(c, "<Expose>", path -> reveal(c))
     # A widget has changed size or position and may need to adjust its layout
     bind(c, "<Configure>", path -> configure(c))
     # A mouse button was pressed
@@ -396,7 +396,7 @@ function add_canvas_callbacks(c::Canvas)
     bind(c, "<ButtonPress-3>",   (path,x,y)->(c.mouse.button3press(c,int(x),int(y))))
     bind(c, "<ButtonRelease-3>", (path,x,y)->(c.mouse.button3release(c,int(x),int(y))))
     # The cursor is in motion over a widget
-    bind(c, "<Motion>",          (path,x,y)->(c.mouse.motion(c,int(x),int(y))))       
+    bind(c, "<Motion>",          (path,x,y)->(c.mouse.motion(c,int(x),int(y))))
     bind(c, "<Button1-Motion>",  (path,x,y)->(c.mouse.button1motion(c,int(x),int(y))))
 end
 
@@ -407,7 +407,7 @@ function init_canvas(c::Canvas)
     configure(c)
     c
 end
-    
+
 get_visible(c::Canvas) = get_visible(c.c.parent)
 
 initialized(c::Canvas) = c.initialized

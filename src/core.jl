@@ -80,7 +80,7 @@ function configure(widget::Widget, args...; kwargs...)
     tcl(widget, "configure", args...; kwargs...)
 end
 
-setindex!(widget::Widget, value, prop::Symbol) = configure(widget, {prop=>value})
+setindex!(widget::Widget, value, prop::Symbol) = configure(widget, Compat.@Dict(prop=>value))
 
 ## Get values
 ## cget
@@ -106,7 +106,7 @@ function winfo(widget::Widget, prop::String, coerce::MaybeFunction)
 end
 winfo(widget::Widget, prop::String) = winfo(widget, prop, nothing)
 
-## wm. 
+## wm.
 wm(window::Widget, prop::String, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
 
 
@@ -183,25 +183,26 @@ function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs:
     end
 end
 
-## add most typical callback    
+## add most typical callback
 function callback_add(widget::Tk_Widget, callback::Function)
-  events ={:Tk_Window => "<Destroy>",
-           :Tk_Frame => nothing,
-           :Tk_Labelframe => nothing,
-           :Tk_Notebook => "<<NotebookTabChanged>>",
-           :Tk_Panedwindow => nothing,
-           ##
-           :Tk_Label => nothing,
-           :Tk_Button => "command",
-           :Tk_Checkbutton => "command",
-           :Tk_Radio => "command",
-           :Tk_Combobox => "<<ComboboxSelected>>",
-           :Tk_Scale => "command",
-           :Tk_Spinbox => "command",
-           :Tk_Entry => "<FocusOut>",
-           :Tk_Text => "<FocusOut>",
-           :Tk_Treeview => "<<TreeviewSelect>>"
-           }
+    events = Compat.@Dict(
+        :Tk_Window => "<Destroy>",
+        :Tk_Frame => nothing,
+        :Tk_Labelframe => nothing,
+        :Tk_Notebook => "<<NotebookTabChanged>>",
+        :Tk_Panedwindow => nothing,
+        ##
+        :Tk_Label => nothing,
+        :Tk_Button => "command",
+        :Tk_Checkbutton => "command",
+        :Tk_Radio => "command",
+        :Tk_Combobox => "<<ComboboxSelected>>",
+        :Tk_Scale => "command",
+        :Tk_Spinbox => "command",
+        :Tk_Entry => "<FocusOut>",
+        :Tk_Text => "<FocusOut>",
+        :Tk_Treeview => "<<TreeviewSelect>>")
+
     key = Base.symbol(string(typeof(widget)))
     if haskey(events, key)
         event = events[key]
@@ -224,7 +225,7 @@ function make_widget(parent::Widget, str::String; kwargs...)
 end
 
 
-## tcl after ... 
+## tcl after ...
 ## Better likely to use julia's
 ## timer = Base.Timer(next_frame)
 ## Base.start_timer(timer,int64(50),int64(50))
@@ -238,7 +239,7 @@ type TclAfter
     start::Union(Nothing, Function)
     stop::Union(Nothing, Function)
     ms::Int
-    
+
     function TclAfter(ms, cb::Function)
         obj = new(cb, true, nothing, nothing, ms)
         function fun(path)
