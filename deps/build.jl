@@ -1,4 +1,4 @@
-using BinDeps
+using BinDeps, Compat
 
 @BinDeps.setup
 
@@ -27,7 +27,7 @@ provides(BuildProcess,Autotools(configure_subdir = "unix", configure_options = [
 
 if WORD_SIZE == 64
         # Unfortunately the mingw-built tc segfaults since some function signatures
-        # are different between VC and mingw. This is fixed on tcl trunk. For now, 
+        # are different between VC and mingw. This is fixed on tcl trunk. For now,
         # just use VC to build tcl (Note requlres Visual Studio Express in the PATH)
         provides(BuildProcess,(@build_steps begin
                 GetSources(tcl)
@@ -51,5 +51,5 @@ else
         provides(BuildProcess,Autotools(libtarget = "tk86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Windows)
 end
 
-@BinDeps.install [:tk => :libtk, :tcl=>:libtcl]
+@BinDeps.install Compat.@Dict(:tk => :libtk, :tcl=>:libtcl)
 

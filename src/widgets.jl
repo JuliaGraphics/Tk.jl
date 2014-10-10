@@ -61,7 +61,7 @@ Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=tk_str
 Label(parent::Widget, text::String) = Label(parent, text=tk_string_escape(text))
 Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
 get_value(widget::Union(Tk_Button, Tk_Label)) = widget[:text]
-function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
+function set_value(widget::Union(Tk_Label, Tk_Button), value::String)
     variable = cget(widget, "textvariable")
     (variable == "") ? widget[:text] =  tk_string_escape(value) : tclvar(variable, value)
 end
@@ -106,7 +106,7 @@ end
 MaybeTkRadioButton = Union(Nothing, Tk_Radiobutton)
 
 function Radiobutton(parent::Widget, group::MaybeTkRadioButton, label::String)
-    
+
     rb = Radiobutton(parent)
 
     var = isa(group, Tk_Radiobutton) ? group[:variable] : tclvar()
@@ -132,7 +132,7 @@ function Radio{T<:String}(parent::Widget, labels::Vector{T}, orient::String)
     n = size(labels)[1]
     rbs = Array(Tk_Radiobutton, n)
     frame = Frame(parent)
-    
+
     rbs[1] = Radiobutton(frame, tk_string_escape(labels[1]))
     if n > 1
         for j in 2:n
@@ -235,7 +235,7 @@ end
 
 get_editable(widget::Tk_Combobox) = widget[:state] == "normal"
 set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "normal" : "readonly"
-    
+
 
 ## Slider
 ## deprecate this interface as integer values are not guaranteed in return.
@@ -372,7 +372,7 @@ end
 ### methods
 get_value(widget::Tk_Entry) = tcl(widget, "get")
 function set_value(widget::Tk_Entry, val::String)
-   
+
     tcl(widget, I"delete @0 end")
     tcl(widget, I"insert @0", tk_string_escape(val))
 end
@@ -453,7 +453,7 @@ function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String; 
     set_items(w, items)
 
     tcl_eval("ttk::style map Treeview.Row -background [list selected $selected_color]")
-    
+
     w
 end
 Treeview(widget::Widget, items::Vector) = Treeview(widget, items, "")
@@ -495,7 +495,7 @@ function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeV
     set_items(w, items)
     color = "gray"
     tcl_eval("ttk::style map Treeview.Row -background [list selected $color]")
-    
+
     w
 end
 Treeview{T <: String}(widget::Widget, items::Array{T,2}) = Treeview(widget, items, nothing)
@@ -547,7 +547,7 @@ set_value(widget::Tk_Treeview, index::Integer) = set_value(widget, index, false)
 ## used by get_value to return path of keys for a node
 function tree_get_keys(widget::Tk_Treeview, node::TreeNode)
     if tcl(widget, "exists", node) == "0" error("Node is not in tree") end
-    
+
     x = String[]
     while node.node != ""
         push!(x, tcl(widget, "item", node, "-text"))
@@ -570,7 +570,7 @@ function node_insert(widget::Tk_Treeview, node::MaybeTreeNode, at::MaybeStringIn
 
     parent = isa(node, Nothing) ? "{}" : node.node
     at = isa(at, Nothing) ? "end" : at
-    
+
     args = Dict()
     args["text"] = isa(text, Nothing) ? "" : text
     args["image"] = image.i
@@ -666,7 +666,7 @@ function TkCairoCanvas(Widget::Tk_Widget; width::Int=-1, height::Int=-1)
     Tk_CairoCanvas(c)
 end
 
-function Canvas(parent::TTk_Container, args...) 
+function Canvas(parent::TTk_Container, args...)
     c = Canvas(parent.w, args...)
     push!(parent.children, Tk_CairoCanvas(c))
     c

@@ -54,7 +54,7 @@ end
 function make_widget(parent, widget::PickerWidget)
     cb = Combobox(parent)
     set_items(cb, widget.vals)
-    set_value(cb, widget.initial) 
+    set_value(cb, widget.initial)
     set_editable(cb, false)
     cb
 end
@@ -113,7 +113,7 @@ function manipulate(ex::Union(Symbol,Expr), controls...)
     graph = Canvas(w, 500, 500); pack(graph, side="left")
     control_pane= Frame(w); pack(control_pane, side="left", expand=true, fill="both")
 
-    
+
     ## create, layout widgets
     for i in controls
         widget = make_widget(control_pane, i)
@@ -139,7 +139,7 @@ function manipulate(ex::Union(Symbol,Expr), controls...)
             eval(ManipulateContext, :($(symbol(k)) = $v))
         end
     end
-    
+
     function make_graphic(x...)
         d = get_vals()
         dict_to_module(d)
@@ -181,4 +181,4 @@ obj = manipulate(ex,
                  ,picker("color", "Cos color", ["red", "green", "yellow"])
                  ,button("update")
                  )
-           
+

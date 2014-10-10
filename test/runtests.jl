@@ -1,5 +1,5 @@
 ## Tests
-using Tk
+using Tk, Compat
 
 ## Toplevel
 w = Toplevel("Toplevel", 400, 400)
@@ -178,7 +178,7 @@ set_value(combo, nothing)
 set_items(combo, map(uppercase, choices))
 set_value(combo, 2)
 @assert get_value(combo) == uppercase(choices[2])
-set_items(combo, {:one=>"ONE", :two=>"TWO"})
+set_items(combo, Compat.@AnyDict(:one=>"ONE", :two=>"TWO"))
 set_value(combo, "one")
 @assert get_value(combo) == "one"
 destroy(w)
