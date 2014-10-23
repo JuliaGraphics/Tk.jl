@@ -32,7 +32,7 @@ if WORD_SIZE == 64
         provides(BuildProcess,(@build_steps begin
                 GetSources(tcl)
                 FileRule("tclConfig.sh",@build_steps begin
-                        ChangeDirectory(joinpath(srcdir(tcl),"tcl8.5.0/win"))
+                        ChangeDirectory(joinpath(srcdir(tcl),"tcl8.6.0/win"))
                         `nmake -f Makefile.vc`
                         `nmake -f Makefile.vc install INSTALLDIR=$(usrdir(tcl))`
                         `xcopy $(libdir(tcl))\\tclConfig.sh $(srcdir(tcl))\\tcl8.6.0\\win`
@@ -41,8 +41,8 @@ if WORD_SIZE == 64
         provides(BuildProcess,(@build_steps begin
                 GetSources(tk)
                 begin
-                        ChangeDirectory(joinpath(srcdir(tk),"tk8.5.0/win"))
-                        `nmake -f Makefile.vc TCLDIR=$(srcdir(tcl))\\tcl8.5.0`
+                        ChangeDirectory(joinpath(srcdir(tk),"tk8.6.0/win"))
+                        `nmake -f Makefile.vc TCLDIR=$(srcdir(tcl))\\tcl8.6.0`
                         `nmake -f Makefile.vc install INSTALLDIR=$(usrdir(tk))`
                 end
         end),tk)
