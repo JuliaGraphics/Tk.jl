@@ -2,8 +2,8 @@ using BinDeps
 
 @BinDeps.setup
 
-tcl = library_dependency("tcl",aliases=["libtcl","libtcl8.5","libtcl8.5.so.0","tcl85"])
-tk = library_dependency("tk",aliases=["libtk","libtk8.5","libtk8.5.so.0","tk85"], depends=[tcl], validate = function(p,h)
+tcl = library_dependency("tcl",aliases=["libtcl8.6","tcl86g","tcl86t","libtcl","libtcl8.6.so.0","libtcl8.5","libtcl8.5.so.0","tcl85"])
+tk = library_dependency("tk",aliases=["libtk8.6","libtk","libtk8.6.so.0","libtk8.5","libtk8.5.so.0","tk85","tk86","tk86t"], depends=[tcl], validate = function(p,h)
     @osx_only return dlsym_e(h,:TkMacOSXGetRootControl) != C_NULL
     return true
 end)
@@ -47,8 +47,8 @@ if WORD_SIZE == 64
                 end
         end),tk)
 else
-        provides(BuildProcess,Autotools(libtarget = "tcl85.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit","--enable-threads"]),tcl, os = :Windows)
-        provides(BuildProcess,Autotools(libtarget = "tk85.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Windows)
+        provides(BuildProcess,Autotools(libtarget = "tcl86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit","--enable-threads"]),tcl, os = :Windows)
+        provides(BuildProcess,Autotools(libtarget = "tk86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Windows)
 end
 
 @BinDeps.install Dict([:tk => :libtk, :tcl=>:libtcl])
