@@ -14,8 +14,8 @@ end)
     provides(WinRPM.RPM,"tcl",tcl,os = :Windows)
 end
 
-provides(AptGet,"tcl8.6",tcl)
-provides(AptGet,"tk8.6",tk)
+provides(AptGet,"tcl8.5",tcl)
+provides(AptGet,"tk8.5",tk)
 
 provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz"),tcl,unpacked_dir = "tcl8.6.0")
 provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz"),tk,unpacked_dir = "tk8.6.0")
