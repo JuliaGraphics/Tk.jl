@@ -300,6 +300,7 @@ end
 function Separator(widget::Widget, horizontal::Bool)
     w = Separator(widget)
     configure(w, orient = (horizontal ? "horizontal" : "vertical"))
+    w
 end
 
 ## Progressbar
