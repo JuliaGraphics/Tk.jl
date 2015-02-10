@@ -19,7 +19,7 @@ using Compat
 include("../deps/deps.jl")
 
 import Base: string, show, getindex, setindex!, isequal
-import Base.Graphics: width, height, getgc
+import Graphics: width, height, getgc
 import Cairo: destroy
 
 include("tkwidget.jl")                  # old Tk
