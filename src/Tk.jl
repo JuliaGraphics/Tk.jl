@@ -15,11 +15,18 @@ module Tk
 using Base
 using Cairo
 using Compat
+using BinDeps
 
 include("../deps/deps.jl")
 
 import Base: string, show, getindex, setindex!, isequal
-import Graphics: width, height, getgc
+
+if VERSION < v"0.4.0-dev+3275"
+    import Base.Graphics: width, height, getgc
+else
+    import Graphics: width, height, getgc
+end
+
 import Cairo: destroy
 
 include("tkwidget.jl")                  # old Tk

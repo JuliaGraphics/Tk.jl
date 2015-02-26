@@ -484,7 +484,7 @@ function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeV
     sz = size(items)
 
     w = Treeview(widget)
-    configure(w, show = "tree headings", selectmode = "browse", columns=[1:(sz[2]-1)])
+    configure(w, show = "tree headings", selectmode = "browse", columns=collect(1:(sz[2]-1)))
     ## widths ...
     if isa(widths, Vector)
         tcl(w, I"column #0", width = widths[1])

@@ -7,9 +7,6 @@ type Tk_Panedwindow <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} en
 
 ==(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
 
-## Julia 0.2 compatibility
-isequal(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
-
 ## Toplevel window
 function Toplevel(;title::String="Toplevel Window", width::Integer=200, height::Integer=200, visible::Bool=true)
     w = Window(title, width, height, visible)
@@ -67,8 +64,7 @@ destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 ## Labelframe
 Labelframe(parent::Widget, text::String) = Labelframe(parent, text=text)
 get_value(widget::Tk_Labelframe) = cget(widget, "text")
-set_value(widget::Tk_Labelframe, text::String) = configure(widget, Compat.@Dict(:text=> text))
-
+set_value(widget::Tk_Labelframe, text::String) = configure(widget, @compat Dict(:text=> text))
 
 ## Notebook
 function page_add(child::Widget, label::String)
