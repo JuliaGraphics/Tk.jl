@@ -1,6 +1,9 @@
-require("Tk")
 using Tk
-using Base.Graphics
+if VERSION < v"0.4.0-dev+3275"
+    using Base.Graphics
+else
+    using Graphics
+end
 
 function sketch_window()
     w = Window("drawing", 400, 300)

@@ -1,7 +1,7 @@
 f = "radio.png"
 
 function process_file(f)
-    a = readall(`base64 $f`) | chomp
+    a = readchomp(`base64 $f`)
     "<!-- $f -->\n<img src='data:image/png;base64,$a'></img>"
 end
 

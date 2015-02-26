@@ -43,7 +43,6 @@ slider(nm::String, label::String, rng::Range1, initial::Integer) = SliderWidget(
 slider(nm::String, label::String, rng::Range1) = slider(nm, label, rng, minimum(rng))
 slider(nm::String,  rng::Range1) = slider(nm, nm, rng, minimum(rng))
 
-
 type PickerWidget <: ManipulateWidget
     nm
     label

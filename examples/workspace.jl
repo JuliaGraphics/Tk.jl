@@ -66,7 +66,7 @@ get_names_summaries(m::Module) = get_names_summaries(m::Module, nothing, nothing
 w = Toplevel("Workspace", 600, 600)
 f = Frame(w)
 pack_stop_propagate(w)
-pack(f, {:expand=>true, :fill=>"both"})
+pack(f, expand=true, fill="both")
 tv = Treeview(f, get_names_summaries(Main, nothing, (Module), true))
 tree_key_header(tv, "Object")
 tree_headers(tv,  ["Summary"])
