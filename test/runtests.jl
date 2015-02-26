@@ -1,5 +1,6 @@
 ## Tests
-using Tk, Compat
+using Tk
+using Compat
 
 ## Toplevel
 w = Toplevel("Toplevel", 400, 400)
@@ -178,7 +179,7 @@ set_value(combo, nothing)
 set_items(combo, map(uppercase, choices))
 set_value(combo, 2)
 @assert get_value(combo) == uppercase(choices[2])
-set_items(combo, Compat.@AnyDict(:one=>"ONE", :two=>"TWO"))
+set_items(combo, @compat Dict(:one=>"ONE", :two=>"TWO"))
 set_value(combo, "one")
 @assert get_value(combo) == "one"
 destroy(w)
@@ -281,3 +282,25 @@ c = Canvas(f)
 @assert parent(c) == f.w
 @assert toplevel(c) == w
 destroy(w)
+
+## Examples
+# Wrap each test in its own module to avoid namespace leaks between files
+cd(joinpath(Pkg.dir("Tk"), "examples"))
+if Pkg.installed("Winston")==nothing
+    module example_manipulate
+        include("../examples/manipulate.jl")
+    end
+end
+module example_process
+    include("../examples/process.jl")
+end
+module example_sketch
+    include("../examples/sketch.jl")
+end
+module example_test
+    include("../examples/test.jl")
+end
+module example_workspace
+    include("../examples/workspace.jl")
+end
+
