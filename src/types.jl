@@ -6,7 +6,7 @@ abstract TTk_Container <: Tk_Widget ## for containers (frame, labelframe, ???)
 Widget = Union(TkWidget, Tk_Widget, Canvas, String)
 
 ## Maybe -- can this be parameterized?
-## https://groups.google.com/forum/?fromgroups=#!topic/julia-dev/IbbWwplrqlc (takeaway -- this style if frowned on)
+## https://groups.google.com/forum/?fromgroups=#!topic/julia-dev/IbbWwplrqlc (takeaway -- this style is frowned upon)
 MaybeFunction = Union(Function, Nothing)
 MaybeString = Union(String, Nothing)
 MaybeStringInteger = Union(String, Integer, Nothing) # for at in tree insert
