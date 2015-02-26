@@ -21,7 +21,7 @@ Tcl constructs.
 
 Constructors are provided  for the following widgets
 
-* `Toplevel`: for toplevel windows
+* `Toplevel`: for top level windows
 * `Frame`, `Labelframe`, `Notebook`, `Panedwindow`: for the basic containers
 * `Label`, `Button`, `Menu`: basic elements
 * `Checkbutton`, `Radio`, `Combobox`, `Slider`, `Spinbox`: selection widgets
@@ -56,7 +56,7 @@ convenience methods defined.
   item(s) to select from for selection widgets.
 
 * We add the methods `width`, `height`, `get_size` to get the
-  on-screen size of a widget. For toplevel windows there are
+  on-screen size of a widget. For top level windows there are
   `set_width`, `set_height`, and `set_size` for adjusting the
   geometry. The `:width` and `:height` properties are common to most
   widgets, and return the _requested_ width and height, which need not
@@ -70,7 +70,7 @@ convenience methods defined.
 
 A simple "Hello world" example, which shows off many of the styles is given by:
 
-```
+```jl
 w = Toplevel("Example")                                    ## A titled top level window
 f = Frame(w, padding = [3,3,2,2], relief="groove")         ## A Frame with some options set
 pack(f, expand = true, fill = "both")                      ## using pack to manage the layout of f
@@ -79,7 +79,7 @@ b = Button(f, "Click for a message")                       ## Button constructor
 grid(b, 1, 1)                                              ## use grid to pack in b. 1,1 specifies location
 #
 callback(path) = Messagebox(w, title="A message", message="Hello World") ## A callback to open a message
-bind(b, "command", callback)                            ## bind callback to 'command' option	 
+bind(b, "command", callback)                            ## bind callback to 'command' option
 bind(b, "<Return>", callback)                           ## press return key when button has focus
 ```
 
@@ -115,11 +115,11 @@ allowing us to add methods, such as `set_value` to modify the title.)
 Toplevel windows play a special role, as they start the widget
 hierarchy needed when constructing child components.
 
-A toplevel window is not a themed widget. Immediately packing in a
+A top level window is not a themed widget. Immediately packing in a
 `Frame` instance is good practice, as otherwise the background of the
 window may show through:
 
-```
+```jl
 w = Toplevel()
 f = Frame(w)
 pack(f, expand=true, fill="both")
@@ -132,19 +132,19 @@ pack(f, expand=true, fill="both")
 
 * The above will get the size from the frame -- which has no
   request. This means the window will disappear. You may want to force
-  the size to come from the toplevel window. You can use `tcl("pack",
+  the size to come from the top level window. You can use `tcl("pack",
   "propagate", w, false)` (wrapped in `pack_stop_propagate`) to get
   this:
 
-```
+```jl
 w = Toplevel("title", 400, 300)	## title, width, height
 pack_stop_propagate(w)
 f = Frame(w)
 pack(f, expand=true, fill="both")
 ```
 
-* resizing toplevel windows with the mouse can leave visual artifacts, at least on a
-  Mac. This is not optimal! (The picture below can be avoided by packing an expanding frame into the toplevel widget.)
+* resizing top level windows with the mouse can leave visual artifacts, at least on a
+  Mac. This is not optimal! (The picture below can be avoided by packing an expanding frame into the top level widget.)
 
 <img src="munged-window.png"></img>
 
@@ -152,7 +152,7 @@ pack(f, expand=true, fill="both")
 
 The `Messagebox` constructor makes a modal message box.
 
-```
+```jl
 Messagebox(title="title", message="message")
 ```
 
@@ -161,11 +161,11 @@ the parent, as seen in the examples.
 
 ### Checkbuttons
 
-<img src="checkbutton.png" > </img>
+![Check button](checkbutton.png)
 
 Check boxes are constructed with `Checkbutton`:
 
-```
+```jl
 w = Toplevel()
 f = Frame(w)
 pack(f, expand=true, fill="both")
@@ -176,7 +176,7 @@ function callback(path)		   ## callbacks have at least one argument
   value = get_value(cb)
   msg = value ? "Glad to hear that" : "Sorry to hear that"
   Messagebox(w, title="Thanks for the feedback", message=msg)
-end	 
+end
 
 bind(cb, "command", callback)   ## bind to command option
 ```
@@ -186,9 +186,9 @@ The `set_items` method can be used to change the label.
 
 ### Radio buttons
 
-<img src="radio.png" > </img>
+![Radio button](radio.png)
 
-```
+```jl
 w = Toplevel()
 f = Frame(w)
 pack(f, expand=true, fill="both")
@@ -199,8 +199,8 @@ b  = Button(f, "ok")
 map(u -> pack(u, anchor="w"), (l, rb, b))     ## pack in left to right
 
 
-function callback(path) 
-  msg = (get_value(rb) == "apples") ? "Good choice!  An apple a day keeps the doctor away!" : 
+function callback(path)
+  msg = (get_value(rb) == "apples") ? "Good choice!  An apple a day keeps the doctor away!" :
                                       "Good choice!  Oranges are full of Vitamin C!"
   Messagebox(w, msg)
 end
@@ -211,8 +211,8 @@ bind(b, "command", callback)
 The individual buttons can be accessed via the `buttons` property. This
 allows one to edit the labels, as in
 
-```
-set_items(rb.buttons[1], "Honeycrisp Apples")  
+```jl
+set_items(rb.buttons[1], "Honeycrisp Apples")
 ```
 
 (The `set_items` method is used to set the items for a selection
@@ -221,17 +221,16 @@ button.)
 
 ### Menus
 
-Menu bars for toplevel windows are easily created with the `menu_add`
+Menu bars for top level windows are easily created with the `menu_add`
 method. One can add actions items (pass a callback function), check
 buttons, radio buttons, or separators.
 
-
-```
+```jl
 w = Toplevel()
 tcl("pack", "propagate", w, false) ## or pack_stop_propagate(w)
 
 mb = Menu(w)			## makes menu, adds to top-level window
-fmenu = menu_add(mb, "File")	
+fmenu = menu_add(mb, "File")
 omenu = menu_add(mb, "Options")
 
 menu_add(fmenu, "Open file...", (path) -> println("Open file dialog, ..."))
@@ -254,7 +253,7 @@ pack(b, expand=true, fill="both")
 function callback(path)
   vals = map(get_value, (cb, rb))
   println(vals)
-end	 
+end
 
 callback_add(b, callback)	## generic way to add callback for most common event
 )
@@ -263,11 +262,11 @@ callback_add(b, callback)	## generic way to add callback for most common event
 
 ### Entry widget
 
-<img src="entry.png"></img>
+![Entry](entry.png)
 
 The entry widget can be used to collect data from the user.
 
-```
+```jl
 w = Toplevel()
 f = Frame(w); pack(f, expand=true, fill="both")
 
@@ -278,7 +277,7 @@ formlayout(e, "First name:")
 formlayout(b, nothing)
 focus(e)			## put keyboard focus on widget
 
-function callback(path) 
+function callback(path)
   val = get_value(e)
   msg = "You have a nice name $val"
   Messagebox(w,  msg)
@@ -291,14 +290,14 @@ bind(e, "<Return>", callback)  ## bind to a certain key press event
 
 ### Listboxes
 
-<img src="listbox.png"></img>
+![List box](listbox.png)
 
-There is no `Listbox` constructor, rather we replicate this with
+There is no `Listbox` constructor; rather, we replicate this with
 `Treeview` simply by passing a vector of strings. Here we use a
 scrollbar too:
 
-```
-fruits = ["Apple", "Naval orange", "Banana", "Pear"]
+```jl
+fruits = ["Apple", "Navel orange", "Banana", "Pear"]
 w = Toplevel("Favorite fruit?")
 tcl("pack", "propagate", w, false)
 f = Frame(w)
@@ -323,7 +322,7 @@ The value returned by `get_value` is an array or `nothing`. Returning
 `nothing` may not be the best choice, perhaps a 0-length array is
 better?
 
-One can configure the `selectmode`. E.g. `configure(lb,
+One can configure the `selectmode`, e.g. `configure(lb,
 selectmode = "extended")` with either `extended` (multiple
 selection possible, `browse` (single selection), or `none` (no
 selection).) The shortcut `lb[:selectmode] = "extended"` will also work.
@@ -338,9 +337,9 @@ libraries.
 
 Selection from a list of choices can be done with a combo box:
 
-<img src="combo.png" > </img>
+![Combo box](combo.png)
 
-```
+```jl
 fruits = ["Apple", "Navel orange", "Banana", "Pear"]
 
 w = Toplevel("Combo boxes", 300, 200)
@@ -356,14 +355,13 @@ grid(b, 3, 1)
 
 function callback(path)
   fruit_choice = get_value(cb)
-  msg = (fruit_choice == nothing) ? "What, no choice?" : 
+  msg = (fruit_choice == nothing) ? "What, no choice?" :
                                     "Good choice! $(fruit_choice)" * "s are delicious!"
   Messagebox(w, msg)
 end
 
 bind(b, "command", callback)
 ```
-
 
 Here no choice also returns `nothing`. Use this value with `set_value`
 to clear the selection, if desired.
@@ -375,7 +373,7 @@ really what we have here :)
 
 The basic multi-line text widget can be done through:
 
-```
+```jl
 w = Toplevel()
 tcl("pack", "propagate", w, false)
 f = Frame(w)
@@ -390,15 +388,15 @@ other things (adding/inserting text, using tags, ...) directly with
 
 ### Events
 
-One can bind a callback to an event in tcltk. There are few things to know:
+One can bind a callback to an event in Tcl/Tk. There are few things to know:
 
 * Callbacks have at least one argument (we use `path`). With
   `bind`, other arguments are matched by name to correspond to
-  tcltk's percent substitution. E.g. `f(path, x, y)` would get values
+  Tcl/Tk's percent substitution. E.g. `f(path, x, y)` would get values
   for x and y through `%x %y`.
 
 * We show how to bind to a widget event, but this can be more
-  general. E.g., toplevel events are for all children of the window a
+  general. E.g., top level events are for all children of the window a
   style can match all object of that style.
 
 * many widgets have a standard `command` argument in addition to
@@ -419,7 +417,7 @@ values. The convenience constructor allows one to specify the range of
 values through a `Range` object, or the low and high `float` values of the range.  Note
 that `get_value` returns a `float`, even if used with an integer range.
 
-``` 
+```jl
 w = Toplevel()
 f = Frame(w)
 pack(f, expand=true, fill="both")
@@ -437,7 +435,7 @@ bind(s_float, "command", path -> println("The float value is $(get_value(s_float
 
 One can also call `bind` using the `do` idiom:
 
-```
+```jl
 bind(sc, "command") do path
   println("The value is $(get_value(sc))")
 end
@@ -446,13 +444,13 @@ end
 
 ### Sharing a variable between widgets
 
-<img src="scale-label.png"></img>
+![Scale label](scale-label.png)
 
 Some widgets have a `textvariable` option. These can be shared to have
 automatic synchronization. For example, the scale widget does not have
 any indication as to the value, we remedy this with a label.
 
-```
+```jl
 w = Toplevel("Slider and label", 300, 200)
 f = Frame(w); pack(f, expand = true, fill = "both")
 
@@ -471,13 +469,13 @@ callback.
 
 ### Spinbox
 
-<img src="scale-spinbox.png"></img>
+![Scale spinbox](scale-spinbox.png)
 
 The scale widget easily lets one pick a value, but it can be hard to
 select a precise one. The spinbox makes this easier. Here we link the
 two using a callback:
 
-```
+```jl
 w = Toplevel("Slider/Spinbox")
 f = Frame(w); pack(f, expand = true, fill = "both")
 
@@ -490,11 +488,11 @@ bind(sp, "command", path -> set_value(sc, get_value(sp)))
 ```
 ### Images
 
-<img src="image.png"></img>
+![Image](image.png)
 
 The `Image` widget can be used to show `gif` files.
 
-```
+```jl
 fname = Pkg.dir("Tk", "examples", "logo.gif")
 img = Image(fname)
 
@@ -506,7 +504,7 @@ pack(l)
 
 This example adds an image to a button.
 
-```
+```jl
 fname = Pkg.dir("Tk", "examples", "weather-overcast.gif") ## https://code.google.com/p/ultimate-gnome/
 img = Image(fname)
 
@@ -526,13 +524,13 @@ interactive GUIs for plotting with `Winston`.
 
 To try it, run
 
-```
+```jl
 require(Pkg.dir("Tk", "examples", "manipulate.jl"))
 ```
 
 The above graphic was produced with:
 
-```
+```jl
 ex = quote
     x = linspace( 0, n * pi, 100 )
     c = cos(x)
@@ -554,7 +552,7 @@ obj = manipulate(ex,
                  ,picker("color", "Cos color", ["red", "green", "yellow"])
                  ,button("update")
                  )
-```           
+```
 
 
 ### Frames
@@ -583,7 +581,7 @@ make use of
 
 * `fill`: how should an expanding child fill its space. We use
   `{:expand=>true, :fill=>"both"}` to indicate the child should take
-  all the available space it can. Use `"x"` to stetch horizontally,
+  all the available space it can. Use `"x"` to stretch horizontally,
   and `"y"` to stretch vertically.
 
 Unlike other toolkits (Gtk, Qt), one can pack both horizontally and
@@ -591,7 +589,7 @@ vertically within a frame. So to pack horizontally, one must add the
 `side` option each time. It can be convenient to do this using a map
 by first creating the widgets, then managing them:
 
-```
+```jl
 w = Toplevel("packing example")
 f = Frame(w); pack(f, expand=true, fill="both")
 ok_b = Button(f, "Ok")
@@ -602,17 +600,17 @@ map(u -> pack(u, side = "left"), (ok_b, cancel_b, help_b))
 
 #### grid
 
-For `grid`  the arguments are the  row and column. We  use integers or
-ranges.  When a  range,  then the  widget  can span  multiple rows  or
-columns. Within  a cell, the `sticky` argument  replaces the `expand`,
-`fill`,  and `anchor` arguments.  This is  a string  with one  or more
-directions  to attach.  A  value of  `news`  is like  `{:expand=>true,
-:fill=>"both"}`, as all four sides are attached to.
+For `grid`, the arguments are the row and column. We use integers or ranges.
+When given a range, the widget can span multiple rows or columns. Within a
+cell, the `sticky` argument replaces the `expand`, `fill`, and `anchor`
+arguments. This is a string with one or more directions to attach. A value of
+`news` is like `Dict(:expand=>true, :fill=>"both")`, as all four sides are
+attached to.
 
 
-<img src="grid.png"></img>
+![Grid](grid.png)
 
-```
+```jl
 w = Toplevel("Grid")
 f = Frame(w, padding = 10); pack(f, expand=true, fill="both")
 
@@ -642,7 +640,7 @@ mix and match layout managers.
 A notebook container holds various pages and draws tabs to allow the
 user to switch between them. The `page_add` method makes this easy:
 
-```
+```jl
 w = Toplevel()
 tcl("pack", "propagate", w, false)
 nb = Notebook(w)
@@ -666,7 +664,7 @@ A paned window allows a user to allocate space between child
 components using their mouse. This is done by dragging a "sash". As
 with `Notebook` containers, children are added through `page_add`.
 
-```
+```jl
 w = Toplevel("Panedwindow", 800, 300)
 tcl("pack", "propagate", w, false)
 f = Frame(w); pack(f, expand=true, fill="both")
