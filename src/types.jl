@@ -3,8 +3,6 @@ abstract Tk_Widget
 abstract TTk_Widget <: Tk_Widget ## for ttk::widgets
 abstract TTk_Container <: Tk_Widget ## for containers (frame, labelframe, ???)
 
-
-
 Widget = Union(TkWidget, Tk_Widget, Canvas, String)
 
 ## Maybe -- can this be parameterized?

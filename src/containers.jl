@@ -114,7 +114,7 @@ page_add(child::Widget) = page_add(child, 1)
 ## Container methods
 
 ## pack(widget, {:expand => true, :anchor => "w"})
-pack(widget::Widget;  kwargs...) = tcl("pack", widget; kwargs...)
+pack(widget::Widget; kwargs...) = tcl("pack", widget; kwargs...)
 
 pack_configure(widget::Widget, kwargs...) = tcl(I"pack configure", widget; kwargs...)
 pack_stop_propagate(widget::Widget) = tcl(I"pack propagate", widget, false)
