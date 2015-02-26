@@ -201,7 +201,7 @@ function callback_add(widget::Tk_Widget, callback::Function)
         :Tk_Spinbox => "command",
         :Tk_Entry => "<FocusOut>",
         :Tk_Text => "<FocusOut>",
-        :Tk_Treeview => "<<TreeviewSelect>>")
+        :Tk_Treeview => "<<TreeviewSelect>>"
     )
     key = Base.symbol(string(typeof(widget)))
     if haskey(events, key)
