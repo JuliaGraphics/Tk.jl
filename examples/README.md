@@ -159,6 +159,16 @@ Messagebox(title="title", message="message")
 An optional `parent` argument can be specified to locate the box near
 the parent, as seen in the examples.
 
+### File Dialogs
+
+File Open, File Save and Choose Directory dialogs can be invoked as follows.
+
+```jl
+GetOpenFile()
+GetSaveFile()
+ChooseDirectory()
+```
+
 ### Checkbuttons
 
 ![Check button](checkbutton.png)
