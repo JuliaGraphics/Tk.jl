@@ -1,86 +1,54 @@
 using BinDeps
 
-s = @build_steps begin
-    c=Choices(Choice[Choice(:skip,"Skip Installation - Binaries must be installed manually",nothing)])
-end
+@BinDeps.setup
 
-## Homebrew
-@osx_only push!(c,Choice(:brew,"Install depdendency using brew",@build_steps begin
-        HomebrewInstall("tk",ASCIIString["--enable-aqua"])
-        end))
+tcl = library_dependency("tcl",aliases=["libtcl8.6","tcl86g","tcl86t","libtcl","libtcl8.6.so.0","libtcl8.5","libtcl8.5.so.0","tcl85"])
+tk = library_dependency("tk",aliases=["libtk8.6","libtk","libtk8.6.so.0","libtk8.5","libtk8.5.so.0","tk85","tk86","tk86t"], depends=[tcl], validate = function(p,h)
+    @osx_only return dlsym_e(h,:TkMacOSXGetRootControl) != C_NULL
+    return true
+end)
 
-## Prebuilt Binaries
-depsdir = joinpath(Pkg.dir(),"Tk","deps")
 @windows_only begin
-    local_file = joinpath(joinpath(depsdir,"downloads"),"Tk.tar.gz")
-    push!(c,Choice(:binary,"Download prebuilt binary",@build_steps begin
-                ChangeDirectory(depsdir)
-                FileDownloader("http://julialang.googlecode.com/files/Tk.tar.gz",local_file)
-                FileUnpacker(local_file,joinpath(depsdir,"usr"))
-            end))
+    using WinRPM
+    provides(WinRPM.RPM,"tk",tk,os = :Windows)
+    provides(WinRPM.RPM,"tcl",tcl,os = :Windows)
 end
 
-prefix=joinpath(depsdir,"usr")
-uprefix = replace(replace(prefix,"\\","/"),"C:/","/c/")
+provides(AptGet,"tcl8.5",tcl)
+provides(AptGet,"tk8.5",tk)
 
-## Install from source
-let 
-    steps = @build_steps begin ChangeDirectory(depsdir) end
+provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz"),tcl,unpacked_dir = "tcl8.6.0")
+provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz"),tk,unpacked_dir = "tk8.6.0")
 
-    ENV["PKG_CONFIG_LIBDIR"]=ENV["PKG_CONFIG_PATH"]=joinpath(depsdir,"usr","lib","pkgconfig")
-    @unix_only ENV["PATH"]=joinpath(prefix,"bin")*":"*ENV["PATH"]
-    @windows_only ENV["PATH"]=joinpath(prefix,"bin")*";"*ENV["PATH"]
-    ## Windows Specific dependencies
+is64bit = WORD_SIZE == 64
 
-    is64bit = WORD_SIZE == 64
-    tcldir = OS_NAME==:Windows?"tcl8.6.0/win":OS_NAME==:Darwin?"tcl8.6.0/macosx":"tcl8.6.0/unix"
-    tkdir = OS_NAME==:Windows?"tk8.6.0/win":OS_NAME==:Darwin?"tk8.6.0/macosx":"tk8.6.0/unix"
+provides(BuildProcess,Autotools(configure_subdir = "unix", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tcl, os = :Unix)
+provides(BuildProcess,Autotools(configure_subdir = "unix", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Unix)
 
-    steps |= @build_steps begin
-        ChangeDirectory(depsdir)
-        autotools_install(depsdir,"http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz","tcl-8.6.0.tar.gz",String[is64bit ? "--enable-64bit" : "--disable-64bit","--enable-threads","--enable-symbols","TCL_BIN_DIR=\"$uprefix/bin\""],"tcl8.6.0",tcldir,"libtcl8.6."*BinDeps.shlib_ext,"libtcl8.6."*BinDeps.shlib_ext)
-        begin
-            ChangeDirectory(joinpath("builds",tcldir))
-            `make install-private-headers`
-        end
-        autotools_install(depsdir,"http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz","tk-8.6.0.tar.gz",String["--enable-symbols",is64bit ? "--enable-64bit" : "--disable-64bit","--enable-threads","--enable-aqua=yes","--with-tcl="*joinpath(uprefix,"lib")],"tk8.6.0",tkdir,"libtk8.6."*BinDeps.shlib_ext,"libtk8.6."*BinDeps.shlib_ext)
-        begin
-            ChangeDirectory(joinpath("builds",tkdir))
-            `make install-private-headers`
-        end
-    end
-
-    push!(c,Choice(:source,"Install depdendency from source",steps))
+if WORD_SIZE == 64
+        # Unfortunately the mingw-built tc segfaults since some function signatures
+        # are different between VC and mingw. This is fixed on tcl trunk. For now,
+        # just use VC to build tcl (Note requlres Visual Studio Express in the PATH)
+        provides(BuildProcess,(@build_steps begin
+                GetSources(tcl)
+                FileRule("tclConfig.sh",@build_steps begin
+                        ChangeDirectory(joinpath(srcdir(tcl),"tcl8.6.0/win"))
+                        `nmake -f Makefile.vc`
+                        `nmake -f Makefile.vc install INSTALLDIR=$(usrdir(tcl))`
+                        `xcopy $(libdir(tcl))\\tclConfig.sh $(srcdir(tcl))\\tcl8.6.0\\win`
+                end)
+        end),tcl)
+        provides(BuildProcess,(@build_steps begin
+                GetSources(tk)
+                begin
+                        ChangeDirectory(joinpath(srcdir(tk),"tk8.6.0/win"))
+                        `nmake -f Makefile.vc TCLDIR=$(srcdir(tcl))\\tcl8.6.0`
+                        `nmake -f Makefile.vc install INSTALLDIR=$(usrdir(tk))`
+                end
+        end),tk)
+else
+        provides(BuildProcess,Autotools(libtarget = "tcl86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit","--enable-threads"]),tcl, os = :Windows)
+        provides(BuildProcess,Autotools(libtarget = "tk86.dll", configure_subdir = "win", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Windows)
 end
 
-try
-    dl = dlopen("libtk_wrapper")
-    dlclose(dl)
-catch
-    cc = CCompile("src/tk_wrapper.c","$prefix/lib/libtk_wrapper."*BinDeps.shlib_ext,
-                  ["-shared","-g","-fPIC","-I$prefix/include",
-                   "-I/usr/local/include",
-                   "-L$prefix/lib"],
-                  OS_NAME == :Linux ? ["-ltcl8.5","-ltk8.5"] : OS_NAME == :Darwin ? ["-ltcl8.6","-ltk8.6"] : ["-ltcl","-ltk"])
-    if(OS_NAME == :Darwin)
-#        push!(cc.options, "-I/opt/X11/include")
-        unshift!(cc.options,"-xobjective-c")
-        append!(cc.libs,["-framework","AppKit","-framework","Foundation","-framework","ApplicationServices"])
-    elseif(OS_NAME == :Windows)
-        push!(cc.libs,"-lGdi32")
-    elseif(OS_NAME == :Linux)
-        for idir in ("/usr/include/tcl8.5", "/usr/include/tcl")
-            if isdir(idir)
-                push!(cc.options, "-I$idir")
-                break
-            end
-        end
-    end
-    s |= @build_steps begin
-        CreateDirectory(joinpath(prefix,"lib"))
-        cc
-    end
-
-    run(s)
-
-end
+@BinDeps.install Dict([:tk => :libtk, :tcl=>:libtcl])

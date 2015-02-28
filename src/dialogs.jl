@@ -1,8 +1,8 @@
 ## dialogs
 
 ## can add arguments if desired. Don't like names or lack of arguments
-GetOpenFile() = tcl("tkGetOpenFile")
-GetSaveFile() = tcl("tkGetSaveFile")
+GetOpenFile() = tcl("tk_getOpenFile")
+GetSaveFile() = tcl("tk_getSaveFile")
 ChooseDirectory() = tcl("tk_chooseDirectory")
 
 ## Message box
@@ -13,7 +13,7 @@ function Messagebox(parent::MaybeWidget; title::String="", message::String="", d
     if length(message) > 0 args["message"] = message end
     if length(detail) > 0 args["detail"] = detail end
     args["type"] = "okcancel"
-    
+
     tcl("tk_messageBox", args)
 end
 Messagebox(;kwargs...) = Messagebox(nothing; kwargs...)

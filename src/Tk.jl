@@ -10,15 +10,23 @@
 # - state-interrogating functions
 # - cleaning up unused callbacks
 
-include(joinpath(Pkg.dir(),"Tk","deps","ext.jl"))
 
 module Tk
 using Base
 using Cairo
+using Compat
 
+include("../deps/deps.jl")
 
-import Base: string, show, getindex, setindex!
-import Base.Graphics: width, height, getgc
+import Base: string, show, getindex, setindex!, isequal
+
+if VERSION < v"0.4.0-dev+3275"
+    import Base.Graphics: width, height, getgc
+else
+    import Graphics: width, height, getgc
+end
+
+import Cairo: destroy
 
 include("tkwidget.jl")                  # old Tk
 include("types.jl")
@@ -32,7 +40,7 @@ include("menu.jl")
 
 export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_surface, getgc,
-    tcl_doevent, MouseHandler
+    tcl_doevent, MouseHandler, draw
 
 export tcl, tclvar, configure, cget, identify, state, instate, winfo, wm, exists,
        tcl_after, bind, bindwheel, callback_add
@@ -56,10 +64,12 @@ export get_value, set_value,
        set_width,
        set_height,
        get_size, set_size,
+       pointerxy,
        get_enabled, set_enabled,
        get_editable, set_editable,
        get_visible, set_visible,
        set_position,
+       parent, toplevel, children,
        raise, focus, update, destroy
 
 

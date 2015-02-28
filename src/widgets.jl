@@ -46,7 +46,9 @@ for (k, k1, v) in ((:Label, :Tk_Label, "ttk::label"),
     @eval begin
         function $k(parent::Widget; kwargs...)
             w = make_widget(parent, $v; kwargs...)
-            $k1(w)
+            widget = $k1 <: TTk_Container ? $k1(w, Tk_Widget[]) : $k1(w)
+            if isa(parent, TTk_Container) push!(parent.children, widget) end
+            widget
         end
     end
 end
@@ -55,22 +57,22 @@ end
 ## Now customize
 
 ## Label constructors
-Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=text, image=image, compound="left")
-Label(parent::Widget, text::String) = Label(parent, text=text)
+Label(parent::Widget, text::String, image::Tk_Image) = Label(parent, text=tk_string_escape(text), image=image, compound="left")
+Label(parent::Widget, text::String) = Label(parent, text=tk_string_escape(text))
 Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
 get_value(widget::Union(Tk_Button, Tk_Label)) = widget[:text]
-function set_value(widget::Union(Tk_Label, Tk_Button), value::String) 
+function set_value(widget::Union(Tk_Label, Tk_Button), value::String)
     variable = cget(widget, "textvariable")
-    (variable == "") ? widget[:text] =  value : tclvar(variable, value)
+    (variable == "") ? widget[:text] =  tk_string_escape(value) : tclvar(variable, value)
 end
 
 ## Button constructors
 Button(parent::Widget, text::String, command::Function, image::Tk_Image) =
-    Button(parent, text = text, command=command, image=image, compound="left")
+    Button(parent, text = tk_string_escape(text), command=command, image=image, compound="left")
 Button(parent::Widget, text::String, image::Tk_Image) =
-    Button(parent, text = text, image=image, compound="left")
-Button(parent::Widget, text::String, command::Function) = Button(parent, text=text, command=command)
-Button(parent::Widget, text::String) = Button(parent, text=text)
+    Button(parent, text = tk_string_escape(text), image=image, compound="left")
+Button(parent::Widget, text::String, command::Function) = Button(parent, text=tk_string_escape(text), command=command)
+Button(parent::Widget, text::String) = Button(parent, text=tk_string_escape(text))
 Button(parent::Widget, command::Function, image::Tk_Image) =
     Button(parent, command=command, image=image, compound="image")
 Button(parent::Widget, image::Tk_Image) =
@@ -95,7 +97,7 @@ function set_value(widget::Tk_Checkbutton, value::Bool)
     tclvar(var, value ? 1 : 0)
 end
 get_items(widget::Tk_Checkbutton) = widget[:text]
-set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = value
+set_items(widget::Tk_Checkbutton, value::String) = widget[:text] = tk_string_escape(value)
 
 ## RadioButton
 type Tk_Radiobutton <: TTk_Widget
@@ -104,7 +106,7 @@ end
 MaybeTkRadioButton = Union(Nothing, Tk_Radiobutton)
 
 function Radiobutton(parent::Widget, group::MaybeTkRadioButton, label::String)
-    
+
     rb = Radiobutton(parent)
 
     var = isa(group, Tk_Radiobutton) ? group[:variable] : tclvar()
@@ -130,11 +132,11 @@ function Radio{T<:String}(parent::Widget, labels::Vector{T}, orient::String)
     n = size(labels)[1]
     rbs = Array(Tk_Radiobutton, n)
     frame = Frame(parent)
-    
-    rbs[1] = Radiobutton(frame, labels[1])
+
+    rbs[1] = Radiobutton(frame, tk_string_escape(labels[1]))
     if n > 1
         for j in 2:n
-            rbs[j] = Radiobutton(frame, rbs[1], labels[j])
+            rbs[j] = Radiobutton(frame, rbs[1], tk_string_escape(labels[j]))
         end
     end
 
@@ -217,7 +219,7 @@ end
 
 
 get_items(widget::Tk_Combobox) =  widget.values
-function set_items(widget::Tk_Combobox, items::Vector{Tuple})
+function set_items{T}(widget::Tk_Combobox, items::Vector{(T,T)})
     vals = cb_pluck_labels(items)
     configure(widget, values = vals)
     widget.values = items
@@ -233,26 +235,32 @@ end
 
 get_editable(widget::Tk_Combobox) = widget[:state] == "normal"
 set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "normal" : "readonly"
-    
+
 
 ## Slider
-## Restricted to integer ranges stepping by 1!
-
+## deprecate this interface as integer values are not guaranteed in return.
 function Slider{T <: Integer}(parent::Widget, range::Range1{T}; orient="horizontal")
     w = Slider(parent, orient=orient)
     var = tclvar()
-    tclvar(var, min(range))
-    configure(w, from=min(range), to = max(range), variable=var)
+    tclvar(var, minimum(range))
+    configure(w, from=minimum(range), to = maximum(range), variable=var)
     w
 end
 
+function Slider{T <: Real}(parent::Widget, lo::T, hi::T; orient = "horizontal")
+    w = Slider(parent, orient = orient)
+    var = tclvar()
+    tclvar(var, lo)
+    configure(w, from = lo, to = hi, variable = var)
+    w
+end
 
-get_value(widget::Tk_Scale) = int(float(widget[:value]))
-function set_value(widget::Tk_Scale, value::Integer)
+get_value(widget::Tk_Scale) = float(widget[:value])
+
+function set_value(widget::Tk_Scale, value::Real)
     variable = widget[:variable]
     (variable == "") ? widget[:value] = value : tclvar(variable, value)
 end
-
 
 ## bind needs extra args for command
 function bind(widget::Tk_Scale, event::String, callback::Function)
@@ -274,7 +282,7 @@ end
 function Spinbox{T <: Integer}(parent, range::Range1{T})
     w = Spinbox(parent)
     set_items(w, range)
-    set_value(w, min(range))
+    set_value(w, minimum(range))
     w
 end
 
@@ -283,7 +291,7 @@ set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
 function set_items{T <: Integer}(widget::Tk_Spinbox, range::Range1{T})
-    configure(widget, from=min(range), to = max(range), increment = step(range))
+    configure(widget, from=minimum(range), to = maximum(range), increment = step(range))
     widget.range = range
 end
 
@@ -292,6 +300,7 @@ end
 function Separator(widget::Widget, horizontal::Bool)
     w = Separator(widget)
     configure(w, orient = (horizontal ? "horizontal" : "vertical"))
+    w
 end
 
 ## Progressbar
@@ -301,7 +310,7 @@ function Progressbar(widget::Widget, mode::String)
     w
 end
 
-get_value(widget::Tk_Progressbar) = widget[:value] | float | int
+get_value(widget::Tk_Progressbar) = int(float(widget[:value]))
 set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image
@@ -336,7 +345,7 @@ end
 
 function x11encode(data::BitArray{2})
     # Not efficient, but easy
-    s = memio()
+    s = IOBuffer()
     x11header(s, data)
     u8 = zeros(Uint8, iceil(size(data, 1)/8), size(data, 2))
     for i = 1:size(data,1)
@@ -364,8 +373,9 @@ end
 ### methods
 get_value(widget::Tk_Entry) = tcl(widget, "get")
 function set_value(widget::Tk_Entry, val::String)
+
     tcl(widget, I"delete @0 end")
-    tcl(widget, I"insert @0", val == "" ? "{}" : val)
+    tcl(widget, I"insert @0", tk_string_escape(val))
 end
 
 get_editable(widget::Tk_Entry) = widget[:state] == "normal"
@@ -397,14 +407,24 @@ function Scrollbar(parent::Widget, child::Widget, orient::String)
 end
 
 ## Text
-get_value(widget::Tk_Text) = tcl(widget, I"get 0.0 end") | chomp
 
+## non-exported helpers
+get_text(widget::Tk_Text, start_index, end_index) = tcl(widget, "get", start_index, end_index)
+function set_text(widget::Tk_Text, value::String, index)
+    tcl(widget, "insert", index, tk_string_escape(value))
+end
+
+get_value(widget::Tk_Text) = chomp(get_text(widget, "0.0", "end"))
 function set_value(widget::Tk_Text, value::String)
     path = get_path(widget)
     tcl(widget, I"delete 0.0 end")
-    tcl(widget, I"insert end", value)
+    set_text(widget, value, "end")
     tcl(widget, I"see 0.0")
 end
+
+
+
+
 
 get_editable(widget::Tk_Text) = widget[:state] != "disabled"
 set_editable(widget::Tk_Text, value::Bool) = widget[:state] = value ? "normal" : "disabled"
@@ -434,7 +454,7 @@ function Treeview{T <: String}(widget::Widget, items::Vector{T}, title::String; 
     set_items(w, items)
 
     tcl_eval("ttk::style map Treeview.Row -background [list selected $selected_color]")
-    
+
     w
 end
 Treeview(widget::Widget, items::Vector) = Treeview(widget, items, "")
@@ -464,7 +484,7 @@ function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeV
     sz = size(items)
 
     w = Treeview(widget)
-    configure(w, show = "tree headings", selectmode = "browse", columns=[1:(sz[2]-1)])
+    configure(w, show = "tree headings", selectmode = "browse", columns=collect(1:(sz[2]-1)))
     ## widths ...
     if isa(widths, Vector)
         tcl(w, I"column #0", width = widths[1])
@@ -476,7 +496,7 @@ function Treeview{T <: String}(widget::Widget, items::Array{T,2}, widths::MaybeV
     set_items(w, items)
     color = "gray"
     tcl_eval("ttk::style map Treeview.Row -background [list selected $color]")
-    
+
     w
 end
 Treeview{T <: String}(widget::Widget, items::Array{T,2}) = Treeview(widget, items, nothing)
@@ -528,7 +548,7 @@ set_value(widget::Tk_Treeview, index::Integer) = set_value(widget, index, false)
 ## used by get_value to return path of keys for a node
 function tree_get_keys(widget::Tk_Treeview, node::TreeNode)
     if tcl(widget, "exists", node) == "0" error("Node is not in tree") end
-    
+
     x = String[]
     while node.node != ""
         push!(x, tcl(widget, "item", node, "-text"))
@@ -551,7 +571,7 @@ function node_insert(widget::Tk_Treeview, node::MaybeTreeNode, at::MaybeStringIn
 
     parent = isa(node, Nothing) ? "{}" : node.node
     at = isa(at, Nothing) ? "end" : at
-    
+
     args = Dict()
     args["text"] = isa(text, Nothing) ? "" : text
     args["image"] = image.i
@@ -638,67 +658,18 @@ end
 
 
 ## Bring Canvas object into Tk_Widget level.
-type Tk_CairoCanvas <: Tk_Widget
-    w::Union(Nothing, Canvas)
-    device::Union(Nothing, Cairo.CairoSurface)
-    function Tk_CairoCanvas(widget::Widget)
-        self = new(Tk.Canvas(widget.w), nothing)
-        function callback(path)
-            if self.device == nothing
-                c = self.w
-                Tk.init_canvas(c)
-                w = winfo(c, "width")  | int
-                h = winfo(c, "height")  | int
-
-                self.device = Tk.cairo_surface(c)
-            end
-        end
-        bind(self.w, "<Map>", callback)
-        bind(self.w, "<Configure>", (path) -> begin
-            if !isa(self.device, Nothing)
-                w, h = map(u -> winfo(self.w, u) | int, ("width", "height"))
-            end
-        end)
-        self
-    end
+type Tk_CairoCanvas       <: TTk_Widget
+    w::Canvas
 end
 
-CairoCanvas(parent::Widget) = Tk_CairoCanvas(parent)
+function TkCairoCanvas(Widget::Tk_Widget; width::Int=-1, height::Int=-1)
+    c = Canvas(Widget.w, width, height)
+    Tk_CairoCanvas(c)
+end
 
-## This would be used with the following, but it only works directly if the
-## canvas is packed in a window. It doesn't show in a themed widget (Frame, Panedwindow)
-## and loosk funny when sharing the stage with a button.
-
-
-## add to Winston.jl:
-## function render(cnv::Tk_CairoCanvas, p::Winston.PlotContainer)
-##     if !isa(cnv.device, Nothing)
-##         Winston.page_compose(p, cnv.device, false)
-##         cnv.device.on_close()
-##     else
-##         println("Device not initialized yet. Did you manage its layout?")
-##     end
-## end
-
-## ## This works:
-## using Winston 
-## w = Toplevel("works")
-## canvas = Tk.CairoCanvas(w)
-## pack(canvas)
-
-## x = linspace(0, pi, 1000); y = cos(x); p = FramedPlot(); add(p, Curve(x,y))
-## render(canvas, p)
-
-
-## ## This fails:
-
-## w = Toplevel("Fails")
-## pack_stop_propagate(w)
-## f = Frame(w)
-## pack(f, expand=true, :fill="both")
-## #
-## canvas = Tk.CairoCanvas(f)
-## pack(canvas, expand=true, fill="both")
-## #
-## render(canvas, p)
+function Canvas(parent::TTk_Container, args...)
+    c = Canvas(parent.w, args...)
+    push!(parent.children, Tk_CairoCanvas(c))
+    c
+end
 
