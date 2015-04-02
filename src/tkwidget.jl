@@ -138,7 +138,8 @@ const _callbacks = ObjectIdDict()
 
 const empty_str = ""
 
-function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
+function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
+    f = unsafe_pointer_to_objref(fptr)
     args = [bytestring(unsafe_load(argv,i)) for i=1:argc]
     local result
     try
@@ -159,14 +160,14 @@ function jl_tcl_callback(f, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
 end
 
 jl_tcl_callback_ptr = cfunction(jl_tcl_callback,
-                                Int32, (Function, Ptr{Void}, Int32, Ptr{Ptr{Uint8}}))
+                                Int32, (Ptr{Void}, Ptr{Void}, Int32, Ptr{Ptr{Uint8}}))
 
 function tcl_callback(f)
     cname = string("jl_cb", repr(object_id(f)))
     # TODO: use Tcl_CreateObjCommand instead
     ccall((:Tcl_CreateCommand,libtcl), Ptr{Void},
-          (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Any, Ptr{Void}),
-          tcl_interp, cname, jl_tcl_callback_ptr, f, C_NULL)
+          (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Ptr{Void}, Ptr{Void}),
+          tcl_interp, cname, jl_tcl_callback_ptr, pointer_from_objref(f), C_NULL)
     # TODO: use a delete proc (last arg) to remove this
     _callbacks[f] = true
     cname
