@@ -285,6 +285,7 @@ destroy(w)
 
 ## Examples
 # Wrap each test in its own module to avoid namespace leaks between files
+dcur = pwd()
 cd(joinpath(Pkg.dir("Tk"), "examples"))
 if Pkg.installed("Winston")==nothing
     module example_manipulate
@@ -299,8 +300,12 @@ module example_sketch
 end
 module example_test
     include("../examples/test.jl")
+    destroy(w)
 end
 module example_workspace
     include("../examples/workspace.jl")
+    aft.stop()
+    sleep(1.5)
+    destroy(w)
 end
-
+cd(dcur)

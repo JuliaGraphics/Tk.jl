@@ -81,7 +81,7 @@ end)
 
 ## Update values after 1000ms. Call aft.stop() to stop
 function cb()
-    tk_exists(tv) ? nothing : aft.stop()
+    exists(tv) ? nothing : aft.stop()
     if update_ids(Main)
         set_items(tv, get_names_summaries(Main, nothing, (Module), true))
     end
