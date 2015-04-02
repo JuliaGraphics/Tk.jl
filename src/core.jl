@@ -171,7 +171,7 @@ function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs:
     if !isempty(modifier) && !endswith(modifier,"-")
         modifier = string(modifier, "-")
     end
-    if !isempty(tkargs) && !beginswith(tkargs," ")
+    if !isempty(tkargs) && !startswith(tkargs," ")
         tkargs = string(" ", tkargs)
     end
     ccb = tcl_callback(callback)
