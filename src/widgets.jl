@@ -286,7 +286,7 @@ function Spinbox{T <: Integer}(parent, range::Range1{T})
     w
 end
 
-get_value(widget::Tk_Spinbox) = int(tcl(widget, "get"))
+get_value(widget::Tk_Spinbox) = parse(Int, tcl(widget, "get"))
 set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
@@ -310,7 +310,7 @@ function Progressbar(widget::Widget, mode::String)
     w
 end
 
-get_value(widget::Tk_Progressbar) = int(float(widget[:value]))
+get_value(widget::Tk_Progressbar) = round(Int, float(widget[:value]))
 set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image

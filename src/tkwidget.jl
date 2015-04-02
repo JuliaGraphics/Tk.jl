@@ -1,8 +1,8 @@
-const TCL_OK       = int32(0)
-const TCL_ERROR    = int32(1)
-const TCL_RETURN   = int32(2)
-const TCL_BREAK    = int32(3)
-const TCL_CONTINUE = int32(4)
+const TCL_OK       = convert(Int32, 0)
+const TCL_ERROR    = convert(Int32, 1)
+const TCL_RETURN   = convert(Int32, 2)
+const TCL_BREAK    = convert(Int32, 3)
+const TCL_CONTINUE = convert(Int32, 4)
 
 const TCL_VOLATILE = convert(Ptr{Void}, 1)
 const TCL_STATIC   = convert(Ptr{Void}, 0)
@@ -173,8 +173,8 @@ function tcl_callback(f)
     cname
 end
 
-width(w::TkWidget) = int(tcl_eval("winfo width $(w.path)"))
-height(w::TkWidget) = int(tcl_eval("winfo height $(w.path)"))
+width(w::TkWidget) = parse(Int, tcl_eval("winfo width $(w.path)"))
+height(w::TkWidget) = parse(Int, tcl_eval("winfo height $(w.path)"))
 
 const default_mouse_cb = (w, x, y)->nothing
 
@@ -390,15 +390,15 @@ function add_canvas_callbacks(c::Canvas)
     # A widget has changed size or position and may need to adjust its layout
     bind(c, "<Configure>", path -> configure(c))
     # A mouse button was pressed
-    bind(c, "<ButtonPress-1>", (path,x,y)->(c.mouse.button1press(c,int(x),int(y))))
-    bind(c, "<ButtonRelease-1>", (path,x,y)->(c.mouse.button1release(c,int(x),int(y))))
-    bind(c, "<ButtonPress-2>",   (path,x,y)->(c.mouse.button2press(c,int(x),int(y))))
-    bind(c, "<ButtonRelease-2>", (path,x,y)->(c.mouse.button2release(c,int(x),int(y))))
-    bind(c, "<ButtonPress-3>",   (path,x,y)->(c.mouse.button3press(c,int(x),int(y))))
-    bind(c, "<ButtonRelease-3>", (path,x,y)->(c.mouse.button3release(c,int(x),int(y))))
+    bind(c, "<ButtonPress-1>", (path,x,y)->(c.mouse.button1press(c, parse(Int, x), parse(Int, y))))
+    bind(c, "<ButtonRelease-1>", (path,x,y)->(c.mouse.button1release(c, parse(Int, x), parse(Int, y))))
+    bind(c, "<ButtonPress-2>",   (path,x,y)->(c.mouse.button2press(c, parse(Int, x), parse(Int, y))))
+    bind(c, "<ButtonRelease-2>", (path,x,y)->(c.mouse.button2release(c, parse(Int, x), parse(Int, y))))
+    bind(c, "<ButtonPress-3>",   (path,x,y)->(c.mouse.button3press(c, parse(Int, x), parse(Int, y))))
+    bind(c, "<ButtonRelease-3>", (path,x,y)->(c.mouse.button3release(c, parse(Int, x), parse(Int, y))))
     # The cursor is in motion over a widget
-    bind(c, "<Motion>",          (path,x,y)->(c.mouse.motion(c,int(x),int(y))))
-    bind(c, "<Button1-Motion>",  (path,x,y)->(c.mouse.button1motion(c,int(x),int(y))))
+    bind(c, "<Motion>",          (path,x,y)->(c.mouse.motion(c, parse(Int, x), parse(Int, y))))
+    bind(c, "<Button1-Motion>",  (path,x,y)->(c.mouse.button1motion(c, parse(Int, x), parse(Int, y))))
 end
 
 # some canvas init steps require the widget to fully exist

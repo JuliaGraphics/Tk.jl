@@ -15,8 +15,8 @@ set_items(widget::Widget, items) = XXX()
 ## reqwidth -- may not be satisfied by window sizing algorithm.
 ## that reported by -width property
 ## width, height, get_size refer to that drawn:
-width(widget::Widget) = int(float(winfo(widget, "width")))
-height(widget::Widget) = int(float(winfo(widget, "height")))
+width(widget::Widget) = round(Int, float(winfo(widget, "width")))
+height(widget::Widget) = round(Int, float(winfo(widget, "height")))
 get_size(widget::Widget) = [width(widget), height(widget)]
 
 ## setting is different.
@@ -62,12 +62,12 @@ exists(widget::Widget) = winfo(widget, "exists") == "1"
 function pointerxy(window)
     # Get position within the screen
     xy = split(winfo(window, "pointerxy"))
-    x,y = int(xy[1]), int(xy[2])
+    x,y = parse(Int, xy[1]), parse(Int, xy[2])
     if x == -1 && y == -1
         return x,y  # not on same desktop
     end
     # Compensate for window position
-    winx = int(winfo(window, "x"))
-    winy = int(winfo(window, "y"))
+    winx = parse(Int, winfo(window, "x"))
+    winy = parse(Int, winfo(window, "y"))
     x-winx, y-winy
 end
