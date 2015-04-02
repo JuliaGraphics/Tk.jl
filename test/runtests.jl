@@ -285,10 +285,11 @@ destroy(w)
 
 ## Examples
 # Wrap each test in its own module to avoid namespace leaks between files
+const exampledir = joinpath(splitdir(splitdir(@__FILE__)[1])[1], "examples")
 dcur = pwd()
-cd(joinpath(Pkg.dir("Tk"), "examples"))
-if Pkg.installed("Winston")==nothing
-    module example_manipulate
+cd(exampledir)
+module example_manipulate
+    if Pkg.installed("Winston")==nothing
         include("../examples/manipulate.jl")
     end
 end
