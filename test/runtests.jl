@@ -289,7 +289,7 @@ const exampledir = joinpath(splitdir(splitdir(@__FILE__)[1])[1], "examples")
 dcur = pwd()
 cd(exampledir)
 module example_manipulate
-    if Pkg.installed("Winston")==nothing
+    if Pkg.installed("Winston")!=nothing
         include("../examples/manipulate.jl")
     end
 end
