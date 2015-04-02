@@ -286,7 +286,7 @@ function Spinbox{T <: Integer}(parent, range::Range1{T})
     w
 end
 
-get_value(widget::Tk_Spinbox) = int(tcl(widget, "get"))
+get_value(widget::Tk_Spinbox) = parse(Int, tcl(widget, "get"))
 set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
@@ -310,7 +310,7 @@ function Progressbar(widget::Widget, mode::String)
     w
 end
 
-get_value(widget::Tk_Progressbar) = int(float(widget[:value]))
+get_value(widget::Tk_Progressbar) = round(Int, float(widget[:value]))
 set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image
@@ -347,12 +347,12 @@ function x11encode(data::BitArray{2})
     # Not efficient, but easy
     s = IOBuffer()
     x11header(s, data)
-    u8 = zeros(Uint8, iceil(size(data, 1)/8), size(data, 2))
+    u8 = zeros(Uint8, ceil(Int, size(data, 1)/8), size(data, 2))
     for i = 1:size(data,1)
-        ii = iceil(i/8)
+        ii = ceil(Int, i/8)
         n = i - 8*(ii-1) - 1
         for j = 1:size(data,2)
-            u8[ii, j] |= uint8(data[i,j]) << n
+            u8[ii, j] |= convert(UInt8, data[i,j]) << n
         end
     end
     for i = 1:length(u8)-1

@@ -19,8 +19,8 @@ Toplevel(title::String) = Toplevel(title=title)
 
 
 ## Sizing of toplevel windows should refer to the geometry
-width(widget::Tk_Toplevel) = int(winfo(widget, "width"))
-height(widget::Tk_Toplevel) = int(winfo(widget, "height"))
+width(widget::Tk_Toplevel) = parse(Int, winfo(widget, "width"))
+height(widget::Tk_Toplevel) = parse(Int, winfo(widget, "height"))
 get_size(widget::Tk_Toplevel) = [width(widget), height(widget)]
 set_size(widget::Tk_Toplevel,  width::Integer, height::Integer) = wm(widget, "geometry", "$(string(width))x$(string(height))")
 set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(widget, widthheight[1], widthheight[2])
@@ -53,7 +53,7 @@ function set_position(widget::Tk_Toplevel, x::Integer, y::Integer)
     wm(widget, "geometry", I(p_or_m(x) * p_or_m(y)))
 end
 set_position{T <: Integer}(widget::Tk_Toplevel, pos::Vector{T}) = set_position(w, pos[1], pos[2])
-set_position(widget::Tk_Toplevel, pos::Tk_Widget) = set_position(widget, Integer[parse_int(winfo(pos, i)) for i in ["x", "y"]] + [10,10])
+set_position(widget::Tk_Toplevel, pos::Tk_Widget) = set_position(widget, Integer[parse(Int, winfo(pos, i)) for i in ["x", "y"]] + [10,10])
 
 update(widget::Tk_Toplevel) = wm(widget, "geometry")
 destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
@@ -78,7 +78,7 @@ function page_insert(child::Widget, index::Integer, label::String)
     tcl(parent, "insert", index, child, text = label)
 end
 
-get_value(widget::Tk_Notebook) = 1 + int(tcl(widget, I"index current"))
+get_value(widget::Tk_Notebook) = 1 + parse(Int, tcl(widget, I"index current"))
 set_value(widget::Tk_Notebook, index::Integer) = tcl(widget, "select", index - 1)
 no_tabs(widget::Tk_Notebook) = length(split(tcl(widget, "tabs")))
 
@@ -95,7 +95,7 @@ end
 ## value is sash position as percentage of first pane
 function get_value(widget::Tk_Panedwindow)
     sz = (cget(widget, "orient") == "horizontal") ? width(widget) : height(widget)
-    pos = int(tcl(widget, "sashpos", 0))
+    pos = parse(Int, tcl(widget, "sashpos", 0))
     floor(pos/sz*100)
 end
 ## can set with Integer -- pixels, or real (proportion in [0,1])
@@ -103,7 +103,7 @@ set_value(widget::Tk_Panedwindow, value::Integer) = tcl(widget, "sashpos", 0, va
 function set_value(widget::Tk_Panedwindow, value::Real)
     if value <= 1 && value >= 0
         sz = (cget(widget, "orient") == "horizontal") ? width(widget) : height(widget)
-        set_value(widget, int(value * sz/100))
+        set_value(widget, round(Int, value * sz/100))
     end
 end
 
@@ -165,7 +165,7 @@ grid_forget(child::Widget) = tcl(I"grid forget", child)
 ##
 function formlayout(child::Tk_Widget, label::MaybeString)
     master = winfo(child, "parent")
-    sz = int(split(tcl_eval("grid size $master"))) ## columns, rows
+    sz = map(x->parse(Int, x), split(tcl_eval("grid size $master"))) ## columns, rows
     nrows = sz[2]
 
     if isa(label, String)
