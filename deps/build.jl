@@ -1,10 +1,11 @@
 using BinDeps
+using Compat
 
 @BinDeps.setup
 
 tcl = library_dependency("tcl",aliases=["libtcl8.6","tcl86g","tcl86t","libtcl","libtcl8.6.so.0","libtcl8.5","libtcl8.5.so.0","tcl85"])
 tk = library_dependency("tk",aliases=["libtk8.6","libtk","libtk8.6.so.0","libtk8.5","libtk8.5.so.0","tk85","tk86","tk86t"], depends=[tcl], validate = function(p,h)
-    @osx_only return dlsym_e(h,:TkMacOSXGetRootControl) != C_NULL
+    @osx_only return @compat Libdl.dlsym_e(h,:TkMacOSXGetRootControl) != C_NULL
     return true
 end)
 
