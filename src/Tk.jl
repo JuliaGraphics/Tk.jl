@@ -16,7 +16,11 @@ using Base
 using Cairo
 using Compat
 
-include("../deps/deps.jl")
+if isfile(joinpath(dirname(@__FILE__),"..","deps","deps.jl"))
+    include("../deps/deps.jl")
+else
+    error("Tk not properly installed. Please run Pkg.build(\"Tk\")")
+end
 
 import Base: string, show, getindex, setindex!, isequal
 
