@@ -132,11 +132,11 @@ function forget(parent::TTk_Container, child::Widget)
 end
 
 ## grid ...
-IntOrRange = Union(Integer, Range1)
+IntOrRange = Union(Integer, UnitRange)
 function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
     path = get_path(child)
-    if isa(row, Range1) rowspan = 1 + maximum(row) - minimum(row)  else rowspan = 1 end
-    if isa(column, Range1) columnspan = 1 + maximum(column) - minimum(column) else columnspan = 1 end
+    if isa(row, UnitRange) rowspan = 1 + maximum(row) - minimum(row)  else rowspan = 1 end
+    if isa(column, UnitRange) columnspan = 1 + maximum(column) - minimum(column) else columnspan = 1 end
 
     row = minimum(row) - 1
     column = minimum(column) - 1
