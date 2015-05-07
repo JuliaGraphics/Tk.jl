@@ -39,9 +39,9 @@ function make_widget(parent, widget::SliderWidget)
     sl
 end
 
-slider(nm::String, label::String, rng::Range1, initial::Integer) = SliderWidget(nm, label, initial, rng)
-slider(nm::String, label::String, rng::Range1) = slider(nm, label, rng, minimum(rng))
-slider(nm::String,  rng::Range1) = slider(nm, nm, rng, minimum(rng))
+slider(nm::String, label::String, rng::UnitRange, initial::Integer) = SliderWidget(nm, label, initial, rng)
+slider(nm::String, label::String, rng::UnitRange) = slider(nm, label, rng, minimum(rng))
+slider(nm::String,  rng::UnitRange) = slider(nm, nm, rng, minimum(rng))
 
 type PickerWidget <: ManipulateWidget
     nm
