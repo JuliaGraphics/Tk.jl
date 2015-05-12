@@ -301,7 +301,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Void}, (Ptr{Uint8},), "NSView"), "focusView");
         focusLocked = false
         if view != focusView
-            focusLocked = bool(objc_msgSend(view, "lockFocusIfCanDraw", Int32))
+            focusLocked = objc_msgSend(view, "lockFocusIfCanDraw", Int32) != 0
             dontDraw = !focusLocked
         else
             dontDraw = !bool(objc_msgSend(view, "canDraw", Int32))
