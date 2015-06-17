@@ -61,8 +61,7 @@ function init()
         throw(TclError(string("error initializing Tk: ", tcl_result(tclinterp))))
     end
     global timeout
-    timeout = Base.Timer(tcl_doevent)
-    Base.start_timer(timeout,0.1,0.01)
+    timeout = Timer(tcl_doevent,0.1,0.01)
     tclinterp
 end
 
