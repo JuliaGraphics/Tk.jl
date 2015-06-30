@@ -98,21 +98,22 @@ function tcl_eval(cmd,tclinterp)
         result
     end
 end
-
+tk_ID = 0
 type TkWidget
     path::ByteString
     kind::ByteString
     parent::Union(TkWidget,Nothing)
 
-    ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
+        global tk_ID
         underscoredKind = replace(kind, "::", "_")
-        path = "$(parent.path).jl_$(underscoredKind)$(ID)"; ID += 1
+        path = "$(parent.path).jl_$(underscoredKind)$(tk_ID)"; tk_ID += 1
         new(path, kind, parent)
     end
     global Window
     function Window(title, w, h, visible = true)
-        wpath = ".jl_win$ID"; ID += 1
+        global tk_ID
+        wpath = ".jl_win$tk_ID"; tk_ID += 1
         tcl_eval("toplevel $wpath -width $w -height $h -background \"\"")
         if !visible
             tcl_eval("wm withdraw $wpath")
