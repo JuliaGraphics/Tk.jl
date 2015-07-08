@@ -103,8 +103,8 @@ type TkWidget
     path::ByteString
     kind::ByteString
     parent::Union(TkWidget,Nothing)
-
-    ID::Int = 0
+    
+    let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
         underscoredKind = replace(kind, "::", "_")
         path = "$(parent.path).jl_$(underscoredKind)$(ID)"; ID += 1
@@ -120,6 +120,7 @@ type TkWidget
         tcl_eval("wm title $wpath \"$title\"")
         tcl_doevent()
         new(wpath, "toplevel", nothing)
+    end
     end
 end
 
