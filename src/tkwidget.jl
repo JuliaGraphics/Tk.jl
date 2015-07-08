@@ -99,31 +99,37 @@ function tcl_eval(cmd,tclinterp)
     end
 end
 
+NextWidgetID = 0 # ID that would be assigned to the next Tk Widget/Window
+
 type TkWidget
     path::ByteString
     kind::ByteString
-    parent::Union(TkWidget,Nothing)
+    parent::Union(TkWidget,Nothing) # FIXME replace by Nullable{TkWidget}
+    ID::Int
 
-    ID::Int = 0
-    function TkWidget(parent::TkWidget, kind)
-        underscoredKind = replace(kind, "::", "_")
-        path = "$(parent.path).jl_$(underscoredKind)$(ID)"; ID += 1
-        new(path, kind, parent)
-    end
-    global Window
-    function Window(title, w, h, visible = true)
-        wpath = ".jl_win$ID"; ID += 1
-        tcl_eval("toplevel $wpath -width $w -height $h -background \"\"")
-        if !visible
-            tcl_eval("wm withdraw $wpath")
-        end
-        tcl_eval("wm title $wpath \"$title\"")
-        tcl_doevent()
-        new(wpath, "toplevel", nothing)
+    function TkWidget(path, kind, parent)
+        global NextWidgetID
+        NextWidgetID += 1
+        new(path, kind, parent, NextWidgetID-1)
     end
 end
 
-Window(title) = Window(title, 200, 200)
+function TkWidget(parent::TkWidget, kind)
+    underscoredKind = replace(kind, "::", "_")
+    path = "$(parent.path).jl_$(underscoredKind)$(NextWidgetID)"
+    TkWidget(path, kind, parent)
+end
+
+function Window(title, w = 200, h = 200, visible::Bool = true)
+    wpath = ".jl_win$(NextWidgetID)"
+    tcl_eval("toplevel $wpath -width $w -height $h -background \"\"")
+    if !visible
+        tcl_eval("wm withdraw $wpath")
+    end
+    tcl_eval("wm title $wpath \"$title\"")
+    tcl_doevent()
+    TkWidget(wpath, "toplevel", nothing)
+end
 
 place(widget::TkWidget, x::Int, y::Int) = tcl_eval("place $(widget.path) -x $x -y $y")
 
