@@ -203,7 +203,7 @@ function callback_add(widget::Tk_Widget, callback::Function)
         :Tk_Text => "<FocusOut>",
         :Tk_Treeview => "<<TreeviewSelect>>"
     )
-    key = Base.symbol(string(typeof(widget)))
+    key = Base.symbol(split(string(typeof(widget)), '.')[end])
     if haskey(events, key)
         event = events[key]
         if event == nothing
