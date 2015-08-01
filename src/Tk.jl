@@ -22,7 +22,7 @@ else
     error("Tk not properly installed. Please run Pkg.build(\"Tk\")")
 end
 
-import Base: bind, getindex, isequal, parent, setindex!, show, string, Text
+import Base: ==, bind, getindex, isequal, parent, setindex!, show, string, Text
 
 if VERSION < v"0.4.0-dev+3275"
     import Base.Graphics: width, height, getgc
