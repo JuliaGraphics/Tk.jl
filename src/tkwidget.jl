@@ -304,7 +304,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
             focusLocked = objc_msgSend(view, "lockFocusIfCanDraw", Int32) != 0
             dontDraw = !focusLocked
         else
-            dontDraw = !bool(objc_msgSend(view, "canDraw", Int32))
+            dontDraw = 0 == objc_msgSend(view, "canDraw", Int32)
         end
         if dontDraw
             error("Cannot draw to OS X Window")
