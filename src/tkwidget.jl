@@ -70,7 +70,7 @@ mainwindow(interp) =
 mainwindow() = mainwindow(tcl_interp)
 
 type TclError <: Exception
-    msg::String
+    msg::AbstractString
 end
 
 tcl_result() = tcl_result(tcl_interp)
@@ -102,7 +102,7 @@ end
 type TkWidget
     path::ByteString
     kind::ByteString
-    parent::Union(TkWidget,Nothing)
+    parent::Union(TkWidget,Void)
     
     let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
