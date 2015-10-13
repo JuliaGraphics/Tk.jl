@@ -3,27 +3,27 @@ show(io::IO, widget::Tk_Widget) = print(io, "Tk widget of type $(typeof(widget))
 
 
 tcl_eval("set auto_path")
-tcl_add_path(path::String) = tcl_eval("lappend auto_path $path")
-tcl_require(pkg::String) = tcl_eval("package require $pkg")
+tcl_add_path(path::AbstractString) = tcl_eval("lappend auto_path $path")
+tcl_require(pkg::AbstractString) = tcl_eval("package require $pkg")
 
 
 ## helper to get path
 ## assumes Tk_Widgets have w property storing TkWidget
-get_path(path::String) = path
+get_path(path::AbstractString) = path
 get_path(widget::Tk_Widget) = get_path(widget.w)
 get_path(widget::TkWidget) = get_path(widget.path)
 get_path(widget::Canvas) = get_path(widget.c) # Tk.Canvas object
 
 ## Coversion of julia objects into tcl strings for inclusion via tcl() call
 to_tcl(x) = string(x)
-to_tcl(x::Nothing) = ""
+to_tcl(x::(@compat Void)) = ""
 has_space = r" "
-to_tcl(x::String) = ismatch(has_space, x) ? "{$x}" : x
+to_tcl(x::AbstractString) = ismatch(has_space, x) ? "{$x}" : x
 type I x::MaybeString end               #  avoid wrapping in {} and ismatch call.
 macro I_str(s) I(s) end
 to_tcl(x::I) = x.x == nothing ? "" : x.x
 to_tcl{T <: Number}(x::Vector{T}) = "\"" * string(join(x, " ")) * "\""
-function to_tcl{T <: String}(x::Vector{T})
+function to_tcl{T <: AbstractString}(x::Vector{T})
     tmp = join(["{$i}" for i in x], " ")
     "[list $tmp ]"
 end
@@ -51,20 +51,20 @@ end
 ## escape a string
 ## http://stackoverflow.com/questions/5302120/general-string-quoting-for-tcl
 ## still need to escape \ (but not {})
-function tk_string_escape(x::String)
+function tk_string_escape(x::AbstractString)
     tcl_eval("set stringescapevariable [subst -nocommands -novariables {$x}]")
     "\$stringescapevariable"
 end
 ## tclvar for textvariables
 ## Work with a text variable. Stores values as strings. Must coerce!
 ## getter -- THIS FAILS IN A CALLBACK!!!
-#function tclvar(nm::String)
+#function tclvar(nm::AbstractString)
 #    cmd = "return \$::" * nm
 #    tcl(cmd)
 #end
 
 ## setter
-function tclvar(nm::String, value)
+function tclvar(nm::AbstractString, value)
     tcl("set", nm, value)
 end
 
@@ -84,11 +84,11 @@ setindex!(widget::Widget, value, prop::Symbol) = configure(widget, @compat Dict(
 
 ## Get values
 ## cget
-function cget(widget::Widget, prop::String, coerce::MaybeFunction)
+function cget(widget::Widget, prop::AbstractString, coerce::MaybeFunction)
     out = tcl(widget, "cget", "-$prop")
     isa(coerce, Function) ? coerce(out) : out
 end
-cget(widget::Widget, prop::String) = cget(widget, prop, nothing)
+cget(widget::Widget, prop::AbstractString) = cget(widget, prop, nothing)
 ## convenience
 getindex(widget::Widget, prop::Symbol) = cget(widget, string(prop))
 
@@ -96,18 +96,18 @@ getindex(widget::Widget, prop::Symbol) = cget(widget, string(prop))
 identify(widget::Widget, x::Integer, y::Integer) = tcl(widget, "identify", "%x", "%y")
 
 ## state(w, "!disabled")
-state(widget::Widget, state::String) = tcl(widget, "state", state)
-instate(widget::Widget, state::String) = tcl(widget, "instate", state) == "1" # return Bool
+state(widget::Widget, state::AbstractString) = tcl(widget, "state", state)
+instate(widget::Widget, state::AbstractString) = tcl(widget, "instate", state) == "1" # return Bool
 
 ## tkwinfo
-function winfo(widget::Widget, prop::String, coerce::MaybeFunction)
+function winfo(widget::Widget, prop::AbstractString, coerce::MaybeFunction)
     out = tcl("winfo", prop, widget)
     isa(coerce, Function) ? coerce(out) : out
 end
-winfo(widget::Widget, prop::String) = winfo(widget, prop, nothing)
+winfo(widget::Widget, prop::AbstractString) = winfo(widget, prop, nothing)
 
 ## wm.
-wm(window::Widget, prop::String, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
+wm(window::Widget, prop::AbstractString, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
 
 
 ## Take a function, get its args as array of symbols. There must be better way...
@@ -144,7 +144,7 @@ end
 ## Function callbacks have first argument path that is ignored
 ## others match percent substitution
 ## e.g. (path, W, x, y) -> x will have  W, x and y available through %W %x %y bindings
-function bind(widget::Widget, event::String, callback::Function)
+function bind(widget::Widget, event::AbstractString, callback::Function)
     if event == "command"
         configure(widget, command = callback)
     else
@@ -160,13 +160,13 @@ function bind(widget::Widget, event::String, callback::Function)
         tcl_eval(cmd)
     end
 end
-bind(widget::Canvas, event::String, callback::Function) = bind(widget.c, event, callback)
+bind(widget::Canvas, event::AbstractString, callback::Function) = bind(widget.c, event, callback)
 
 ## for use with do style
-bind(callback::Function, widget::Union(Widget, Canvas), event::String) = bind(widget, event, callback)
+bind(callback::Function, widget::(@compat Union{Widget, Canvas}), event::AbstractString) = bind(widget, event, callback)
 
 ## Binding to mouse wheel
-function bindwheel(widget::Widget, modifier::String, callback::Function, tkargs::String = "")
+function bindwheel(widget::Widget, modifier::AbstractString, callback::Function, tkargs::AbstractString = "")
     path = get_path(widget)
     if !isempty(modifier) && !endswith(modifier,"-")
         modifier = string(modifier, "-")
@@ -217,7 +217,7 @@ end
 
 ## Need this pattern to make a widget
 ## Parent is not a string, but TkWidget or Tk_Widget instance
-function make_widget(parent::Widget, str::String; kwargs...)
+function make_widget(parent::Widget, str::AbstractString; kwargs...)
     path = isa(parent, Tk_Widget) ? parent.w : parent
     w = TkWidget(path, str)
     tcl(str, w; kwargs...)
@@ -236,8 +236,8 @@ end
 type TclAfter
     cb::Function
     run::Bool
-    start::Union(Nothing, Function)
-    stop::Union(Nothing, Function)
+    start::(@compat Union{(@compat Void), Function})
+    stop::(@compat Union{(@compat Void), Function})
     ms::Int
 
     function TclAfter(ms, cb::Function)

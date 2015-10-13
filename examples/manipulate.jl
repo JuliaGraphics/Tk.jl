@@ -5,6 +5,7 @@
 
 using Winston
 using Tk
+using Compat
 
 
 function render(c, p)
@@ -39,9 +40,9 @@ function make_widget(parent, widget::SliderWidget)
     sl
 end
 
-slider(nm::String, label::String, rng::UnitRange, initial::Integer) = SliderWidget(nm, label, initial, rng)
-slider(nm::String, label::String, rng::UnitRange) = slider(nm, label, rng, minimum(rng))
-slider(nm::String,  rng::UnitRange) = slider(nm, nm, rng, minimum(rng))
+slider(nm::AbstractString, label::AbstractString, rng::UnitRange, initial::Integer) = SliderWidget(nm, label, initial, rng)
+slider(nm::AbstractString, label::AbstractString, rng::UnitRange) = slider(nm, label, rng, minimum(rng))
+slider(nm::AbstractString,  rng::UnitRange) = slider(nm, nm, rng, minimum(rng))
 
 type PickerWidget <: ManipulateWidget
     nm
@@ -59,12 +60,12 @@ function make_widget(parent, widget::PickerWidget)
 end
 
 
-picker{T <: String}(nm::String, label::String, vals::Vector{T}, initial) = PickerWidget(nm, label, initial, vals)
-picker{T <: String}(nm::String, label::String, vals::Vector{T}) = picker(nm, label, vals, vals[1])
-picker{T <: String}(nm::String, vals::Vector{T}) = picker(nm, nm, vals)
-picker(nm::String, label::String, vals::Dict, initial) = PickerWidget(nm, label, vals, initial)
-picker(nm::String, label::String, vals::Dict) = PickerWidget(nm, label, vals, [string(k) for (k,v) in vals][1])
-picker(nm::String, vals::Dict) = picker(nm, nm, vals)
+picker{T <: AbstractString}(nm::AbstractString, label::AbstractString, vals::Vector{T}, initial) = PickerWidget(nm, label, initial, vals)
+picker{T <: AbstractString}(nm::AbstractString, label::AbstractString, vals::Vector{T}) = picker(nm, label, vals, vals[1])
+picker{T <: AbstractString}(nm::AbstractString, vals::Vector{T}) = picker(nm, nm, vals)
+picker(nm::AbstractString, label::AbstractString, vals::Dict, initial) = PickerWidget(nm, label, vals, initial)
+picker(nm::AbstractString, label::AbstractString, vals::Dict) = PickerWidget(nm, label, vals, [string(k) for (k,v) in vals][1])
+picker(nm::AbstractString, vals::Dict) = picker(nm, nm, vals)
 
 type CheckboxWidget <: ManipulateWidget
     nm
@@ -78,8 +79,8 @@ function make_widget(parent, widget::CheckboxWidget)
 end
 get_label(widget::CheckboxWidget) = nothing
 
-checkbox(nm::String, label::String, initial::Bool) = CheckboxWidget(nm, label, initial)
-checkbox(nm::String, label::String) = checkbox(nm, label, false)
+checkbox(nm::AbstractString, label::AbstractString, initial::Bool) = CheckboxWidget(nm, label, initial)
+checkbox(nm::AbstractString, label::AbstractString) = checkbox(nm, label, false)
 
 
 type ButtonWidget <: ManipulateWidget
@@ -88,7 +89,7 @@ type ButtonWidget <: ManipulateWidget
 end
 make_widget(parent, widget::ButtonWidget) = Button(parent, widget.label)
 get_label(widget::ButtonWidget) = nothing
-button(label::String) = ButtonWidget(label, nothing)
+button(label::AbstractString) = ButtonWidget(label, nothing)
 
 
 ## Add text widget to gather one-line of text
@@ -98,13 +99,13 @@ type EntryWidget <: ManipulateWidget
     initial
 end
 make_widget(parent, widget::EntryWidget) = Entry(parent, widget.initial)
-entry(nm::String, label::String, initial::String) = EntryWidget(nm, label, initial)
-entry(nm::String, initial::String) = EntryWidget(nm, nm, initial)
-entry(nm::String) = EntryWidget(nm, nm, "{}")
+entry(nm::AbstractString, label::AbstractString, initial::AbstractString) = EntryWidget(nm, label, initial)
+entry(nm::AbstractString, initial::AbstractString) = EntryWidget(nm, nm, initial)
+entry(nm::AbstractString) = EntryWidget(nm, nm, "{}")
 
 
 ## Expression returns a plot object. Use names as values
-function manipulate(ex::Union(Symbol,Expr), controls...)
+function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
     widgets = Array(Tk.Widget, 0)
 
     w = Toplevel("Manipulate", 800, 500)
@@ -126,7 +127,7 @@ function manipulate(ex::Union(Symbol,Expr), controls...)
         d = Dict()                      # return Dict of values
         vals = get_values(); keys = get_nms()
         for i in 1:length(vals)
-            if !isa(keys[i], Nothing)
+            if !isa(keys[i], @compat Void)
                 d[keys[i]] = vals[i]
             end
         end

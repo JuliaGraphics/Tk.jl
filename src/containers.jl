@@ -8,14 +8,14 @@ type Tk_Panedwindow <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} en
 ==(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
 
 ## Toplevel window
-function Toplevel(;title::String="Toplevel Window", width::Integer=200, height::Integer=200, visible::Bool=true)
+function Toplevel(;title::AbstractString="Toplevel Window", width::Integer=200, height::Integer=200, visible::Bool=true)
     w = Window(title, width, height, visible)
     Tk_Toplevel(w, Tk_Widget[])
 end
-Toplevel(title::String, width::Integer, height::Integer, visible::Bool) = Toplevel(title=title, width=width, height=height, visible=visible)
-Toplevel(title::String, width::Integer, height::Integer) = Toplevel(title=title, width=width, height=height)
-Toplevel(title::String, visible::Bool) = Toplevel(title=title,  visible=visible)
-Toplevel(title::String) = Toplevel(title=title)
+Toplevel(title::AbstractString, width::Integer, height::Integer, visible::Bool) = Toplevel(title=title, width=width, height=height, visible=visible)
+Toplevel(title::AbstractString, width::Integer, height::Integer) = Toplevel(title=title, width=width, height=height)
+Toplevel(title::AbstractString, visible::Bool) = Toplevel(title=title,  visible=visible)
+Toplevel(title::AbstractString) = Toplevel(title=title)
 
 
 ## Sizing of toplevel windows should refer to the geometry
@@ -30,7 +30,7 @@ set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(w
 
 
 get_value(widget::Tk_Toplevel) = wm(widget, "title")
-set_value(widget::Tk_Toplevel, value::String) = wm(widget, "title", value)
+set_value(widget::Tk_Toplevel, value::AbstractString) = wm(widget, "title", value)
 
 function set_visible(widget::Tk_Toplevel, value::Bool)
     value = value ? "normal" : "withdrawn"
@@ -62,18 +62,18 @@ destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 ## nothing to add...
 
 ## Labelframe
-Labelframe(parent::Widget, text::String) = Labelframe(parent, text=text)
+Labelframe(parent::Widget, text::AbstractString) = Labelframe(parent, text=text)
 get_value(widget::Tk_Labelframe) = cget(widget, "text")
-set_value(widget::Tk_Labelframe, text::String) = configure(widget, @compat Dict(:text=> text))
+set_value(widget::Tk_Labelframe, text::AbstractString) = configure(widget, @compat Dict(:text=> text))
 
 ## Notebook
-function page_add(child::Widget, label::String)
+function page_add(child::Widget, label::AbstractString)
     parent = winfo(child, "parent")
     tcl(parent, "add", child, text = label)
 end
 
 
-function page_insert(child::Widget, index::Integer, label::String)
+function page_insert(child::Widget, index::Integer, label::AbstractString)
     parent = winfo(child, "parent")
     tcl(parent, "insert", index, child, text = label)
 end
@@ -85,7 +85,7 @@ no_tabs(widget::Tk_Notebook) = length(split(tcl(widget, "tabs")))
 
 ## Panedwindow
 ## orient in "horizontal" or "vertical"
-Panedwindow(widget::Widget, orient::String) = Panedwindow(widget, orient = orient)
+Panedwindow(widget::Widget, orient::AbstractString) = Panedwindow(widget, orient = orient)
 
 function page_add(child::Widget, weight::Integer)
     parent = winfo(child, "parent")
@@ -132,7 +132,7 @@ function forget(parent::TTk_Container, child::Widget)
 end
 
 ## grid ...
-IntOrRange = Union(Integer, UnitRange)
+IntOrRange = (@compat Union{Integer, UnitRange})
 function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
     path = get_path(child)
     if isa(row, UnitRange) rowspan = 1 + maximum(row) - minimum(row)  else rowspan = 1 end
@@ -168,7 +168,7 @@ function formlayout(child::Tk_Widget, label::MaybeString)
     sz = map(x->parse(Int, x), split(tcl_eval("grid size $master"))) ## columns, rows
     nrows = sz[2]
 
-    if isa(label, String)
+    if isa(label, AbstractString)
         l = Label(child.w.parent, label)
         grid(l, nrows + 1, 1)
         grid_configure(l, sticky = "ne")
@@ -211,7 +211,7 @@ parent(w::Tk_Widget) = parent(w.w)
 parent(c::Canvas) = parent(c.c)
 
 # For toplevel it's obvious how to wrap it...
-function toplevel(w::Union(TkWidget, Tk_Widget, Canvas))
+function toplevel(w::(@compat Union{TkWidget, Tk_Widget, Canvas}))
     p = parent(w)
     pold = p
     while !is(p, nothing)

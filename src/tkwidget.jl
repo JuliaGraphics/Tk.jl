@@ -29,18 +29,18 @@ tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 function init()
     @osx_only ccall(:CFBundleCreate, Ptr{Void}, (Ptr{Void}, Ptr{Void}), C_NULL,
         ccall(:CFURLCreateWithFileSystemPath, Ptr{Void}, (Ptr{Void}, Ptr{Void}, Cint, Cint), C_NULL,
-            ccall(:CFStringCreateWithFileSystemRepresentation, Ptr{Void}, (Ptr{Void}, Ptr{Uint8}), C_NULL, "/System/Library/Frameworks/Tk.framework"),
+            ccall(:CFStringCreateWithFileSystemRepresentation, Ptr{Void}, (Ptr{Void}, Ptr{UInt8}), C_NULL, "/System/Library/Frameworks/Tk.framework"),
             0, 1))
-    ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{Uint8},),
+    ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{UInt8},),
           joinpath(JULIA_HOME, "julia"))
     ccall((:g_type_init,Cairo._jl_libgobject),Void,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     @windows_only begin
         htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
-            (Ptr{Uint8},),libtcl)
-        tclfile = Array(Uint8,260)
+            (Ptr{UInt8},),libtcl)
+        tclfile = Array(UInt8,260)
         len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
-            (Csize_t,Ptr{Uint8},Cint),htcl,tclfile,length(tclfile))
+            (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile))
         if len > 0
             tcldir = dirname(bytestring(tclfile[1:len]))
             libpath = IOBuffer()
@@ -70,17 +70,17 @@ mainwindow(interp) =
 mainwindow() = mainwindow(tcl_interp)
 
 type TclError <: Exception
-    msg::String
+    msg::AbstractString
 end
 
 tcl_result() = tcl_result(tcl_interp)
 function tcl_result(tcl_interp)
     bytestring(ccall((:Tcl_GetStringResult,libtcl),
-                     Ptr{Uint8}, (Ptr{Void},), tcl_interp))
+                     Ptr{UInt8}, (Ptr{Void},), tcl_interp))
 end
 
 function tcl_evalfile(name)
-    if ccall((:Tcl_EvalFile,libtcl), Int32, (Ptr{Void}, Ptr{Uint8}),
+    if ccall((:Tcl_EvalFile,libtcl), Int32, (Ptr{Void}, Ptr{UInt8}),
              tcl_interp, name) != 0
         throw(TclError(tcl_result()))
     end
@@ -89,7 +89,7 @@ end
 
 tcl_eval(cmd) = tcl_eval(cmd,tcl_interp)
 function tcl_eval(cmd,tclinterp)
-    code = ccall((:Tcl_Eval,libtcl), Int32, (Ptr{Void}, Ptr{Uint8}),
+    code = ccall((:Tcl_Eval,libtcl), Int32, (Ptr{Void}, Ptr{UInt8}),
                  tclinterp, cmd)
     result = tcl_result(tclinterp)
     if code != 0
@@ -102,7 +102,7 @@ end
 type TkWidget
     path::ByteString
     kind::ByteString
-    parent::Union(TkWidget,Nothing)
+    parent::(@compat Union{TkWidget,Void})
     
     let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
@@ -130,7 +130,7 @@ place(widget::TkWidget, x::Int, y::Int) = tcl_eval("place $(widget.path) -x $x -
 
 function nametowindow(name)
     ccall((:Tk_NameToWindow,libtk), Ptr{Void},
-          (Ptr{Void}, Ptr{Uint8}, Ptr{Void}),
+          (Ptr{Void}, Ptr{UInt8}, Ptr{Void}),
           tcl_interp, name, mainwindow(tcl_interp))
 end
 
@@ -138,7 +138,7 @@ const _callbacks = ObjectIdDict()
 
 const empty_str = ""
 
-function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
+function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})
     f = unsafe_pointer_to_objref(fptr)
     args = [bytestring(unsafe_load(argv,i)) for i=1:argc]
     local result
@@ -150,23 +150,23 @@ function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{Uint8}})
         return TCL_ERROR
     end
     if isa(result,ByteString)
-        ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{Uint8}, Int32),
+        ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{UInt8}, Int32),
               interp, result, TCL_VOLATILE)
     else
-        ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{Uint8}, Int32),
+        ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{UInt8}, Int32),
               interp, empty_str, TCL_STATIC)
     end
     return TCL_OK
 end
 
 jl_tcl_callback_ptr = cfunction(jl_tcl_callback,
-                                Int32, (Ptr{Void}, Ptr{Void}, Int32, Ptr{Ptr{Uint8}}))
+                                Int32, (Ptr{Void}, Ptr{Void}, Int32, Ptr{Ptr{UInt8}}))
 
 function tcl_callback(f)
     cname = string("jl_cb", repr(object_id(f)))
     # TODO: use Tcl_CreateObjCommand instead
     ccall((:Tcl_CreateCommand,libtcl), Ptr{Void},
-          (Ptr{Void}, Ptr{Uint8}, Ptr{Void}, Ptr{Void}, Ptr{Void}),
+          (Ptr{Void}, Ptr{UInt8}, Ptr{Void}, Ptr{Void}, Ptr{Void}),
           tcl_interp, cname, jl_tcl_callback_ptr, pointer_from_objref(f), C_NULL)
     # TODO: use a delete proc (last arg) to remove this
     _callbacks[f] = true
@@ -271,7 +271,7 @@ else
     typealias CGFloat Float64
 end
 objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void}) = ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}),
-    id, ccall(:sel_getUid, Ptr{Void}, (Ptr{Uint8},), uid))
+    id, ccall(:sel_getUid, Ptr{Void}, (Ptr{UInt8},), uid))
 end
 
 # NOTE: This has to be ported to each window environment.
@@ -298,7 +298,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         if view == C_NULL
             error("Invalid OS X window at getView")
         end
-        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Void}, (Ptr{Uint8},), "NSView"), "focusView");
+        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Void}, (Ptr{UInt8},), "NSView"), "focusView");
         focusLocked = false
         if view != focusView
             focusLocked = objc_msgSend(view, "lockFocusIfCanDraw", Int32) != 0
@@ -338,7 +338,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
                 ccall(:CGContextTranslateCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 0, height(toplevel(w)))
                 ccall(:CGContextScaleCTM, Void, (Ptr{Void}, CGFloat, CGFloat), context, 1, -1)
                 if clipRgn != C_NULL
-                    if ccall(:HIShapeIsEmpty, Uint8, (Ptr{Void},), clipRgn) != 0
+                    if ccall(:HIShapeIsEmpty, UInt8, (Ptr{Void},), clipRgn) != 0
                         return
                     end
                     @assert 0 == ccall(:HIShapeReplacePathInCGContext, Cint, (Ptr{Void}, Ptr{Void}), clipRgn, context)
@@ -367,14 +367,14 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         return
     end
     @windows_only begin
-        state = Array(Uint8, sizeof(Int)*2) # 8.4, 8.5, 8.6
+        state = Array(UInt8, sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
-        hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Void}, (Ptr{Void}, Int, Ptr{Uint8}),
+        hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Void}, (Ptr{Void}, Int, Ptr{UInt8}),
             jl_tkwin_display(win), drawable, state)
         surf = CairoWin32Surface(hdc, width(w), height(w))
         f(surf)
         destroy(surf)
-        ccall((:TkWinReleaseDrawableDC,libtk), Void, (Int, Int, Ptr{Uint8}),
+        ccall((:TkWinReleaseDrawableDC,libtk), Void, (Int, Int, Ptr{UInt8}),
             drawable, hdc, state)
         return
     end

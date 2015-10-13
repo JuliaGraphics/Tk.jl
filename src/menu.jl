@@ -19,17 +19,17 @@ function Menu(widget::Tk_Toplevel)
 end
 
 ## add a submenu, return it
-function menu_add(widget::Tk_Menu, label::String)
+function menu_add(widget::Tk_Menu, label::AbstractString)
     m = Menu(widget)
     tcl(widget, "add", "cascade", menu = m, label = label)
     m
 end
 
 ## add menu item to menu
-function menu_add(widget::Tk_Menu, label::String, command::Function, img::Tk_Image)
+function menu_add(widget::Tk_Menu, label::AbstractString, command::Function, img::Tk_Image)
     tcl(widget, "add", "command", label = label, command = command, image = img, compound = "left")
 end
-function menu_add(widget::Tk_Menu, label::String, command::Function)
+function menu_add(widget::Tk_Menu, label::AbstractString, command::Function)
     ccb = Tk.tcl_callback(command)
     tcl(widget, "add", "command", label = label, command = command)
 end

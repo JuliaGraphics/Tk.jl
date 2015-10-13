@@ -1,5 +1,5 @@
 ## simple workspace browser for julia
-using Tk
+using Tk, Compat
 
 ## Some functions to work with a module
 function get_names(m::Module)
@@ -12,10 +12,10 @@ unique_id(x) = string(object_id(x))
 ## short_summary
 ## can customize description here
 short_summary(x) = summary(x)
-short_summary(x::String) = "A string"
+short_summary(x::AbstractString) = "A string"
 
 ## update ids, returning false if the same, true if not
-__ids__ = Array(String, 0)
+__ids__ = Array(AbstractString, 0)
 function update_ids(m::Module)
     global __ids__
     nms = get_names(m)
@@ -31,13 +31,13 @@ end
 
 
 negate(x::Bool, val::Bool) = val ? !x : x
-MaybeRegex = Union(Nothing, Regex)
-MaybeType = Union(Nothing, DataType, UnionType)
+MaybeRegex = (@compat Union{(@compat Void), Regex})
+MaybeType = (@compat Union{(@compat Void), DataType})
 
 ## get array of names and summaries
 ## m module
 ## pat regular expression to filter by
-## dtype: DataType or UnionType to filter out by.
+## dtype: DataType or Union to filter out by.
 ## dtypefilter: If true not these types, if false only these types
 function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtypefilter::Bool)
     nms = get_names(m)
