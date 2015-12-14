@@ -102,7 +102,7 @@ end
 type TkWidget
     path::ByteString
     kind::ByteString
-    parent::(@compat Union{TkWidget,Void})
+    parent::Union{TkWidget,Void}
     
     let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
@@ -304,7 +304,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
             focusLocked = objc_msgSend(view, "lockFocusIfCanDraw", Int32) != 0
             dontDraw = !focusLocked
         else
-            dontDraw = 0 == objc_msgSend(view, "canDraw", Int32)
+            dontDraw = !bool(objc_msgSend(view, "canDraw", Int32))
         end
         if dontDraw
             error("Cannot draw to OS X Window")

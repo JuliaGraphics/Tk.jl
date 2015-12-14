@@ -132,7 +132,7 @@ function forget(parent::TTk_Container, child::Widget)
 end
 
 ## grid ...
-IntOrRange = (@compat Union{Integer, UnitRange})
+IntOrRange = Union{Integer, UnitRange}
 function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
     path = get_path(child)
     if isa(row, UnitRange) rowspan = 1 + maximum(row) - minimum(row)  else rowspan = 1 end
@@ -168,7 +168,7 @@ function formlayout(child::Tk_Widget, label::MaybeString)
     sz = map(x->parse(Int, x), split(tcl_eval("grid size $master"))) ## columns, rows
     nrows = sz[2]
 
-    if isa(label, AbstractString)
+    if isa(label, String)
         l = Label(child.w.parent, label)
         grid(l, nrows + 1, 1)
         grid_configure(l, sticky = "ne")
@@ -211,7 +211,7 @@ parent(w::Tk_Widget) = parent(w.w)
 parent(c::Canvas) = parent(c.c)
 
 # For toplevel it's obvious how to wrap it...
-function toplevel(w::(@compat Union{TkWidget, Tk_Widget, Canvas}))
+function toplevel(w::Union{TkWidget, Tk_Widget, Canvas})
     p = parent(w)
     pold = p
     while !is(p, nothing)
