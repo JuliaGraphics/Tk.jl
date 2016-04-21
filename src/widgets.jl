@@ -347,7 +347,7 @@ function x11encode(data::BitArray{2})
     # Not efficient, but easy
     s = IOBuffer()
     x11header(s, data)
-    u8 = zeros(Uint8, ceil(Int, size(data, 1)/8), size(data, 2))
+    u8 = zeros(UInt8, ceil(Int, size(data, 1)/8), size(data, 2))
     for i = 1:size(data,1)
         ii = ceil(Int, i/8)
         n = i - 8*(ii-1) - 1
