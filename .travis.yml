@@ -9,7 +9,7 @@ notifications:
     email: false
 script:
     - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - julia -e 'Pkg.clone("Winston"); Pkg.checkout("Tk")'
+    - julia -e 'Pkg.clone(pwd()); Pkg.clone("Winston")'
     - xvfb-run julia -e 'Pkg.build("Tk"); Pkg.test("Tk"; coverage=true)';
     # - xvfb-run julia -e 'Pkg.clone(pwd()); Pkg.build("Tk"); Pkg.test("Tk"; coverage=true)';
 after_success:
