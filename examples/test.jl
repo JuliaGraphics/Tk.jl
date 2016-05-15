@@ -1,7 +1,7 @@
 ## Example of widgets put into container with change handler assigned
 
 using Tk
-using Compat
+using Compat; import Compat.String
 
 w = Toplevel("Test window", false)
 ## pack in tk frame for themed widgets

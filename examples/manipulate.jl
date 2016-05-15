@@ -5,7 +5,7 @@
 
 using Winston
 using Tk
-using Compat
+using Compat; import Compat.String
 
 
 function render(c, p)

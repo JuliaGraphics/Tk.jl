@@ -16,7 +16,7 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(false)
 module Tk
 using Base
 using Cairo
-using Compat
+using Compat; import Compat.String
 
 if isfile(joinpath(dirname(@__FILE__),"..","deps","deps.jl"))
     include("../deps/deps.jl")
