@@ -112,32 +112,37 @@ wm(window::Widget, prop::AbstractString, args...; kwargs...) = tcl("wm", prop, w
 
 ## Take a function, get its args as array of symbols. There must be better way...
 ## Helper functions for bind callback
-function get_args(li::LambdaStaticData)
-    e = li.ast
-    if !isa(e, Expr)
-        e = Base.uncompressed_ast(li)
-    end
-    argnames = e.args[1]
-    ## return array of symbols -- not args
-    if isa(argnames[1], Expr)
-        argnames = map(u -> u.args[1], argnames)
-    end
+#function get_args(li::LambdaInfo)
+#    e = li.ast
+#    if !isa(e, Expr)
+#        e = Base.uncompressed_ast(li)
+#    end
+#    argnames = e.args[1]
+#    ## return array of symbols -- not args
+#    if isa(argnames[1], Expr)
+#        argnames = map(u -> u.args[1], argnames)
+#    end
+#
+#    argnames
+#end
 
-    argnames
-end
+#function get_args(m::Method)
+#    li = m.func.code
+#    get_args(li)
+#end
 
-function get_args(m::Method)
-    li = m.func.code
-    get_args(li)
-end
+#function get_args(f::Function)
+#    try
+#        get_args(f.env.defs.func)
+#    catch e
+#        get_args(f.code)
+#    end
+#end
 
 function get_args(f::Function)
-    try
-        get_args(f.env.defs.func)
-    catch e
-        get_args(f.code)
-    end
+    return first(methods(f)).lambda_template.slotnames[2:end]    
 end
+
 
 
 ## bind
