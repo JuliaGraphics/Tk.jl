@@ -78,7 +78,7 @@ end
 
 tcl_result() = tcl_result(tcl_interp)
 function tcl_result(tcl_interp)
-    String(ccall((:Tcl_GetStringResult,libtcl),
+    unsafe_string(ccall((:Tcl_GetStringResult,libtcl),
                      Ptr{UInt8}, (Ptr{Void},), tcl_interp))
 end
 
@@ -143,7 +143,7 @@ const empty_str = ""
 
 function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})
     f = unsafe_pointer_to_objref(fptr)
-    args = [String(unsafe_load(argv,i)) for i=1:argc]
+    args = [unsafe_string(unsafe_load(argv,i)) for i=1:argc]
     local result
     try
         result = f(args...)
