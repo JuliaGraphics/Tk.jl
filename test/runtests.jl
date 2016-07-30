@@ -132,7 +132,7 @@ end
 bind(b, "command", cb)
 tcl(b, "invoke")
 @assert ctr == 2
-img = Image(Pkg.dir("Tk", "examples", "weather-overcast.gif"))
+img = Image(joinpath(dirname(@__FILE__), "..", "examples", "weather-overcast.gif"))
 map(u-> configure(u, image=img, compound="left"), (l,b))
 destroy(w)
 
