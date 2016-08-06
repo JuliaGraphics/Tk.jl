@@ -16,7 +16,7 @@ get_path(widget::Canvas) = get_path(widget.c) # Tk.Canvas object
 
 ## Coversion of julia objects into tcl strings for inclusion via tcl() call
 to_tcl(x) = string(x)
-to_tcl(x::(@compat Void)) = ""
+to_tcl(x::Void) = ""
 has_space = r" "
 to_tcl(x::AbstractString) = ismatch(has_space, x) ? "{$x}" : x
 type I x::MaybeString end               #  avoid wrapping in {} and ismatch call.
@@ -58,7 +58,7 @@ end
 ## tclvar for textvariables
 ## Work with a text variable. Stores values as strings. Must coerce!
 ## getter -- THIS FAILS IN A CALLBACK!!!
-#function tclvar(nm::AbstractString)
+#function tclvar(nm::String)
 #    cmd = "return \$::" * nm
 #    tcl(cmd)
 #end
@@ -172,7 +172,7 @@ end
 bind(widget::Canvas, event::AbstractString, callback::Function) = bind(widget.c, event, callback)
 
 ## for use with do style
-bind(callback::Function, widget::(@compat Union{Widget, Canvas}), event::AbstractString) = bind(widget, event, callback)
+bind(callback::Function, widget::Union{Widget, Canvas}, event::AbstractString) = bind(widget, event, callback)
 
 ## Binding to mouse wheel
 function bindwheel(widget::Widget, modifier::AbstractString, callback::Function, tkargs::AbstractString = "")
@@ -245,8 +245,8 @@ end
 type TclAfter
     cb::Function
     run::Bool
-    start::(@compat Union{(@compat Void), Function})
-    stop::(@compat Union{(@compat Void), Function})
+    start::Union{Void, Function}
+    stop::Union{Void, Function}
     ms::Int
 
     function TclAfter(ms, cb::Function)
