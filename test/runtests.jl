@@ -1,6 +1,6 @@
 ## Tests
 using Tk
-using Compat
+using Compat; import Compat.String
 
 ## Toplevel
 w = Toplevel("Toplevel", 400, 400)

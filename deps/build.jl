@@ -1,5 +1,5 @@
 using BinDeps
-using Compat
+using Compat; import Compat.String
 
 @BinDeps.setup
 

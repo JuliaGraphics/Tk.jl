@@ -100,8 +100,8 @@ function tcl_eval(cmd,tclinterp)
 end
 
 type TkWidget
-    path::ByteString
-    kind::ByteString
+    path::String
+    kind::String
     parent::(@compat Union{TkWidget,Void})
     
     let ID::Int = 0
@@ -149,7 +149,7 @@ function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})
         Base.display_error(e,catch_backtrace())
         return TCL_ERROR
     end
-    if isa(result,ByteString)
+    if isa(result,String)
         ccall((:Tcl_SetResult,libtcl), Void, (Ptr{Void}, Ptr{UInt8}, Int32),
               interp, result, TCL_VOLATILE)
     else
