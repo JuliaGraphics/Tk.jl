@@ -112,6 +112,21 @@ wm(window::Widget, prop::AbstractString, args...; kwargs...) = tcl("wm", prop, w
 
 ## Take a function, get its args as array of symbols. There must be better way...
 ## Helper functions for bind callback
+if VERSION > v"0.5-"
+function get_args(li::LambdaInfo)
+    argnames = li.slotnames[1:li.nargs]
+    if _arg_offset == 0
+        return argnames
+    else
+        return argnames[_arg_offset:end]
+    end
+end
+
+get_args(m::Method) = get_args(m.lambda_template)
+get_args(f::Function) = get_args(first(methods(f)).lambda_template)
+
+else
+
 function get_args(li::LambdaStaticData)
     e = li.ast
     if !isa(e, Expr)
@@ -144,6 +159,8 @@ function get_args(f::Function)
     catch e
         get_args(f.code)
     end
+end
+
 end
 
 _arg_offset = 0

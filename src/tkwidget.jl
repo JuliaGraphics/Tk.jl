@@ -27,22 +27,23 @@ global timeout = nothing
 tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Void}},w), (1,), false)[1]
 
 function init()
-    @osx_only ccall(:CFBundleCreate, Ptr{Void}, (Ptr{Void}, Ptr{Void}), C_NULL,
+    @static if is_apple() ccall(:CFBundleCreate, Ptr{Void}, (Ptr{Void}, Ptr{Void}), C_NULL,
         ccall(:CFURLCreateWithFileSystemPath, Ptr{Void}, (Ptr{Void}, Ptr{Void}, Cint, Cint), C_NULL,
             ccall(:CFStringCreateWithFileSystemRepresentation, Ptr{Void}, (Ptr{Void}, Ptr{UInt8}), C_NULL, "/System/Library/Frameworks/Tk.framework"),
             0, 1))
+    end
     ccall((:Tcl_FindExecutable,libtcl), Void, (Ptr{UInt8},),
           joinpath(JULIA_HOME, "julia"))
     ccall((:g_type_init,Cairo._jl_libgobject),Void,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
-    @windows_only begin
+    @static if is_windows()
         htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
             (Ptr{UInt8},),libtcl)
         tclfile = Array(UInt8,260)
         len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
             (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile))
         if len > 0
-            tcldir = dirname(bytestring(tclfile[1:len]))
+            tcldir = dirname(String(tclfile[1:len]))
             libpath = IOBuffer()
             print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
             print_escaped(libpath,abspath(tcldir,"..","share","tcl"),"{}")
@@ -75,8 +76,8 @@ end
 
 tcl_result() = tcl_result(tcl_interp)
 function tcl_result(tcl_interp)
-    bytestring(ccall((:Tcl_GetStringResult,libtcl),
-                     Ptr{UInt8}, (Ptr{Void},), tcl_interp))
+    unsafe_string(ccall((:Tcl_GetStringResult,libtcl),
+                        Ptr{UInt8}, (Ptr{Void},), tcl_interp))
 end
 
 function tcl_evalfile(name)
@@ -140,7 +141,7 @@ const empty_str = ""
 
 function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})
     f = unsafe_pointer_to_objref(fptr)
-    args = [bytestring(unsafe_load(argv,i)) for i=1:argc]
+    args = [unsafe_string(unsafe_load(argv,i)) for i=1:argc]
     local result
     try
         result = f(args...)
@@ -264,7 +265,7 @@ function reveal(c::Canvas)
     tcl_doevent()
 end
 
-@osx_only begin
+@static if is_apple()
 if WORD_SIZE == 32
     typealias CGFloat Float32
 else
@@ -279,7 +280,7 @@ end
 function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
     win = nametowindow(w.path)
     win == C_NULL && error("invalid window")
-    @linux_only begin
+    @static if is_linux()
         disp = jl_tkwin_display(win)
         d = jl_tkwin_id(win)
         vis = jl_tkwin_visual(win)
@@ -291,7 +292,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         destroy(surf)
         return
     end
-    @osx_only begin
+    @static if is_apple()
         ## TkMacOSXSetupDrawingContext()
         drawable = jl_tkwin_id(win)
         view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Void}, (Int,), drawable) # NSView*
@@ -366,7 +367,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         ##
         return
     end
-    @windows_only begin
+    @static if is_windows()
         state = Array(UInt8, sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
         hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Void}, (Ptr{Void}, Int, Ptr{UInt8}),
@@ -459,7 +460,8 @@ if tk_version >= v"8.4-" && tk_version < v"8.7-"
 jl_tkwin_display(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Ptr{Void}},tkwin), 1) # 8.4, 8.5, 8.6
 jl_tkwin_visual(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Ptr{Void}},tkwin), 4) # 8.4, 8.5, 8.6
 jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Int},tkwin), 6) # 8.4, 8.5, 8.6
-@osx_only if tk_version >= v"8.5-"
+if is_apple()
+if tk_version >= v"8.5-"
     immutable TkWindowPrivate
         winPtr::Ptr{Void}
         view::Ptr{Void}
@@ -493,6 +495,7 @@ jl_tkwin_id(tkwin::Ptr{Void}) = unsafe_load(convert(Ptr{Int},tkwin), 6) # 8.4, 8
         flags::Cint
     end
     end
+end
 else
 error("Tk.jl needs to be updated for tk version $tk_version")
 end
