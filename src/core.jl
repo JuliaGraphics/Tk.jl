@@ -169,7 +169,6 @@ end
 _arg_offset = 0
 _arg_offset = length(get_args(x->x))
 
-
 ## bind
 ## Function callbacks have first argument path that is ignored
 ## others match percent substitution

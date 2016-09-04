@@ -38,10 +38,10 @@ function init()
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Void}, ())
     @static if is_windows()
         htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
-            (Ptr{UInt8},),libtcl);
-        tclfile = Array(UInt8,260);
+            (Ptr{UInt8},),libtcl)
+        tclfile = Array(UInt8,260)
         len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
-            (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile));
+            (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile))
         if len > 0
             tcldir = dirname(String(tclfile[1:len]))
             libpath = IOBuffer()
@@ -53,7 +53,7 @@ function init()
             print_escaped(libpath,abspath(tcldir,"..","share","tk"),"{}")
             print(libpath,"}]")
             tcl_eval(takebuf_string(libpath),tclinterp)
-        end;
+        end
     end
     if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tclinterp) == TCL_ERROR
         throw(TclError(string("error initializing Tcl: ", tcl_result(tclinterp))))
