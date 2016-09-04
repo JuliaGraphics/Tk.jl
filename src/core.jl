@@ -153,18 +153,22 @@ function get_args(m::Method)
     get_args(li)
 end
 
+#function get_args(f::Function)
+#    try
+#        get_args(first(methods(f)).func)
+#    catch e
+#        get_args(f.code)
+#    end
+
 function get_args(f::Function)
-    try
-        get_args(first(methods(f)).func)
-    catch e
-        get_args(f.code)
-    end
+    return first(methods(f)).lambda_template.slotnames[2:end]    
 end
 
 end
 
 _arg_offset = 0
 _arg_offset = length(get_args(x->x))
+
 
 ## bind
 ## Function callbacks have first argument path that is ignored
