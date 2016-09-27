@@ -20,7 +20,7 @@ function update_ids(m::Module)
     global __ids__
     nms = get_names(m)
     nms = filter(u -> u != "__ids__", nms)
-    a_ids = map(u -> unique_id(symbol(u), m), nms)
+    a_ids = map(u -> unique_id(Symbol(u), m), nms)
     if __ids__ == a_ids
         false
     else
@@ -47,9 +47,9 @@ function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtype
     end
     ## filter out this type
     if dtype != nothing
-        nms = filter(u -> isdefined(m, symbol(u)) && negate(isa(eval(m,symbol(u)), dtype), dtypefilter), nms)
+        nms = filter(u -> isdefined(m, Symbol(u)) && negate(isa(eval(m,Symbol(u)), dtype), dtypefilter), nms)
     end
-    summaries = map(u -> isdefined(m, symbol(u)) ? short_summary(eval(m,symbol(u))) : "undefined", nms)
+    summaries = map(u -> isdefined(m, Symbol(u)) ? short_summary(eval(m,Symbol(u))) : "undefined", nms)
 
     if length(nms) == length(summaries)
         return [nms summaries]
@@ -75,7 +75,7 @@ scrollbars_add(f, tv)
 ## add a callback. Here we get the obj clicked on.
 callback_add(tv, (path) -> begin
     val = get_value(tv)[1]
-    obj = eval(Main, symbol(val))
+    obj = eval(Main, Symbol(val))
     println(short_summary(obj))
 end)
 

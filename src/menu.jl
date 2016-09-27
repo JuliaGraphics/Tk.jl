@@ -54,7 +54,7 @@ function menu_add(widget::Tk_Menu, rb::Tk_Radio)
 end
 
 function tk_popup(widget::Tk_Widget, menu::Tk_Menu)
-    if OS_NAME == :Darwin
+    if is_apple()
         tcl_eval("bind $(widget.w.path) <2> {tk_popup $(menu.w.path) %X %Y}")
         tcl_eval("bind $(widget.w.path) <Control-1> {tk_popup $(menu.w.path) %X %Y}")
     else
@@ -63,7 +63,7 @@ function tk_popup(widget::Tk_Widget, menu::Tk_Menu)
 end
 
 function tk_popup(c::Canvas, menu::Tk_Menu)
-    if OS_NAME == :Darwin
+    if is_apple()
         tcl_eval("bind $(c.c.path) <2> {tk_popup $(menu.w.path) %X %Y}")
         tcl_eval("bind $(c.c.path) <Control-1> {tk_popup $(menu.w.path) %X %Y}")
     else

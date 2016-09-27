@@ -136,7 +136,7 @@ function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
 
     function dict_to_module(d::Dict) ## stuff values into Manipulate Context
         for (k,v) in d
-            eval(ManipulateContext, :($(symbol(k)) = $v))
+            eval(ManipulateContext, :($(Symbol(k)) = $v))
         end
     end
 
@@ -165,8 +165,8 @@ ex = quote
     s = sin(x)
     p = FramedPlot()
     setattr(p, "title", title)
-    if
-        fillbetween add(p, FillBetween(x, c, x, s) )
+    if fillbetween
+        add(p, FillBetween(x, c, x, s) )
     end
     add(p, Curve(x, c, "color", color) )
     add(p, Curve(x, s, "color", "blue") )

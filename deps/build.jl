@@ -5,11 +5,11 @@ using Compat; import Compat.String
 
 tcl = library_dependency("tcl",aliases=["libtcl8.6","tcl86g","tcl86t","libtcl","libtcl8.6.so.0","libtcl8.5","libtcl8.5.so.0","tcl85"])
 tk = library_dependency("tk",aliases=["libtk8.6","libtk","libtk8.6.so.0","libtk8.5","libtk8.5.so.0","tk85","tk86","tk86t"], depends=[tcl], validate = function(p,h)
-    @osx_only return @compat Libdl.dlsym_e(h,:TkMacOSXGetRootControl) != C_NULL
+    is_apple() && (return @compat Libdl.dlsym_e(h,:TkMacOSXGetRootControl) != C_NULL)
     return true
 end)
 
-@windows_only begin
+if is_windows()
     using WinRPM
     provides(WinRPM.RPM,"tk",tk,os = :Windows)
     provides(WinRPM.RPM,"tcl",tcl,os = :Windows)
@@ -21,12 +21,12 @@ provides(AptGet,"tk8.5",tk)
 provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz"),tcl,unpacked_dir = "tcl8.6.0")
 provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz"),tk,unpacked_dir = "tk8.6.0")
 
-is64bit = WORD_SIZE == 64
+is64bit = @compat Sys.WORD_SIZE == 64
 
 provides(BuildProcess,Autotools(configure_subdir = "unix", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tcl, os = :Unix)
 provides(BuildProcess,Autotools(configure_subdir = "unix", configure_options = [is64bit?"--enable-64bit":"--disable-64bit"]),tk, os = :Unix)
 
-if WORD_SIZE == 64
+if @compat Sys.WORD_SIZE == 64
         # Unfortunately the mingw-built tc segfaults since some function signatures
         # are different between VC and mingw. This is fixed on tcl trunk. For now,
         # just use VC to build tcl (Note requlres Visual Studio Express in the PATH)
