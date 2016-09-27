@@ -201,7 +201,7 @@ function bindwheel(widget::Widget, modifier::AbstractString, callback::Function,
         tkargs = string(" ", tkargs)
     end
     ccb = tcl_callback(callback)
-    if OS_NAME == :Linux
+    if is_linux()
         tcl_eval("bind $(path) <$(modifier)Button-4> {$ccb -120$tkargs}")
         tcl_eval("bind $(path) <$(modifier)Button-5> {$ccb 120$tkargs}")
     else
@@ -229,7 +229,7 @@ function callback_add(widget::Tk_Widget, callback::Function)
         :Tk_Text => "<FocusOut>",
         :Tk_Treeview => "<<TreeviewSelect>>"
     )
-    key = Base.symbol(split(string(typeof(widget)), '.')[end])
+    key = Base.Symbol(split(string(typeof(widget)), '.')[end])
     if haskey(events, key)
         event = events[key]
         if event == nothing

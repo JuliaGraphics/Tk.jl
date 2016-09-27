@@ -266,7 +266,7 @@ function reveal(c::Canvas)
 end
 
 @static if is_apple()
-if WORD_SIZE == 32
+if @compat Sys.WORD_SIZE == 32
     typealias CGFloat Float32
 else
     typealias CGFloat Float64
