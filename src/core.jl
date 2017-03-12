@@ -16,7 +16,7 @@ get_path(widget::Canvas) = get_path(widget.c) # Tk.Canvas object
 
 ## Coversion of julia objects into tcl strings for inclusion via tcl() call
 to_tcl(x) = string(x)
-to_tcl(x::(@compat Void)) = ""
+to_tcl(x::Void) = ""
 has_space = r" "
 to_tcl(x::AbstractString) = ismatch(has_space, x) ? "{$x}" : x
 type I x::MaybeString end               #  avoid wrapping in {} and ismatch call.
@@ -112,55 +112,17 @@ wm(window::Widget, prop::AbstractString, args...; kwargs...) = tcl("wm", prop, w
 
 ## Take a function, get its args as array of symbols. There must be better way...
 ## Helper functions for bind callback
-if VERSION > v"0.5-"
-function get_args(li::LambdaInfo)
-    argnames = li.slotnames[1:li.nargs]
-    if _arg_offset == 0
-        return argnames
-    else
-        return argnames[_arg_offset:end]
-    end
-end
-
-get_args(m::Method) = get_args(m.lambda_template)
-get_args(f::Function) = get_args(first(methods(f)).lambda_template)
-
-else
-
-function get_args(li::LambdaStaticData)
-    e = li.ast
-    if !isa(e, Expr)
-        e = Base.uncompressed_ast(li)
-    end
-    argnames = e.args[1]
-    ## return array of symbols -- not args
-    if isa(argnames[1], Expr)
-        argnames = map(u -> u.args[1], argnames)
-    end
-
-    if _arg_offset == 0
-        return argnames
-    else
-        return argnames[_arg_offset:end]
-    end
-end
-
-function get_args(m::Method)
-    li = m.func
-    if !isa(li,LambdaStaticData)
-        li = li.code
-    end
-    get_args(li)
-end
-
 function get_args(f::Function)
-    try
-        get_args(first(methods(f)).func)
-    catch e
-        get_args(f.code)
+    m = first(methods(f))
+    @static if VERSION >= v"0.6.0-dev.624"
+        slots = m.source.slotnames
+        n = m.nargs
+    else
+        slots = m.lambda_template.slotnames
+        n = m.lambda_template.nargs
     end
-end
-
+    argnames = slots[1:n]
+    return _arg_offset == 0 ? argnames : argnames[_arg_offset:end]
 end
 
 _arg_offset = 0
@@ -189,7 +151,7 @@ end
 bind(widget::Canvas, event::AbstractString, callback::Function) = bind(widget.c, event, callback)
 
 ## for use with do style
-bind(callback::Function, widget::(@compat Union{Widget, Canvas}), event::AbstractString) = bind(widget, event, callback)
+bind(callback::Function, widget::Union{Widget, Canvas}, event::AbstractString) = bind(widget, event, callback)
 
 ## Binding to mouse wheel
 function bindwheel(widget::Widget, modifier::AbstractString, callback::Function, tkargs::AbstractString = "")
@@ -262,8 +224,8 @@ end
 type TclAfter
     cb::Function
     run::Bool
-    start::(@compat Union{(@compat Void), Function})
-    stop::(@compat Union{(@compat Void), Function})
+    start::Union{Void, Function}
+    stop::Union{Void, Function}
     ms::Int
 
     function TclAfter(ms, cb::Function)

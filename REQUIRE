@@ -1,5 +1,5 @@
-julia 0.4
-Compat 0.7.20
+julia 0.5
+Compat 0.17.0
 Cairo
 Graphics 0.1
 BinDeps 0.2.2-

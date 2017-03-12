@@ -64,7 +64,7 @@ destroy(widget::Tk_Toplevel) = tcl("destroy", widget)
 ## Labelframe
 Labelframe(parent::Widget, text::AbstractString) = Labelframe(parent, text=text)
 get_value(widget::Tk_Labelframe) = cget(widget, "text")
-set_value(widget::Tk_Labelframe, text::AbstractString) = configure(widget, @compat Dict(:text=> text))
+set_value(widget::Tk_Labelframe, text::AbstractString) = configure(widget, Dict(:text=> text))
 
 ## Notebook
 function page_add(child::Widget, label::AbstractString)
@@ -132,7 +132,7 @@ function forget(parent::TTk_Container, child::Widget)
 end
 
 ## grid ...
-IntOrRange = (@compat Union{Integer, UnitRange})
+IntOrRange = Union{Integer, UnitRange}
 function grid(child::Widget, row::IntOrRange, column::IntOrRange; kwargs...)
     path = get_path(child)
     if isa(row, UnitRange) rowspan = 1 + maximum(row) - minimum(row)  else rowspan = 1 end
@@ -211,10 +211,10 @@ parent(w::Tk_Widget) = parent(w.w)
 parent(c::Canvas) = parent(c.c)
 
 # For toplevel it's obvious how to wrap it...
-function toplevel(w::(@compat Union{TkWidget, Tk_Widget, Canvas}))
+function toplevel(w::Union{TkWidget, Tk_Widget, Canvas})
     p = parent(w)
     pold = p
-    while !is(p, nothing)
+    while p !== nothing
         pold = p
         p = parent(p)
     end

@@ -15,7 +15,7 @@ short_summary(x) = summary(x)
 short_summary(x::AbstractString) = "A string"
 
 ## update ids, returning false if the same, true if not
-__ids__ = Array(AbstractString, 0)
+__ids__ = Vector{AbstractString}(0)
 function update_ids(m::Module)
     global __ids__
     nms = get_names(m)
@@ -31,8 +31,8 @@ end
 
 
 negate(x::Bool, val::Bool) = val ? !x : x
-MaybeRegex = (@compat Union{(@compat Void), Regex})
-MaybeType = (@compat Union{(@compat Void), DataType})
+const MaybeRegex = Union{Void, Regex}
+const MaybeType = Union{Void, DataType}
 
 ## get array of names and summaries
 ## m module
