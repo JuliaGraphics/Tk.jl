@@ -39,7 +39,7 @@ function init()
     @static if is_windows()
         htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
             (Ptr{UInt8},),libtcl)
-        tclfile = Array(UInt8,260)
+        tclfile = Vector{UInt8}(260)
         len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
             (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile))
         if len > 0
@@ -103,7 +103,7 @@ end
 type TkWidget
     path::String
     kind::String
-    parent::(@compat Union{TkWidget,Void})
+    parent::Union{TkWidget,Void}
     
     let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
@@ -267,9 +267,9 @@ end
 
 @static if is_apple()
 if @compat Sys.WORD_SIZE == 32
-    typealias CGFloat Float32
+    const CGFloat = Float32
 else
-    typealias CGFloat Float64
+    const CGFloat = Float64
 end
 objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void}) = ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}),
     id, ccall(:sel_getUid, Ptr{Void}, (Ptr{UInt8},), uid))
@@ -368,7 +368,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         return
     end
     @static if is_windows()
-        state = Array(UInt8, sizeof(Int)*2) # 8.4, 8.5, 8.6
+        state = Vector{UInt8}(sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
         hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Void}, (Ptr{Void}, Int, Ptr{UInt8}),
             jl_tkwin_display(win), drawable, state)

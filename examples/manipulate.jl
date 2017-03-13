@@ -25,7 +25,7 @@ using Winston
 end
 
 
-abstract ManipulateWidget
+@compat abstract type ManipulateWidget end
 get_label(widget::ManipulateWidget) = widget.label
 
 type SliderWidget <: ManipulateWidget

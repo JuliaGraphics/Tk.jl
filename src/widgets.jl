@@ -60,8 +60,8 @@ end
 Label(parent::Widget, text::AbstractString, image::Tk_Image) = Label(parent, text=tk_string_escape(text), image=image, compound="left")
 Label(parent::Widget, text::AbstractString) = Label(parent, text=tk_string_escape(text))
 Label(parent::Widget,  image::Tk_Image) = Label(parent, image=image, compound="image")
-get_value(widget::(@compat Union{Tk_Button, Tk_Label})) = widget[:text]
-function set_value(widget::(@compat Union{Tk_Label, Tk_Button}), value::AbstractString)
+get_value(widget::Union{Tk_Button, Tk_Label}) = widget[:text]
+function set_value(widget::Union{Tk_Label, Tk_Button}, value::AbstractString)
     variable = cget(widget, "textvariable")
     (variable == "") ? widget[:text] =  tk_string_escape(value) : tclvar(variable, value)
 end
@@ -103,7 +103,7 @@ set_items(widget::Tk_Checkbutton, value::AbstractString) = widget[:text] = tk_st
 type Tk_Radiobutton <: TTk_Widget
     w::TkWidget
 end
-MaybeTkRadioButton = (@compat Union{Void, Tk_Radiobutton})
+MaybeTkRadioButton = Union{Void, Tk_Radiobutton}
 
 function Radiobutton(parent::Widget, group::MaybeTkRadioButton, label::AbstractString)
 
@@ -125,12 +125,12 @@ set_items(widget::Tk_Radiobutton, value::AbstractString) = configure(widget, tex
 type Tk_Radio <: TTk_Widget
     w::TkWidget
     buttons::Vector
-    orient::(@compat Union{Void, AbstractString})
+    orient::Union{Void, AbstractString}
 end
 
 function Radio{T<:AbstractString}(parent::Widget, labels::Vector{T}, orient::AbstractString)
     n = size(labels)[1]
-    rbs = Array(Tk_Radiobutton, n)
+    rbs = Vector{Tk_Radiobutton}(n)
     frame = Frame(parent)
 
     rbs[1] = Radiobutton(frame, tk_string_escape(labels[1]))
@@ -314,7 +314,7 @@ get_value(widget::Tk_Progressbar) = round(Int, float(widget[:value]))
 set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image
-MaybeImage = (@compat Union{Void, Tk_Image})
+MaybeImage = Union{Void, Tk_Image}
 to_tcl(x::Tk_Image) = x.w
 
 function Image(fname::AbstractString)
@@ -440,7 +440,7 @@ type Tk_Treeview <: TTk_Widget
 end
 type TreeNode node::AbstractString end
 to_tcl(x::TreeNode) = x.node
-MaybeTreeNode = (@compat Union{TreeNode, Void})
+MaybeTreeNode = Union{TreeNode, Void}
 
 ## Special Tree cases
 
