@@ -266,13 +266,15 @@ function reveal(c::Canvas)
 end
 
 @static if is_apple()
-if @compat Sys.WORD_SIZE == 32
-    const CGFloat = Float32
-else
-    const CGFloat = Float64
-end
-objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void}) = ccall(:objc_msgSend, T, (Ptr{Void}, Ptr{Void}),
-    id, ccall(:sel_getUid, Ptr{Void}, (Ptr{UInt8},), uid))
+    if Sys.WORD_SIZE == 32
+        const CGFloat = Float32
+    else
+        const CGFloat = Float64
+    end
+    function objc_msgSend{T}(id, uid, ::Type{T}=Ptr{Void})
+        convert(T, ccall(:objc_msgSend, Ptr{Void}, (Ptr{Void}, Ptr{Void}),
+                         id, ccall(:sel_getUid, Ptr{Void}, (Ptr{UInt8},), uid)))
+    end
 end
 
 # NOTE: This has to be ported to each window environment.
