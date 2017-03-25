@@ -115,7 +115,7 @@ if VERSION >= v"0.6.0-pre.alpha.244"
 elseif VERSION >= v"0.6.0-dev.624"
     _slots(m::Method) = (m.source.slotnames, m.nargs)
 else
-    _slots(m::Method) = (m.lambda_template.slotnames, n.lambda_template.nargs)
+    _slots(m::Method) = (m.lambda_template.slotnames, m.lambda_template.nargs)
 end
 
 ## Take a function, get its args as array of symbols. There must be better way...
