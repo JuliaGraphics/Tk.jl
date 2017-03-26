@@ -110,17 +110,18 @@ winfo(widget::Widget, prop::AbstractString) = winfo(widget, prop, nothing)
 wm(window::Widget, prop::AbstractString, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
 
 
+if VERSION >= v"0.6.0-pre.alpha.244"
+    _slots(m::Method) = (Base.uncompressed_ast(m).slotnames, m.nargs)
+elseif VERSION >= v"0.6.0-dev.624"
+    _slots(m::Method) = (m.source.slotnames, m.nargs)
+else
+    _slots(m::Method) = (m.lambda_template.slotnames, m.lambda_template.nargs)
+end
+
 ## Take a function, get its args as array of symbols. There must be better way...
 ## Helper functions for bind callback
 function get_args(f::Function)
-    m = first(methods(f))
-    @static if VERSION >= v"0.6.0-dev.624"
-        slots = m.source.slotnames
-        n = m.nargs
-    else
-        slots = m.lambda_template.slotnames
-        n = m.lambda_template.nargs
-    end
+    slots, n = _slots(first(methods(f)))
     argnames = slots[1:n]
     return _arg_offset == 0 ? argnames : argnames[_arg_offset:end]
 end
