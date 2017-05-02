@@ -46,13 +46,13 @@ function init()
             tcldir = dirname(String(tclfile[1:len]))
             libpath = IOBuffer()
             print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
-            print_escaped(libpath,abspath(tcldir,"..","share","tcl"),"{}")
+            escape_string(libpath,abspath(tcldir,"..","share","tcl"),"{}")
             print(libpath,"}]")
-            tcl_eval(takebuf_string(libpath),tclinterp)
+            @compat tcl_eval(String(take!(libpath)),tclinterp)
             print(libpath,"set env(TK_LIBRARY) [subst -nocommands -novariables {")
-            print_escaped(libpath,abspath(tcldir,"..","share","tk"),"{}")
+            escape_string(libpath,abspath(tcldir,"..","share","tk"),"{}")
             print(libpath,"}]")
-            tcl_eval(takebuf_string(libpath),tclinterp)
+            @compat tcl_eval(String(take!(libpath)),tclinterp)
         end
     end
     if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Void},), tclinterp) == TCL_ERROR
@@ -104,7 +104,7 @@ type TkWidget
     path::String
     kind::String
     parent::Union{TkWidget,Void}
-    
+
     let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
         underscoredKind = replace(kind, "::", "_")

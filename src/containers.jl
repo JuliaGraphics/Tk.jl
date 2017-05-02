@@ -183,7 +183,7 @@ end
 ##
 ## w = Toplevel()
 ## f = Frame(w); pack(f) ## f shouldn't have any layout management of its children
-## t = Text(f)
+## t = TkText(f)
 ## scrollbars_add(f,t)
 ##
 function scrollbars_add(parent::Tk_Frame, child::Tk_Widget)
@@ -233,5 +233,3 @@ function children(w::TTk_Container; ismapped::Bool=false)
     end
     kids
 end
-
-

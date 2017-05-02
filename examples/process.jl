@@ -1,3 +1,5 @@
+using Compat
+
 f = "radio.png"
 
 function process_file(f)
@@ -5,4 +7,4 @@ function process_file(f)
     "<!-- $f -->\n<img src='data:image/png;base64,$a'></img>"
 end
 
-process_file(f)
+@compat is_windows() || process_file(f)

@@ -25,7 +25,7 @@ Constructors are provided  for the following widgets
 * `Frame`, `Labelframe`, `Notebook`, `Panedwindow`: for the basic containers
 * `Label`, `Button`, `Menu`: basic elements
 * `Checkbutton`, `Radio`, `Combobox`, `Slider`, `Spinbox`: selection widgets
-* `Entry`, `Text`: text widgets
+* `Entry`, `TkText`: text widgets
 * `Treeview`: for trees, but also listboxes and grids
 * `Sizegrip`, `Separator`, `Progressbar`, `Image` various widgets
 
@@ -387,7 +387,7 @@ The basic multi-line text widget can be done through:
 w = Toplevel()
 tcl("pack", "propagate", w, false)
 f = Frame(w)
-txt = Text(f)
+txt = TkText(f)
 scrollbars_add(f, txt)
 pack(f, expand=true, fill = "both")
 ```

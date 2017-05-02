@@ -144,7 +144,11 @@ end
         bind(b, "command", cb)
         tcl(b, "invoke")
         @test ctr == 2
-        img = Image(joinpath(dirname(@__FILE__), "..", "examples", "weather-overcast.gif"))
+        path = join([dirname(@__FILE__), "..", "examples", "weather-overcast.gif"], '/')
+        if is_windows()
+          path = replace(path, r"\\", "/")
+        end
+        img = Image(path)
         map(u-> configure(u, image=img, compound="left"), (l,b))
         destroy(w)
     end
@@ -257,11 +261,11 @@ end
     destroy(w)
 end
 
-@testset "Text" begin
+@testset "TkText" begin
     w = Toplevel("Text")
     pack_stop_propagate(w)
     f = Frame(w); pack(f, expand=true, fill="both")
-    txt = Text(f)
+    txt = TkText(f)
     scrollbars_add(f, txt)
     set_value(txt, "new text\n")
     @test get_value(txt) == "new text\n"

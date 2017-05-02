@@ -34,7 +34,7 @@ for (k, k1, v) in ((:Label, :Tk_Label, "ttk::label"),
                    (:Menu, :Tk_Menu, "menu"),
                    (:Menubutton, :Tk_Menubutton, "ttk::menubutton"),
                    (:Scrollbar, :Tk_Scrollbar, "ttk::scrollbar"),
-                   (:Text, :Tk_Text, "text"),
+                   (:TkText, :Tk_Text, "text"),
                    (:Treeview, :Tk_Treeview, "ttk::treeview"),
                    (:TkCanvas, :Tk_Canvas, "canvas"),
                    ##
@@ -672,4 +672,3 @@ function Canvas(parent::TTk_Container, args...)
     push!(parent.children, Tk_CairoCanvas(c))
     c
 end
-
