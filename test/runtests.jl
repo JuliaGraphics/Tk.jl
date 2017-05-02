@@ -1,6 +1,7 @@
 ## Tests
 using Tk
 using Base.Test
+using Compat
 
 @testset "Toplevel" begin
     w = Toplevel("Toplevel", 400, 400)
@@ -144,8 +145,8 @@ end
         bind(b, "command", cb)
         tcl(b, "invoke")
         @test ctr == 2
-        path = join([dirname(@__FILE__), "..", "examples", "weather-overcast.gif"], '/')
-        if is_windows()
+        path = joinpath(dirname(@__FILE__), "..", "examples", "weather-overcast.gif")
+        @compat if is_windows()
           path = replace(path, r"\\", "/")
         end
         img = Image(path)
