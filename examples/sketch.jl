@@ -1,30 +1,42 @@
 using Tk
-if VERSION < v"0.4.0-dev+3275"
-    using Base.Graphics
-else
-    using Graphics
-end
+using Graphics
 
 function sketch_window()
     w = Window("drawing", 400, 300)
-    c = Canvas(w)
-    pack(c)
-    lastx = 0
-    lasty = 0
-    cr = getgc(c)
-    set_source_rgb(cr, 1, 1, 1)
-    paint(cr)
-    reveal(c)
-    set_source_rgb(cr, 0, 0, 0.85)
-    c.mouse.button1press = function (c, x, y)
-        lastx = x; lasty = y
+    canvas = Canvas(w)
+    pack(canvas, expand=true)
+    ctx = getgc(canvas)
+
+    set_source_rgb(ctx, 1, 1, 1)
+    paint(ctx)
+    reveal(canvas)
+
+    set_source_rgb(ctx, 0, 0, 0.85)
+    pressed = false
+    points = []
+
+    canvas.mouse.button1press = function (c, x, y)
+        pressed = true
+        push!(points, (x, y))
+        move_to(ctx, x, y)
     end
-    c.mouse.button1motion = function (c, x, y)
-        move_to(cr, lastx, lasty)
-        line_to(cr, x, y)
-        stroke(cr)
-        reveal(c)
-        lastx = x; lasty = y
+
+    canvas.mouse.button1release = function (c, x, y)
+        pressed = false
+        empty!(points)
     end
-    c
+
+    canvas.mouse.button1motion = function (c, x, y)
+        if pressed
+            push!(points, (x, y))
+            for (a,b) in points
+                line_to(ctx, a, b)
+            end
+            stroke(ctx)
+            reveal(canvas)
+            Tk.update()
+        end
+    end
 end
+
+sketch_window()

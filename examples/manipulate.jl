@@ -5,13 +5,13 @@
 
 using Winston
 using Tk
-using Compat; import Compat.String
-
+using Compat
+using Graphics
 
 function render(c, p)
     ctx = getgc(c)
-    Base.Graphics.set_source_rgb(ctx, 1, 1, 1)
-    Base.Graphics.paint(ctx)
+    Graphics.set_source_rgb(ctx, 1, 1, 1)
+    Graphics.paint(ctx)
     Winston.page_compose(p, Tk.cairo_surface(c))
     reveal(c)
     Tk.update()
@@ -105,8 +105,8 @@ entry(nm::AbstractString) = EntryWidget(nm, nm, "{}")
 
 
 ## Expression returns a plot object. Use names as values
-function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
-    widgets = Array(Tk.Widget, 0)
+function manipulate(ex::Union{Symbol,Expr}, controls...)
+    widgets = Array{Tk.Widget}(0)
 
     w = Toplevel("Manipulate", 800, 500)
     pack_stop_propagate(w)
@@ -127,7 +127,7 @@ function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
         d = Dict()                      # return Dict of values
         vals = get_values(); keys = get_nms()
         for i in 1:length(vals)
-            if !isa(keys[i], @compat Void)
+            if !isa(keys[i], Void)
                 d[keys[i]] = vals[i]
             end
         end
@@ -161,8 +161,8 @@ end
 
 ex = quote
     x = linspace( 0, n * pi, 100 )
-    c = cos(x)
-    s = sin(x)
+    c = cos.(x)
+    s = sin.(x)
     p = FramedPlot()
     setattr(p, "title", title)
     if fillbetween
@@ -170,7 +170,7 @@ ex = quote
     end
     add(p, Curve(x, c, "color", color) )
     add(p, Curve(x, s, "color", "blue") )
-    file(p, "example1.png")
+    savefig(p, "example1.png")
     p
 end
 
