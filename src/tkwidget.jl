@@ -194,8 +194,7 @@ type MouseHandler
                          default_mouse_cb, default_mouse_cb)
 end
 
-# TkCanvas is the plain Tk canvas widget. This one is double-
-ed
+# TkCanvas is the plain Tk canvas widget. This one is double-buffered
 # and built on Cairo.
 type Canvas
     c::TkWidget
