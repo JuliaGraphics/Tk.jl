@@ -1,9 +1,9 @@
 ## dialogs
 
 ## can add arguments if desired. Don't like names or lack of arguments
-GetOpenFile() = tcl("tk_getOpenFile")
-GetSaveFile() = tcl("tk_getSaveFile")
-ChooseDirectory() = tcl("tk_chooseDirectory")
+GetOpenFile(;kwargs...) = tcl("tk_getOpenFile";kwargs...)
+GetSaveFile(;kwargs...) = tcl("tk_getSaveFile";kwargs...)
+ChooseDirectory(;kwargs...) = tcl("tk_chooseDirectory";kwargs...)
 
 ## Message box
 function Messagebox(parent::MaybeWidget; title::AbstractString="", message::AbstractString="", detail::AbstractString="")

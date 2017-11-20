@@ -38,6 +38,10 @@ function to_tcl(x::Function)
     perc_args = join(map(u -> "%$(string(u))", args[2:end]), " ")
     cmd = "{$ccb $perc_args}"
 end
+function to_tcl(x::Tuple)
+    out = filter(item -> item != nothing, x)
+    "{"*join(["$(to_tcl(item))" for item in out], " ")*"}"
+end
 
 ## Function to simplify call to tcl_eval, ala R's tcl() function
 ## converts argumets through to_tcl
