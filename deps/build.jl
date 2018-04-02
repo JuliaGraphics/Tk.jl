@@ -17,6 +17,8 @@ end
 
 provides(AptGet,"tcl8.5",tcl)
 provides(AptGet,"tk8.5",tk)
+provides(BSDPkg,"tcl85",tcl,os=:FreeBSD)
+provides(BSDPkg,"tk85",tk,os=:FreeBSD)
 
 provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tcl8.6.0-src.tar.gz"),tcl,unpacked_dir = "tcl8.6.0")
 provides(Sources,URI("http://prdownloads.sourceforge.net/tcl/tk8.6.0-src.tar.gz"),tk,unpacked_dir = "tk8.6.0")
