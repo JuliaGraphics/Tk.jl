@@ -35,7 +35,14 @@ function init()
     end
     ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
           joinpath(Compat.Sys.BINDIR, "julia"))
-    ccall((:g_type_init,Cairo._jl_libgobject),Cvoid,())
+
+    # FIXME: On Julia 0.7, the ccall((f, lib), ...) style call errors, claiming that the
+    # (f, lib) tuple isn't a valid constant expression. This approach works around that
+    # by getting a pointer to the function, then passing that to ccall.
+    g_type_init_ptr = Libdl.dlsym(Cairo._jl_libgobject, :g_type_init)
+    ccall(g_type_init_ptr, Cvoid, ())
+    Libdl.dlclose(g_type_init_ptr)
+
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
     @static if Compat.Sys.iswindows()
         htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
