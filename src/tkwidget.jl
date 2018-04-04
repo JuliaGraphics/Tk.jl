@@ -39,9 +39,11 @@ function init()
     # FIXME: On Julia 0.7, the ccall((f, lib), ...) style call errors, claiming that the
     # (f, lib) tuple isn't a valid constant expression. This approach works around that
     # by getting a pointer to the function, then passing that to ccall.
-    g_type_init_ptr = Libdl.dlsym(Cairo._jl_libgobject, :g_type_init)
+    jl_libgobject_ptr = Libdl.dlopen(Cairo._jl_libgobject)
+    g_type_init_ptr = Libdl.dlsym(jl_libgobject_ptr, :g_type_init)
     ccall(g_type_init_ptr, Cvoid, ())
     Libdl.dlclose(g_type_init_ptr)
+    Libdl.dlclose(jl_libgobject_ptr)
 
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
     @static if Compat.Sys.iswindows()
