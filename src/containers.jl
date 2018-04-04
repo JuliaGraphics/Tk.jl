@@ -1,9 +1,9 @@
 ## Types
-type Tk_Toplevel    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
-type Tk_Frame       <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
-type Tk_Labelframe  <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
-type Tk_Notebook    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
-type Tk_Panedwindow <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+mutable struct Tk_Toplevel    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+mutable struct Tk_Frame       <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+mutable struct Tk_Labelframe  <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+mutable struct Tk_Notebook    <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
+mutable struct Tk_Panedwindow <: TTk_Container w::TkWidget; children::Vector{Tk_Widget} end
 
 ==(a::TTk_Container, b::TTk_Container) = isequal(a.w, b.w) && typeof(a) == typeof(b)
 
@@ -23,7 +23,7 @@ width(widget::Tk_Toplevel) = parse(Int, winfo(widget, "width"))
 height(widget::Tk_Toplevel) = parse(Int, winfo(widget, "height"))
 get_size(widget::Tk_Toplevel) = [width(widget), height(widget)]
 set_size(widget::Tk_Toplevel,  width::Integer, height::Integer) = wm(widget, "geometry", "$(string(width))x$(string(height))")
-set_size{T <: Integer}(widget::Tk_Toplevel, widthheight::Vector{T}) = set_size(widget, widthheight[1], widthheight[2])
+set_size(widget::Tk_Toplevel, widthheight::Vector{T}) where {T <: Integer} = set_size(widget, widthheight[1], widthheight[2])
 
 
 
@@ -52,7 +52,7 @@ function set_position(widget::Tk_Toplevel, x::Integer, y::Integer)
     p_or_m(x) = x < 0 ? "$x" : "+$x"
     wm(widget, "geometry", I(p_or_m(x) * p_or_m(y)))
 end
-set_position{T <: Integer}(widget::Tk_Toplevel, pos::Vector{T}) = set_position(w, pos[1], pos[2])
+set_position(widget::Tk_Toplevel, pos::Vector{T}) where {T <: Integer} = set_position(w, pos[1], pos[2])
 set_position(widget::Tk_Toplevel, pos::Tk_Widget) = set_position(widget, Integer[parse(Int, winfo(pos, i)) for i in ["x", "y"]] + [10,10])
 
 update(widget::Tk_Toplevel) = wm(widget, "geometry")

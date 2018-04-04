@@ -1,6 +1,7 @@
 ## Tests
 using Tk
-using Base.Test
+using Compat
+using Compat.Test
 
 @testset "Toplevel" begin
     w = Toplevel("Toplevel", 400, 400)

@@ -16,14 +16,14 @@ get_path(widget::Canvas) = get_path(widget.c) # Tk.Canvas object
 
 ## Coversion of julia objects into tcl strings for inclusion via tcl() call
 to_tcl(x) = string(x)
-to_tcl(x::Void) = ""
+to_tcl(x::Nothing) = ""
 has_space = r" "
 to_tcl(x::AbstractString) = ismatch(has_space, x) ? "{$x}" : x
-type I x::MaybeString end               #  avoid wrapping in {} and ismatch call.
+mutable struct I x::MaybeString end               #  avoid wrapping in {} and ismatch call.
 macro I_str(s) I(s) end
 to_tcl(x::I) = x.x == nothing ? "" : x.x
-to_tcl{T <: Number}(x::Vector{T}) = "\"" * string(join(x, " ")) * "\""
-function to_tcl{T <: AbstractString}(x::Vector{T})
+to_tcl(x::Vector{T}) where {T <: Number} = "\"" * string(join(x, " ")) * "\""
+function to_tcl(x::Vector{T}) where T <: AbstractString
     tmp = join(["{$i}" for i in x], " ")
     "[list $tmp ]"
 end
@@ -80,7 +80,7 @@ function configure(widget::Widget, args...; kwargs...)
     tcl(widget, "configure", args...; kwargs...)
 end
 
-setindex!(widget::Widget, value, prop::Symbol) = configure(widget, @compat Dict(prop=>value))
+setindex!(widget::Widget, value, prop::Symbol) = configure(widget, Dict(prop=>value))
 
 ## Get values
 ## cget
@@ -110,13 +110,7 @@ winfo(widget::Widget, prop::AbstractString) = winfo(widget, prop, nothing)
 wm(window::Widget, prop::AbstractString, args...; kwargs...) = tcl("wm", prop, window, args...; kwargs...)
 
 
-if VERSION >= v"0.6.0-pre.alpha.244"
-    _slots(m::Method) = (Base.uncompressed_ast(m).slotnames, m.nargs)
-elseif VERSION >= v"0.6.0-dev.624"
-    _slots(m::Method) = (m.source.slotnames, m.nargs)
-else
-    _slots(m::Method) = (m.lambda_template.slotnames, m.lambda_template.nargs)
-end
+_slots(m::Method) = (Base.uncompressed_ast(m).slotnames, m.nargs)
 
 ## Take a function, get its args as array of symbols. There must be better way...
 ## Helper functions for bind callback
@@ -164,7 +158,7 @@ function bindwheel(widget::Widget, modifier::AbstractString, callback::Function,
         tkargs = string(" ", tkargs)
     end
     ccb = tcl_callback(callback)
-    if is_linux()
+    if Compat.Sys.islinux()
         tcl_eval("bind $(path) <$(modifier)Button-4> {$ccb -120$tkargs}")
         tcl_eval("bind $(path) <$(modifier)Button-5> {$ccb 120$tkargs}")
     else
@@ -174,7 +168,7 @@ end
 
 ## add most typical callback
 function callback_add(widget::Tk_Widget, callback::Function)
-    events = @compat Dict(
+    events = Dict(
         :Tk_Window => "<Destroy>",
         :Tk_Frame => nothing,
         :Tk_Labelframe => nothing,
@@ -222,11 +216,11 @@ end
 ## function after a delay of ms milliseconds. This is started with
 ## obj.start() and stopped, if desired, with obj.stop(). To restart is
 ## possible, but first set obj.run=true.
-type TclAfter
+mutable struct TclAfter
     cb::Function
     run::Bool
-    start::Union{Void, Function}
-    stop::Union{Void, Function}
+    start::Union{Nothing, Function}
+    stop::Union{Nothing, Function}
     ms::Int
 
     function TclAfter(ms, cb::Function)

@@ -7,7 +7,7 @@ function get_names(m::Module)
 end
 
 unique_id(v::Symbol, m::Module) = isdefined(m,v) ? unique_id(eval(m,v)) : ""
-unique_id(x) = string(object_id(x))
+unique_id(x) = string(objectid(x))
 
 ## short_summary
 ## can customize description here
@@ -31,8 +31,8 @@ end
 
 
 negate(x::Bool, val::Bool) = val ? !x : x
-const MaybeRegex = Union{Void, Regex}
-const MaybeType = Union{Void, DataType}
+const MaybeRegex = Union{Nothing, Regex}
+const MaybeType = Union{Nothing, DataType}
 
 ## get array of names and summaries
 ## m module

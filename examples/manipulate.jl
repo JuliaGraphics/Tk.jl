@@ -25,10 +25,10 @@ using Winston
 end
 
 
-@compat abstract type ManipulateWidget end
+abstract type ManipulateWidget end
 get_label(widget::ManipulateWidget) = widget.label
 
-type SliderWidget <: ManipulateWidget
+mutable struct SliderWidget <: ManipulateWidget
     nm
     label
     initial
@@ -44,7 +44,7 @@ slider(nm::AbstractString, label::AbstractString, rng::UnitRange, initial::Integ
 slider(nm::AbstractString, label::AbstractString, rng::UnitRange) = slider(nm, label, rng, minimum(rng))
 slider(nm::AbstractString,  rng::UnitRange) = slider(nm, nm, rng, minimum(rng))
 
-type PickerWidget <: ManipulateWidget
+mutable struct PickerWidget <: ManipulateWidget
     nm
     label
     initial
@@ -60,14 +60,14 @@ function make_widget(parent, widget::PickerWidget)
 end
 
 
-picker{T <: AbstractString}(nm::AbstractString, label::AbstractString, vals::Vector{T}, initial) = PickerWidget(nm, label, initial, vals)
-picker{T <: AbstractString}(nm::AbstractString, label::AbstractString, vals::Vector{T}) = picker(nm, label, vals, vals[1])
-picker{T <: AbstractString}(nm::AbstractString, vals::Vector{T}) = picker(nm, nm, vals)
+picker(nm::AbstractString, label::AbstractString, vals::Vector{T}, initial) where {T <: AbstractString} = PickerWidget(nm, label, initial, vals)
+picker(nm::AbstractString, label::AbstractString, vals::Vector{T}) where {T <: AbstractString} = picker(nm, label, vals, vals[1])
+picker(nm::AbstractString, vals::Vector{T}) where {T <: AbstractString} = picker(nm, nm, vals)
 picker(nm::AbstractString, label::AbstractString, vals::Dict, initial) = PickerWidget(nm, label, vals, initial)
 picker(nm::AbstractString, label::AbstractString, vals::Dict) = PickerWidget(nm, label, vals, [string(k) for (k,v) in vals][1])
 picker(nm::AbstractString, vals::Dict) = picker(nm, nm, vals)
 
-type CheckboxWidget <: ManipulateWidget
+mutable struct CheckboxWidget <: ManipulateWidget
     nm
     label
     initial
@@ -83,7 +83,7 @@ checkbox(nm::AbstractString, label::AbstractString, initial::Bool) = CheckboxWid
 checkbox(nm::AbstractString, label::AbstractString) = checkbox(nm, label, false)
 
 
-type ButtonWidget <: ManipulateWidget
+mutable struct ButtonWidget <: ManipulateWidget
     label
     nm
 end
@@ -93,7 +93,7 @@ button(label::AbstractString) = ButtonWidget(label, nothing)
 
 
 ## Add text widget to gather one-line of text
-type EntryWidget <: ManipulateWidget
+mutable struct EntryWidget <: ManipulateWidget
     nm
     label
     initial
@@ -105,7 +105,7 @@ entry(nm::AbstractString) = EntryWidget(nm, nm, "{}")
 
 
 ## Expression returns a plot object. Use names as values
-function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
+function manipulate(ex::(Union{Symbol,Expr}), controls...)
     widgets = Array(Tk.Widget, 0)
 
     w = Toplevel("Manipulate", 800, 500)
@@ -127,7 +127,7 @@ function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
         d = Dict()                      # return Dict of values
         vals = get_values(); keys = get_nms()
         for i in 1:length(vals)
-            if !isa(keys[i], @compat Void)
+            if !isa(keys[i], Nothing)
                 d[keys[i]] = vals[i]
             end
         end
