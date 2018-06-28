@@ -105,7 +105,7 @@ entry(nm::AbstractString) = EntryWidget(nm, nm, "{}")
 
 
 ## Expression returns a plot object. Use names as values
-function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
+function manipulate(ex::(Union{Symbol,Expr}), controls...)
     widgets = Array(Tk.Widget, 0)
 
     w = Toplevel("Manipulate", 800, 500)
@@ -127,7 +127,7 @@ function manipulate(ex::(@compat Union{Symbol,Expr}), controls...)
         d = Dict()                      # return Dict of values
         vals = get_values(); keys = get_nms()
         for i in 1:length(vals)
-            if !isa(keys[i], @compat Void)
+            if !isa(keys[i], Void)
                 d[keys[i]] = vals[i]
             end
         end

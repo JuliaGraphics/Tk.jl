@@ -1,4 +1,4 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(false)
+__precompile__(false)
 
 # julia tk interface
 # TODO:
@@ -26,11 +26,7 @@ end
 
 import Base: ==, bind, getindex, isequal, parent, setindex!, show, string, Text
 
-if VERSION < v"0.4.0-dev+3275"
-    import Base.Graphics: width, height, getgc
-else
-    import Graphics: width, height, getgc
-end
+import Graphics: width, height, getgc
 
 import Cairo: destroy
 

@@ -80,7 +80,7 @@ function configure(widget::Widget, args...; kwargs...)
     tcl(widget, "configure", args...; kwargs...)
 end
 
-setindex!(widget::Widget, value, prop::Symbol) = configure(widget, @compat Dict(prop=>value))
+setindex!(widget::Widget, value, prop::Symbol) = configure(widget, Dict(prop=>value))
 
 ## Get values
 ## cget
@@ -174,7 +174,7 @@ end
 
 ## add most typical callback
 function callback_add(widget::Tk_Widget, callback::Function)
-    events = @compat Dict(
+    events = Dict(
         :Tk_Window => "<Destroy>",
         :Tk_Frame => nothing,
         :Tk_Labelframe => nothing,
