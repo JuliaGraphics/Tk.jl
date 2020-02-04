@@ -47,13 +47,13 @@ function init()
             tcldir = dirname(String(tclfile[1:len]))
             libpath = IOBuffer()
             print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
-            print_escaped(libpath,abspath(tcldir,"..","share","tcl"),"{}")
+            escape_string(libpath,abspath(tcldir,"..","share","tcl"),"{}")
             print(libpath,"}]")
-            tcl_eval(takebuf_string(libpath),tclinterp)
+            tcl_eval(String(take!(libpath)),tclinterp)
             print(libpath,"set env(TK_LIBRARY) [subst -nocommands -novariables {")
-            print_escaped(libpath,abspath(tcldir,"..","share","tk"),"{}")
+            escape_string(libpath,abspath(tcldir,"..","share","tk"),"{}")
             print(libpath,"}]")
-            tcl_eval(takebuf_string(libpath),tclinterp)
+            tcl_eval(String(take!(libpath)),tclinterp)
         end
     end
     if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Cvoid},), tclinterp) == TCL_ERROR
