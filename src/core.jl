@@ -1,8 +1,6 @@
 show(io::IO, widget::TkWidget) = print(io, typeof(widget))
 show(io::IO, widget::Tk_Widget) = print(io, "Tk widget of type $(typeof(widget))")
 
-
-tcl_eval("set auto_path")
 tcl_add_path(path::AbstractString) = tcl_eval("lappend auto_path $path")
 tcl_require(pkg::AbstractString) = tcl_eval("package require $pkg")
 
@@ -18,7 +16,7 @@ get_path(widget::Canvas) = get_path(widget.c) # Tk.Canvas object
 to_tcl(x) = string(x)
 to_tcl(x::Nothing) = ""
 has_space = r" "
-to_tcl(x::AbstractString) = ismatch(has_space, x) ? "{$x}" : x
+to_tcl(x::AbstractString) = occursin(has_space, x) ? "{$x}" : x
 mutable struct I x::MaybeString end               #  avoid wrapping in {} and ismatch call.
 macro I_str(s) I(s) end
 to_tcl(x::I) = x.x == nothing ? "" : x.x
@@ -29,7 +27,7 @@ function to_tcl(x::Vector{T}) where T <: AbstractString
 end
 to_tcl(x::Widget) = get_path(x)
 function to_tcl(x::Dict)
-    out = filter((k,v) -> v != nothing, x)
+    out = filter( kv -> kv[2] != nothing, x)
     join([" -$(string(k)) $(to_tcl(v))" for (k, v) in out], "")
 end
 function to_tcl(x::Function)

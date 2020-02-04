@@ -1,7 +1,6 @@
 ## Example of widgets put into container with change handler assigned
 
 using Tk
-using Compat; import Compat.String
 
 w = Toplevel("Test window", false)
 ## pack in tk frame for themed widgets
@@ -41,4 +40,3 @@ change_handler(path,xs...) = println(map(get_value, widgets))
 map(u -> callback_add(u, change_handler), widgets)
 
 set_visible(w, true)
-

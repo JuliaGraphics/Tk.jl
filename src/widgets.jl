@@ -1,24 +1,24 @@
 ## Create basic widgets here
 
-## Most types are simple, some have other properties
-type Tk_Label       <: TTk_Widget w::TkWidget end
-type Tk_Button      <: TTk_Widget w::TkWidget end
-type Tk_Checkbutton <: TTk_Widget w::TkWidget end
-##type Tk_Radio <: TTk_Widget w::TkWidget end
-##type Tk_Combobox <: TTk_Widget w::TkWidget end
-type Tk_Scale       <: TTk_Widget w::TkWidget end
-#type Tk_Spinbox <: TTk_Widget w::TkWidget end
-type Tk_Entry       <: TTk_Widget w::TkWidget end
-type Tk_Sizegrip    <: TTk_Widget w::TkWidget end
-type Tk_Separator   <: TTk_Widget w::TkWidget end
-type Tk_Progressbar <: TTk_Widget w::TkWidget end
-type Tk_Menu        <: TTk_Widget w::TkWidget end
-type Tk_Menubutton  <: TTk_Widget w::TkWidget end
-type Tk_Image       <: TTk_Widget w::AbstractString end
-type Tk_Scrollbar   <: TTk_Widget w::TkWidget end
-type Tk_Text        <: Tk_Widget  w::TkWidget end
-##type Tk_Treeview    <: Tk_Widget  w::TkWidget end
-type Tk_Canvas      <: Tk_Widget  w::TkWidget end
+## Most structs are simple, some have other properties
+mutable struct Tk_Label       <: TTk_Widget w::TkWidget end
+mutable struct Tk_Button      <: TTk_Widget w::TkWidget end
+mutable struct Tk_Checkbutton <: TTk_Widget w::TkWidget end
+##struct Tk_Radio <: TTk_Widget w::TkWidget end
+##struct Tk_Combobox <: TTk_Widget w::TkWidget end
+mutable struct Tk_Scale       <: TTk_Widget w::TkWidget end
+#struct Tk_Spinbox <: TTk_Widget w::TkWidget end
+mutable struct Tk_Entry       <: TTk_Widget w::TkWidget end
+mutable struct Tk_Sizegrip    <: TTk_Widget w::TkWidget end
+mutable struct Tk_Separator   <: TTk_Widget w::TkWidget end
+mutable struct Tk_Progressbar <: TTk_Widget w::TkWidget end
+mutable struct Tk_Menu        <: TTk_Widget w::TkWidget end
+mutable struct Tk_Menubutton  <: TTk_Widget w::TkWidget end
+mutable struct Tk_Image       <: TTk_Widget w::AbstractString end
+mutable struct Tk_Scrollbar   <: TTk_Widget w::TkWidget end
+mutable struct Tk_Text        <: Tk_Widget  w::TkWidget end
+##struct Tk_Treeview    <: Tk_Widget  w::TkWidget end
+mutable struct Tk_Canvas      <: Tk_Widget  w::TkWidget end
 
 for (k, k1, v) in ((:Label, :Tk_Label, "ttk::label"),
                    (:Button, :Tk_Button, "ttk::button"),
@@ -100,10 +100,10 @@ get_items(widget::Tk_Checkbutton) = widget[:text]
 set_items(widget::Tk_Checkbutton, value::AbstractString) = widget[:text] = tk_string_escape(value)
 
 ## RadioButton
-type Tk_Radiobutton <: TTk_Widget
+mutable struct Tk_Radiobutton <: TTk_Widget
     w::TkWidget
 end
-MaybeTkRadioButton = Union{Void, Tk_Radiobutton}
+MaybeTkRadioButton = Union{Nothing, Tk_Radiobutton}
 
 function Radiobutton(parent::Widget, group::MaybeTkRadioButton, label::AbstractString)
 
@@ -122,15 +122,15 @@ set_items(widget::Tk_Radiobutton, value::AbstractString) = configure(widget, tex
 
 
 ## Radio Button Group
-type Tk_Radio <: TTk_Widget
+mutable struct Tk_Radio <: TTk_Widget
     w::TkWidget
     buttons::Vector
-    orient::Union{Void, AbstractString}
+    orient::Union{Nothing, AbstractString}
 end
 
-function Radio{T<:AbstractString}(parent::Widget, labels::Vector{T}, orient::AbstractString)
+function Radio(parent::Widget, labels::Vector{T}, orient::AbstractString) where {T<:AbstractString}
     n = size(labels)[1]
-    rbs = Vector{Tk_Radiobutton}(n)
+    rbs = Vector{Tk_Radiobutton}(undef, n)
     frame = Frame(parent)
 
     rbs[1] = Radiobutton(frame, tk_string_escape(labels[1]))
@@ -147,7 +147,7 @@ function Radio{T<:AbstractString}(parent::Widget, labels::Vector{T}, orient::Abs
 
     rb
 end
-Radio{T <: AbstractString}(parent::Widget, labels::Vector{T}) = Radio(parent, labels, "vertical") ## vertical default
+Radio(parent::Widget, labels::Vector{T}) where {T <: AbstractString} = Radio(parent, labels, "vertical")  ## vertical default
 
 function get_value(widget::Tk_Radio)
     items = get_items(widget)
@@ -173,7 +173,7 @@ end
 ##getindex(widget::Tk_Radio, i::Integer) = widget.buttons[i]
 
 ## Combobox
-type Tk_Combobox <: TTk_Widget
+mutable struct Tk_Combobox <: TTk_Widget
     w::TkWidget
     values::Vector                      #  of tuples (key, label)
     Tk_Combobox(w::TkWidget) = new(w, [])
@@ -219,7 +219,7 @@ end
 
 
 get_items(widget::Tk_Combobox) =  widget.values
-function set_items{T}(widget::Tk_Combobox, items::Vector{Tuple{T,T}})
+function set_items(widget::Tk_Combobox, items::Vector{Tuple{T,T}}) where T
     vals = cb_pluck_labels(items)
     configure(widget, values = vals)
     widget.values = items
@@ -228,7 +228,7 @@ function set_items(widget::Tk_Combobox, items::Dict)
     widget.values = [(string(k),v) for (k,v) in items]
     configure(widget, values = cb_pluck_labels(widget.values))
 end
-function set_items{T <: AbstractString}(widget::Tk_Combobox, items::Vector{T})
+function set_items(widget::Tk_Combobox, items::Vector{T}) where {T <: AbstractString}
     d = [(v,v) for v in items]
     set_items(widget, d)
 end
@@ -239,7 +239,7 @@ set_editable(widget::Tk_Combobox, value::Bool) = widget[:state] = value ? "norma
 
 ## Slider
 ## deprecate this interface as integer values are not guaranteed in return.
-function Slider{T <: Integer}(parent::Widget, range::UnitRange{T}; orient="horizontal")
+function Slider(parent::Widget, range::UnitRange{T}; orient="horizontal") where {T <: Integer}
     w = Slider(parent, orient=orient)
     var = tclvar()
     tclvar(var, minimum(range))
@@ -247,7 +247,7 @@ function Slider{T <: Integer}(parent::Widget, range::UnitRange{T}; orient="horiz
     w
 end
 
-function Slider{T <: Real}(parent::Widget, lo::T, hi::T; orient = "horizontal")
+function Slider(parent::Widget, lo::T, hi::T; orient = "horizontal") where {T <: Real}
     w = Slider(parent, orient = orient)
     var = tclvar()
     tclvar(var, lo)
@@ -255,7 +255,7 @@ function Slider{T <: Real}(parent::Widget, lo::T, hi::T; orient = "horizontal")
     w
 end
 
-get_value(widget::Tk_Scale) = float(widget[:value])
+get_value(widget::Tk_Scale) = parse(Float64, widget[:value])
 
 function set_value(widget::Tk_Scale, value::Real)
     variable = widget[:variable]
@@ -273,13 +273,13 @@ function bind(widget::Tk_Scale, event::AbstractString, callback::Function)
 end
 
 ## Spinbox
-type Tk_Spinbox <: TTk_Widget
+mutable struct Tk_Spinbox <: TTk_Widget
     w::TkWidget
     range::UnitRange{Int}
     Tk_Spinbox(w::TkWidget) = new(w, 1:1)
 end
 
-function Spinbox{T <: Integer}(parent, range::UnitRange{T})
+function Spinbox(parent, range::UnitRange{T}) where {T <: Integer}
     w = Spinbox(parent)
     set_items(w, range)
     set_value(w, minimum(range))
@@ -290,7 +290,7 @@ get_value(widget::Tk_Spinbox) = parse(Int, tcl(widget, "get"))
 set_value(widget::Tk_Spinbox, value::Integer) = tcl(widget, "set", value)
 
 get_items(widget::Tk_Spinbox) = widget.range
-function set_items{T <: Integer}(widget::Tk_Spinbox, range::UnitRange{T})
+function set_items(widget::Tk_Spinbox, range::UnitRange{T}) where T
     configure(widget, from=minimum(range), to = maximum(range), increment = step(range))
     widget.range = range
 end
@@ -310,15 +310,16 @@ function Progressbar(widget::Widget, mode::AbstractString)
     w
 end
 
-get_value(widget::Tk_Progressbar) = round(Int, float(widget[:value]))
+get_value(widget::Tk_Progressbar) = round(Int, parse(Float64, widget[:value]))
 set_value(widget::Tk_Progressbar, value::Integer) = widget[:value] = min(100, max(0, value))
 
 ## Image
-MaybeImage = Union{Void, Tk_Image}
+MaybeImage = Union{Nothing, Tk_Image}
 to_tcl(x::Tk_Image) = x.w
 
 function Image(fname::AbstractString)
     if isfile(fname)
+        fname = escape_string(fname)
         w = tcl(I"image create photo", file = fname)
         Tk_Image(w)
     else
@@ -433,19 +434,19 @@ set_editable(widget::Tk_Text, value::Bool) = widget[:state] = value ? "normal" :
 
 
 ## Tree
-type Tk_Treeview <: TTk_Widget
+mutable struct Tk_Treeview <: TTk_Widget
     w::Widget
     names::MaybeVector
     Tk_Treeview(w::Widget) = new(w, nothing)
 end
-type TreeNode node::AbstractString end
+mutable struct TreeNode node::AbstractString end
 to_tcl(x::TreeNode) = x.node
-MaybeTreeNode = Union{TreeNode, Void}
+MaybeTreeNode = Union{TreeNode, Nothing}
 
 ## Special Tree cases
 
 ## listbox like interface
-function Treeview{T <: AbstractString}(widget::Widget, items::Vector{T}, title::AbstractString; selected_color::AbstractString="gray")
+function Treeview(widget::Widget, items::Vector{T}, title::AbstractString; selected_color::AbstractString="gray") where {T <: AbstractString}
     w = Treeview(widget)
     configure(w, show="tree headings", selectmode="browse")
     tcl(w, I"heading #0", text = title)
@@ -466,7 +467,7 @@ function treeview_delete_children(widget::Tk_Treeview)
     end
 end
 
-function set_items{T <: AbstractString}(widget::Tk_Treeview, items::Vector{T})
+function set_items(widget::Tk_Treeview, items::Vector{T}) where {T <: AbstractString}
     treeview_delete_children(widget)
     for i in items
         tcl(widget, I"insert {} end", text = i)
@@ -479,7 +480,7 @@ end
 
 
 ## t = Treeview(w, ["one" "two" "half"; "three" "four" "half"], [100, 50, 23])
-function Treeview{T <: AbstractString}(widget::Widget, items::Array{T,2}, widths::MaybeVector)
+function Treeview(widget::Widget, items::Array{T,2}, widths::MaybeVector) where {T <: AbstractString}
 
     sz = size(items)
 
@@ -499,9 +500,9 @@ function Treeview{T <: AbstractString}(widget::Widget, items::Array{T,2}, widths
 
     w
 end
-Treeview{T <: AbstractString}(widget::Widget, items::Array{T,2}) = Treeview(widget, items, nothing)
+Treeview(widget::Widget, items::Array{T,2}) where {T <: AbstractString} = Treeview(widget, items, nothing)
 
-function set_items{T <: AbstractString}(widget::Tk_Treeview, items::Array{T,2})
+function set_items(widget::Tk_Treeview, items::Array{T,2}) where {T <: AbstractString}
     treeview_delete_children(widget)
     sz = size(items)
     for i in 1:sz[1]
@@ -569,11 +570,11 @@ end
 function node_insert(widget::Tk_Treeview, node::MaybeTreeNode, at::MaybeStringInteger,
                      text::MaybeString, image::MaybeImage, values::MaybeVector, opened::MaybeBool)
 
-    parent = isa(node, Void) ? "{}" : node.node
-    at = isa(at, Void) ? "end" : at
+    parent = isa(node, Nothing) ? "{}" : node.node
+    at = isa(at, Nothing) ? "end" : at
 
     args = Dict()
-    args["text"] = isa(text, Void) ? "" : text
+    args["text"] = isa(text, Nothing) ? "" : text
     args["image"] = image.i
     args["values"] = values
     args["open"] = opened
@@ -594,8 +595,8 @@ node_insert(widget::Tk_Treeview, node::MaybeTreeNode, text::MaybeString) =
 
 ## move node to parent and at, a string index, eg. "0" or "end".
 function node_move(widget::Tk_Treeview, node::TreeNode, parent::MaybeTreeNode, at::MaybeStringInteger)
-    to = isa(parent, Void) ? "{}" : parent.node
-    ind = isa(at, Void) ? "end" : at
+    to = isa(parent, Nothing) ? "{}" : parent.node
+    ind = isa(at, Nothing) ? "end" : at
     tcl(widget, "move", node.node, to, ind)
 end
 ## move to end
@@ -615,19 +616,19 @@ end
 ## working on a grid XXX
 
 ## set column names, and widths. This works on values, not text part
-function tree_headers{T <: AbstractString, S<: Integer}(widget::Tk_Treeview, names::Vector{T}, widths::Vector{S})
+function tree_headers(widget::Tk_Treeview, names::Vector{T}, widths::Vector{S}) where {T <: AbstractString, S<: Integer}
     tree_headers(widget, names)
     tree_column_widths(widget, widths)
 end
 
-function tree_headers{T <: AbstractString}(widget::Tk_Treeview, names::Vector{T})
+function tree_headers(widget::Tk_Treeview, names::Vector{T}) where {T <: AbstractString}
     tcl(widget, "configure", column=names)
     widget.names = names
     map(u -> tcl(widget, "heading", u, text=u), names)
 end
 
 ## Set Column widths. Must have set headers first
-function tree_column_widths{T <: Integer}(widget::Tk_Treeview, widths::Vector{T})
+function tree_column_widths(widget::Tk_Treeview, widths::Vector{T}) where {T <: Integer}
     if widget.names == nothing
         error("Must set header names, then widths")
     end
@@ -658,7 +659,7 @@ end
 
 
 ## Bring Canvas object into Tk_Widget level.
-type Tk_CairoCanvas       <: TTk_Widget
+mutable struct Tk_CairoCanvas       <: TTk_Widget
     w::Canvas
 end
 
@@ -672,4 +673,3 @@ function Canvas(parent::TTk_Container, args...)
     push!(parent.children, Tk_CairoCanvas(c))
     c
 end
-

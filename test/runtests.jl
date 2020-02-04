@@ -1,7 +1,6 @@
 ## Tests
 using Tk
-using Compat
-using Compat.Test
+using Test
 
 @testset "Toplevel" begin
     w = Toplevel("Toplevel", 400, 400)
@@ -311,24 +310,29 @@ end
 const exampledir = joinpath(splitdir(splitdir(@__FILE__)[1])[1], "examples")
 dcur = pwd()
 cd(exampledir)
+
 # TODO: Uncomment when Winston supports 0.6
 #module example_manipulate
 #    if Pkg.installed("Winston")!=nothing
 #        include("../examples/manipulate.jl")
 #    end
 #end
+
+
 module example_process
-    include("../examples/process.jl")
+    @static if Sys.isunix()
+    include(joinpath("..","examples","process.jl"))
+    end
 end
 module example_sketch
-    include("../examples/sketch.jl")
+    include(joinpath("..","examples","sketch.jl"))
 end
 module example_test
-    include("../examples/test.jl")
+    include(joinpath("..","examples","test.jl"))
     destroy(w)
 end
 module example_workspace
-    include("../examples/workspace.jl")
+    include(joinpath("..","examples","workspace.jl"))
     aft.stop()
     sleep(1.5)
     destroy(w)

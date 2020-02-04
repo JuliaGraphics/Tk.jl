@@ -27,20 +27,20 @@ global timeout = nothing
 tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Cvoid}},w), (1,), false)[1]
 
 function init()
-    @static if Compat.Sys.isapple()
+    @static if Sys.isapple()
         ccall(:CFBundleCreate, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), C_NULL,
             ccall(:CFURLCreateWithFileSystemPath, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, Cint), C_NULL,
                 ccall(:CFStringCreateWithFileSystemRepresentation, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{UInt8}), C_NULL, "/System/Library/Frameworks/Tk.framework"),
                 0, 1))
     end
     ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
-          joinpath(Compat.Sys.BINDIR, "julia"))
-    ccall((:g_type_init,Cairo._jl_libgobject),Cvoid,())
+          joinpath(Sys.BINDIR, "julia"))
+    ccall((:g_type_init,Cairo.libgobject),Cvoid,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
-    @static if Compat.Sys.iswindows()
+    @static if Sys.iswindows()
         htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
             (Ptr{UInt8},),libtcl)
-        tclfile = Vector{UInt8}(260)
+        tclfile = Vector{UInt8}(undef, 260)
         len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
             (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile))
         if len > 0
@@ -73,28 +73,29 @@ end
 
 mainwindow(interp) =
     ccall((:Tk_MainWindow,libtk), Ptr{Cvoid}, (Ptr{Cvoid},), interp)
-mainwindow() = mainwindow(tcl_interp)
+mainwindow() = mainwindow(tcl_interp[])
 
 mutable struct TclError <: Exception
     msg::AbstractString
 end
 
-tcl_result() = tcl_result(tcl_interp)
-function tcl_result(tcl_interp)
+tcl_result() = tcl_result(tcl_interp[])
+function tcl_result(tclinterp)
     unsafe_string(ccall((:Tcl_GetStringResult,libtcl),
-                        Ptr{UInt8}, (Ptr{Cvoid},), tcl_interp))
+                        Ptr{UInt8}, (Ptr{Cvoid},), tclinterp))
 end
 
 function tcl_evalfile(name)
     if ccall((:Tcl_EvalFile,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}),
-             tcl_interp, name) != 0
+             tcl_interp[], name) != 0
         throw(TclError(tcl_result()))
     end
     nothing
 end
 
-tcl_eval(cmd) = tcl_eval(cmd,tcl_interp)
+tcl_eval(cmd) = tcl_eval(cmd,tcl_interp[])
 function tcl_eval(cmd,tclinterp)
+    #@show cmd
     code = ccall((:Tcl_Eval,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}),
                  tclinterp, cmd)
     result = tcl_result(tclinterp)
@@ -103,16 +104,17 @@ function tcl_eval(cmd,tclinterp)
     else
         result
     end
+
 end
 
 mutable struct TkWidget
     path::String
     kind::String
     parent::Union{TkWidget,Nothing}
-    
+
     let ID::Int = 0
     function TkWidget(parent::TkWidget, kind)
-        underscoredKind = replace(kind, "::", "_")
+        underscoredKind = replace(kind, "::" => "_")
         path = "$(parent.path).jl_$(underscoredKind)$(ID)"; ID += 1
         new(path, kind, parent)
     end
@@ -137,15 +139,16 @@ place(widget::TkWidget, x::Int, y::Int) = tcl_eval("place $(widget.path) -x $x -
 function nametowindow(name)
     ccall((:Tk_NameToWindow,libtk), Ptr{Cvoid},
           (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}),
-          tcl_interp, name, mainwindow(tcl_interp))
+          tcl_interp[], name, mainwindow(tcl_interp[]))
 end
 
-const _callbacks = ObjectIdDict()
+const _callbacks = Dict{String, Any}()
 
 const empty_str = ""
 
-function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})
-    f = unsafe_pointer_to_objref(fptr)
+function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})::Int32
+    cname = unsafe_pointer_to_objref(fptr)
+    f=_callbacks[cname]
     args = [unsafe_string(unsafe_load(argv,i)) for i=1:argc]
     local result
     try
@@ -165,17 +168,14 @@ function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})
     return TCL_OK
 end
 
-jl_tcl_callback_ptr = cfunction(jl_tcl_callback,
-                                Int32, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Ptr{Ptr{UInt8}}))
-
 function tcl_callback(f)
     cname = string("jl_cb", repr(objectid(f)))
     # TODO: use Tcl_CreateObjCommand instead
     ccall((:Tcl_CreateCommand,libtcl), Ptr{Cvoid},
           (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
-          tcl_interp, cname, jl_tcl_callback_ptr, pointer_from_objref(f), C_NULL)
+          tcl_interp[], cname, jl_tcl_callback_ptr, pointer_from_objref(cname), C_NULL)
     # TODO: use a delete proc (last arg) to remove this
-    _callbacks[f] = true
+    _callbacks[cname] = f
     cname
 end
 
@@ -270,7 +270,7 @@ function reveal(c::Canvas)
     tcl_doevent()
 end
 
-@static if Compat.Sys.isapple()
+@static if Sys.isapple()
     if Sys.WORD_SIZE == 32
         const CGFloat = Float32
     else
@@ -287,7 +287,7 @@ end
 function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
     win = nametowindow(w.path)
     win == C_NULL && error("invalid window")
-    @static if Compat.Sys.islinux()
+    @static if Sys.islinux()
         disp = jl_tkwin_display(win)
         d = jl_tkwin_id(win)
         vis = jl_tkwin_visual(win)
@@ -299,7 +299,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         destroy(surf)
         return
     end
-    @static if Compat.Sys.isapple()
+    @static if Sys.isapple()
         ## TkMacOSXSetupDrawingContext()
         drawable = jl_tkwin_id(win)
         view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Cvoid}, (Int,), drawable) # NSView*
@@ -374,7 +374,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         ##
         return
     end
-    @static if Compat.Sys.iswindows()
+    @static if Sys.iswindows()
         state = Vector{UInt8}(sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
         hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Cvoid}, (Ptr{Cvoid}, Int, Ptr{UInt8}),
@@ -458,51 +458,27 @@ function cairo_surface(c::Canvas)
     wait_initialized(c)
     c.back
 end
+@static if Sys.isapple()
+    struct TkWindowPrivate
+        winPtr::Ptr{Cvoid}
+        view::Ptr{Cvoid}
+        context::Ptr{Cvoid}
+        xOff::Cint
+        yOff::Cint
+        sizeX::CGFloat
+        sizeY::CGFloat
+        visRgn::Ptr{Cvoid}
+        aboveVisRgn::Ptr{Cvoid}
+        drawRgn::Ptr{Cvoid}
+        referenceCount::Ptr{Cvoid}
+        toplevel::Ptr{Cvoid}
+        flags::Cint
+    end
+end
 
-const tcl_interp = init()
-const tk_version = convert(VersionNumber,tcl_eval("return \$tk_version"))
-tcl_eval("wm withdraw .")
+global tcl_interp = Ref{Ptr{Cvoid}}()
+global tk_version = Ref{VersionNumber}()
 
-if tk_version >= v"8.4-" && tk_version < v"8.7-"
 jl_tkwin_display(tkwin::Ptr{Cvoid}) = unsafe_load(convert(Ptr{Ptr{Cvoid}},tkwin), 1) # 8.4, 8.5, 8.6
 jl_tkwin_visual(tkwin::Ptr{Cvoid}) = unsafe_load(convert(Ptr{Ptr{Cvoid}},tkwin), 4) # 8.4, 8.5, 8.6
 jl_tkwin_id(tkwin::Ptr{Cvoid}) = unsafe_load(convert(Ptr{Int},tkwin), 6) # 8.4, 8.5, 8.6
-if Compat.Sys.isapple()
-if tk_version >= v"8.5-"
-    struct TkWindowPrivate
-        winPtr::Ptr{Cvoid}
-        view::Ptr{Cvoid}
-        context::Ptr{Cvoid}
-        xOff::Cint
-        yOff::Cint
-        sizeX::CGFloat;
-        sizeY::CGFloat;
-        visRgn::Ptr{Cvoid}
-        aboveVisRgn::Ptr{Cvoid}
-        drawRgn::Ptr{Cvoid}
-        referenceCount::Ptr{Cvoid}
-        toplevel::Ptr{Cvoid}
-        flags::Cint
-    end
-    else
-    struct TkWindowPrivate
-        winPtr::Ptr{Cvoid}
-        grafPtr::Ptr{Cvoid}
-        view::Ptr{Cvoid}
-        context::Ptr{Cvoid}
-        xOff::Cint
-        yOff::Cint
-        sizeX::CGFloat;
-        sizeY::CGFloat;
-        visRgn::Ptr{Cvoid}
-        aboveVisRgn::Ptr{Cvoid}
-        drawRgn::Ptr{Cvoid}
-        referenceCount::Ptr{Cvoid}
-        toplevel::Ptr{Cvoid}
-        flags::Cint
-    end
-    end
-end
-else
-error("Tk.jl needs to be updated for tk version $tk_version")
-end

@@ -1,5 +1,4 @@
-## remove tearoff menus
-tcl_eval("option add *tearOff 0")
+
 
 
 ## make a menubar

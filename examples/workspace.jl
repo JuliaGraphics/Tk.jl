@@ -1,5 +1,5 @@
 ## simple workspace browser for julia
-using Tk, Compat
+using Tk
 
 ## Some functions to work with a module
 function get_names(m::Module)
@@ -15,7 +15,7 @@ short_summary(x) = summary(x)
 short_summary(x::AbstractString) = "A string"
 
 ## update ids, returning false if the same, true if not
-__ids__ = Vector{AbstractString}(0)
+__ids__ = Vector{AbstractString}()
 function update_ids(m::Module)
     global __ids__
     nms = get_names(m)
@@ -47,9 +47,9 @@ function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtype
     end
     ## filter out this type
     if dtype != nothing
-        nms = filter(u -> isdefined(m, Symbol(u)) && negate(isa(eval(m,Symbol(u)), dtype), dtypefilter), nms)
+        nms = filter(u -> isdefined(m, Symbol(u)) && negate(isa(Base.eval(m,Symbol(u)), dtype), dtypefilter), nms)
     end
-    summaries = map(u -> isdefined(m, Symbol(u)) ? short_summary(eval(m,Symbol(u))) : "undefined", nms)
+    summaries = map(u -> isdefined(m, Symbol(u)) ? short_summary(Base.eval(m,Symbol(u))) : "undefined", nms)
 
     if length(nms) == length(summaries)
         return [nms summaries]
@@ -88,4 +88,3 @@ function cb()
 end
 aft = tcl_after(1000, cb)
 aft.start()
-
