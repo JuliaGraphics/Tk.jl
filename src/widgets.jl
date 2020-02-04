@@ -219,7 +219,7 @@ end
 
 
 get_items(widget::Tk_Combobox) =  widget.values
-function set_items{T}(widget::Tk_Combobox, items::Vector{@compat Tuple{T,T}})
+function set_items{T}(widget::Tk_Combobox, items::Vector{Tuple{T,T}})
     vals = cb_pluck_labels(items)
     configure(widget, values = vals)
     widget.values = items
