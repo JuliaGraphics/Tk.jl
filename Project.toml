@@ -1,5 +1,6 @@
 name = "Tk"
 uuid = "4225ea8a-3324-57e7-9ddc-5798a2cb9eab"
+version = "0.6.0"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
