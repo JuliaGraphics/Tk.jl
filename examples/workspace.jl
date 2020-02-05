@@ -6,7 +6,7 @@ function get_names(m::Module)
     sort!(map(string, names(m)))
 end
 
-unique_id(v::Symbol, m::Module) = isdefined(m,v) ? unique_id(eval(m,v)) : ""
+unique_id(v::Symbol, m::Module) = isdefined(m,v) ? unique_id(Base.eval(m,v)) : ""
 unique_id(x) = string(objectid(x))
 
 ## short_summary
@@ -75,7 +75,7 @@ scrollbars_add(f, tv)
 ## add a callback. Here we get the obj clicked on.
 callback_add(tv, (path) -> begin
     val = get_value(tv)[1]
-    obj = eval(Main, Symbol(val))
+    obj = Base.eval(Main, Symbol(val))
     println(short_summary(obj))
 end)
 

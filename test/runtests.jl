@@ -320,21 +320,34 @@ cd(exampledir)
 
 
 module example_process
+    using Test
     @static if Sys.isunix()
-    include(joinpath("..","examples","process.jl"))
+    @testset "Examples_Process" begin
+    @test_nowarn include(joinpath("..","examples","process.jl"))
+    end
     end
 end
 module example_sketch
-    include(joinpath("..","examples","sketch.jl"))
+    using Test
+    @testset "Examples_Sketch" begin
+    @test_nowarn include(joinpath("..","examples","sketch.jl"))
+    end
 end
 module example_test
-    include(joinpath("..","examples","test.jl"))
-    destroy(w)
+    using Test
+    @testset "Examples_Test" begin
+    @test_nowarn include(joinpath("..","examples","test.jl"))
+    @test_nowarn destroy(w)
+    end
 end
 module example_workspace
-    include(joinpath("..","examples","workspace.jl"))
-    aft.stop()
+    using Test
+    @testset "Examples_Workspace" begin
+    @test_nowarn include(joinpath("..","examples","workspace.jl"))
+    @test_nowarn aft.stop()
     sleep(1.5)
-    destroy(w)
+    @test_nowarn destroy(w)
+    end
 end
+
 cd(dcur)

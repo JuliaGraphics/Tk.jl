@@ -13,8 +13,6 @@ jobs:
   - julia: nightly
     os: linux
   - julia: 1.0
-    os: linux
-  - julia: 1.0
     os: osx
   allow_failures:
   - julia: nightly
