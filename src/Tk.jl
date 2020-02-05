@@ -14,14 +14,10 @@
 
 
 module Tk
+using Tcl_jll
+using Tk_jll
 using Cairo
 using Random
-
-if isfile(joinpath(dirname(@__FILE__),"..","deps","deps.jl"))
-    include("../deps/deps.jl")
-else
-    error("Tk not properly installed. Please run Pkg.build(\"Tk\")")
-end
 
 import Base: ==, bind, getindex, isequal, parent, setindex!, show, string, Text
 

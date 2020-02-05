@@ -3,16 +3,16 @@ language: julia
 dist: xenial
 services:
   - xvfb
+os:
+  - linux
+  - osx
+julia:
+  - 1.3
+  - nightly
 
 jobs:
-  include:
-  - julia: 1.0
-    os: linux
-  - julia: 1.3
-    os: linux
+  exclude:
   - julia: nightly
-    os: linux
-  - julia: 1.0
     os: osx
   allow_failures:
   - julia: nightly

@@ -27,35 +27,22 @@ global timeout = nothing
 tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Cvoid}},w), (1,), false)[1]
 
 function init()
-    @static if Sys.isapple()
-        ccall(:CFBundleCreate, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}), C_NULL,
-            ccall(:CFURLCreateWithFileSystemPath, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, Cint), C_NULL,
-                ccall(:CFStringCreateWithFileSystemRepresentation, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{UInt8}), C_NULL, "/System/Library/Frameworks/Tk.framework"),
-                0, 1))
-    end
     ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
           joinpath(Sys.BINDIR, "julia"))
     ccall((:g_type_init,Cairo.libgobject),Cvoid,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
-    @static if Sys.iswindows()
-        htcl = ccall((:GetModuleHandleA,:kernel32),stdcall,Csize_t,
-            (Ptr{UInt8},),libtcl)
-        tclfile = Vector{UInt8}(undef, 260)
-        len = ccall((:GetModuleFileNameA,:kernel32),stdcall,Cint,
-            (Csize_t,Ptr{UInt8},Cint),htcl,tclfile,length(tclfile))
-        if len > 0
-            tcldir = dirname(String(tclfile[1:len]))
-            libpath = IOBuffer()
-            print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
-            escape_string(libpath,abspath(tcldir,"..","share","tcl"),"{}")
-            print(libpath,"}]")
-            tcl_eval(String(take!(libpath)),tclinterp)
-            print(libpath,"set env(TK_LIBRARY) [subst -nocommands -novariables {")
-            escape_string(libpath,abspath(tcldir,"..","share","tk"),"{}")
-            print(libpath,"}]")
-            tcl_eval(String(take!(libpath)),tclinterp)
-        end
-    end
+
+    libpath = IOBuffer()
+    print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
+    escape_string(libpath, joinpath(dirname(dirname(Tcl_jll.libtcl_path)), "lib", "tcl8.6"), "{}")
+    print(libpath,"}]")
+    tcl_eval(String(take!(libpath)),tclinterp)
+    print(libpath,"set env(TK_LIBRARY) [subst -nocommands -novariables {")
+    escape_string(libpath, joinpath(dirname(dirname(Tk_jll.libtk_path)), "lib", "tk8.6"), "{}")
+    print(libpath,"}]")
+    tcl_eval(String(take!(libpath)),tclinterp)
+
+
     if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Cvoid},), tclinterp) == TCL_ERROR
         throw(TclError(string("error initializing Tcl: ", tcl_result(tclinterp))))
     end
