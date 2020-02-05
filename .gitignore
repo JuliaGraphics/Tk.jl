@@ -1,4 +1,5 @@
 deps/builds
+deps/build.log
 deps/downloads
 deps/src
 deps/usr
@@ -7,3 +8,4 @@ deps/deps.jl
 *~
 *.jl.cov
 *.jl.mem
+Manifest.toml

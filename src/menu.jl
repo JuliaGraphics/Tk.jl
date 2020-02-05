@@ -1,5 +1,4 @@
-## remove tearoff menus
-tcl_eval("option add *tearOff 0")
+
 
 
 ## make a menubar
@@ -54,7 +53,7 @@ function menu_add(widget::Tk_Menu, rb::Tk_Radio)
 end
 
 function tk_popup(widget::Tk_Widget, menu::Tk_Menu)
-    if is_apple()
+    if Compat.Sys.isapple()
         tcl_eval("bind $(widget.w.path) <2> {tk_popup $(menu.w.path) %X %Y}")
         tcl_eval("bind $(widget.w.path) <Control-1> {tk_popup $(menu.w.path) %X %Y}")
     else
@@ -63,7 +62,7 @@ function tk_popup(widget::Tk_Widget, menu::Tk_Menu)
 end
 
 function tk_popup(c::Canvas, menu::Tk_Menu)
-    if is_apple()
+    if Compat.Sys.isapple()
         tcl_eval("bind $(c.c.path) <2> {tk_popup $(menu.w.path) %X %Y}")
         tcl_eval("bind $(c.c.path) <Control-1> {tk_popup $(menu.w.path) %X %Y}")
     else

@@ -1,20 +1,21 @@
 language: julia
-os:
-    - linux
-    - osx
-julia:
-    - 0.5
-    - nightly
+
+dist: xenial
+services:
+  - xvfb
+
+jobs:
+  include:
+  - julia: 1.0
+    os: linux
+  - julia: 1.3
+    os: linux
+  - julia: nightly
+    os: linux
+  - julia: 1.0
+    os: osx
+  allow_failures:
+  - julia: nightly
+
 notifications:
-    email: false
-script:
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - julia -e 'Pkg.clone(pwd())'
-    - if [ `uname` = "Linux" ]; then
-        xvfb-run julia -e 'Pkg.build("Tk"); Pkg.test("Tk"; coverage=true)';
-      elif [ `uname` = "Darwin" ]; then
-        julia -e 'Pkg.build("Tk"); Pkg.test("Tk"; coverage=true)';
-      fi
-    # - xvfb-run julia -e 'Pkg.clone(pwd()); Pkg.build("Tk"); Pkg.test("Tk"; coverage=true)';
-after_success:
-    - julia -e 'cd(Pkg.dir("Tk")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
+  email: false

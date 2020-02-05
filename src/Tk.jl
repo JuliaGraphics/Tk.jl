@@ -1,4 +1,4 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(false)
+
 
 # julia tk interface
 # TODO:
@@ -14,9 +14,8 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(false)
 
 
 module Tk
-using Base
 using Cairo
-using Compat; import Compat.String
+using Random
 
 if isfile(joinpath(dirname(@__FILE__),"..","deps","deps.jl"))
     include("../deps/deps.jl")
@@ -26,11 +25,7 @@ end
 
 import Base: ==, bind, getindex, isequal, parent, setindex!, show, string, Text
 
-if VERSION < v"0.4.0-dev+3275"
-    import Base.Graphics: width, height, getgc
-else
-    import Graphics: width, height, getgc
-end
+import Graphics: width, height, getgc
 
 import Cairo: destroy
 
@@ -43,6 +38,17 @@ include("containers.jl")
 include("dialogs.jl")
 include("menu.jl")
 
+function __init__()
+    global tcl_interp[] = init()
+    global tk_version[] = VersionNumber(tcl_eval("return \$tk_version"))
+    tcl_eval("wm withdraw .")
+    tcl_eval("set auto_path")
+    ## remove tearoff menus
+    tcl_eval("option add *tearOff 0")
+
+    global jl_tcl_callback_ptr = @cfunction(jl_tcl_callback,
+                                    Int32, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Ptr{Ptr{UInt8}}))
+end
 
 export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
     cairo_surface_for, width, height, reveal, cairo_surface, getgc,
@@ -90,6 +96,5 @@ export get_value, set_value,
 @deprecate  tk_instate    instate
 @deprecate  get_width     width
 @deprecate  get_height    height
-
 
 end  # module

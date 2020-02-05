@@ -1,13 +1,13 @@
 ## simple workspace browser for julia
-using Tk, Compat
+using Tk
 
 ## Some functions to work with a module
 function get_names(m::Module)
     sort!(map(string, names(m)))
 end
 
-unique_id(v::Symbol, m::Module) = isdefined(m,v) ? unique_id(eval(m,v)) : ""
-unique_id(x) = string(object_id(x))
+unique_id(v::Symbol, m::Module) = isdefined(m,v) ? unique_id(Base.eval(m,v)) : ""
+unique_id(x) = string(objectid(x))
 
 ## short_summary
 ## can customize description here
@@ -15,7 +15,7 @@ short_summary(x) = summary(x)
 short_summary(x::AbstractString) = "A string"
 
 ## update ids, returning false if the same, true if not
-__ids__ = Vector{AbstractString}(0)
+__ids__ = Vector{AbstractString}()
 function update_ids(m::Module)
     global __ids__
     nms = get_names(m)
@@ -31,8 +31,8 @@ end
 
 
 negate(x::Bool, val::Bool) = val ? !x : x
-const MaybeRegex = Union{Void, Regex}
-const MaybeType = Union{Void, DataType}
+const MaybeRegex = Union{Nothing, Regex}
+const MaybeType = Union{Nothing, DataType}
 
 ## get array of names and summaries
 ## m module
@@ -47,9 +47,9 @@ function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtype
     end
     ## filter out this type
     if dtype != nothing
-        nms = filter(u -> isdefined(m, Symbol(u)) && negate(isa(eval(m,Symbol(u)), dtype), dtypefilter), nms)
+        nms = filter(u -> isdefined(m, Symbol(u)) && negate(isa(Base.eval(m,Symbol(u)), dtype), dtypefilter), nms)
     end
-    summaries = map(u -> isdefined(m, Symbol(u)) ? short_summary(eval(m,Symbol(u))) : "undefined", nms)
+    summaries = map(u -> isdefined(m, Symbol(u)) ? short_summary(Base.eval(m,Symbol(u))) : "undefined", nms)
 
     if length(nms) == length(summaries)
         return [nms summaries]
@@ -75,7 +75,7 @@ scrollbars_add(f, tv)
 ## add a callback. Here we get the obj clicked on.
 callback_add(tv, (path) -> begin
     val = get_value(tv)[1]
-    obj = eval(Main, Symbol(val))
+    obj = Base.eval(Main, Symbol(val))
     println(short_summary(obj))
 end)
 
@@ -88,4 +88,3 @@ function cb()
 end
 aft = tcl_after(1000, cb)
 aft.start()
-
