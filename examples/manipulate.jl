@@ -1,7 +1,7 @@
-## This is an example mimicking RStudio's `manipulate` package (inspired by Mathematica's no doubt)
-## The manipulate function makes it easy to create "interactive" GUIs. In this case, we can
-## dynamically control parameters of a `Winston` graph.
-## To add a control is easy. There are just a few: slider, picker, checkbox, button, and entry
+# This is an example mimicking RStudio's `manipulate` package (inspired by Mathematica's no doubt)
+# The manipulate function makes it easy to create "interactive" GUIs. In this case, we can
+# dynamically control parameters of a `Winston` graph.
+# To add a control is easy. There are just a few: slider, picker, checkbox, button, and entry
 
 using Winston
 using Tk
@@ -17,9 +17,10 @@ function render(c, p)
     Tk.update()
 end
 
-## do a manipulate type thing
+# do a manipulate type thing
 
-## context to store dynamic values
+# context to store dynamic values
+
 module ManipulateContext
 using Winston
 end
@@ -92,7 +93,7 @@ get_label(widget::ButtonWidget) = nothing
 button(label::AbstractString) = ButtonWidget(label, nothing)
 
 
-## Add text widget to gather one-line of text
+# Add text widget to gather one-line of text
 mutable struct EntryWidget <: ManipulateWidget
     nm
     label
@@ -104,7 +105,7 @@ entry(nm::AbstractString, initial::AbstractString) = EntryWidget(nm, nm, initial
 entry(nm::AbstractString) = EntryWidget(nm, nm, "{}")
 
 
-## Expression returns a plot object. Use names as values
+# Expression returns a plot object. Use names as values
 function manipulate(ex::(Union{Symbol,Expr}), controls...)
     widgets = Array(Tk.Widget, 0)
 
@@ -147,17 +148,16 @@ function manipulate(ex::(Union{Symbol,Expr}), controls...)
         render(graph, p)
     end
     map(u -> callback_add(u, make_graphic), widgets)
-#    make_graphic()
     widgets
 end
 
 
 
 
-## we need to make an expression
-## here we need to
-## * use semicolon (perhaps)
-## * return p, the FramedPlot object to draw
+# we need to make an expression. 
+# here we need to
+# * use semicolon (perhaps)
+# * return p, the FramedPlot object to draw
 
 ex = quote
     x = linspace( 0, n * pi, 100 )
@@ -181,4 +181,3 @@ obj = manipulate(ex,
                  ,picker("color", "Cos color", ["red", "green", "yellow"])
                  ,button("update")
                  )
-

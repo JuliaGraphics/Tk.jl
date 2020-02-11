@@ -4,6 +4,8 @@ deps/downloads
 deps/src
 deps/usr
 deps/deps.jl
+docs/build
+docs/src/examples
 .DS_Store
 *~
 *.jl.cov
