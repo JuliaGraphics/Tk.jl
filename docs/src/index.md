@@ -67,6 +67,7 @@ convenience methods defined.
 
 
 ## Examples
+### Hello world
 
 A simple "Hello world" example, which shows off many of the styles is given by:
 
@@ -146,7 +147,7 @@ pack(f, expand=true, fill="both")
 * resizing top level windows with the mouse can leave visual artifacts, at least on a
   Mac. This is not optimal! (The picture below can be avoided by packing an expanding frame into the top level widget.)
 
-<img src="munged-window.png"></img>
+![Munged Windows](munged-window.png)
 
 ### Message Box
 
