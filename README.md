@@ -13,7 +13,7 @@
 [docs-dev-url]: https://https://pkg.julialang.org/docs/Tk
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]:https://pkg.julialang.org/docs/Tk
+[docs-stable-url]: https://juliahub.com/docs/Tk/
 
 [travis-img]: https://travis-ci.org/JuliaGraphics/Tk.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaGraphics/Tk.jl
