@@ -19,3 +19,5 @@ makedocs(modules = [Tk],
             ],
        "API Reference" => "api.md"
    ])
+
+deploydocs(repo = "github.com/LilithHafner/Tk.jl.git")
