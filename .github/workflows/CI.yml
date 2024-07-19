@@ -67,11 +67,26 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - run: sudo apt-get update
       - run: sudo apt-get install -y xvfb xauth
-      - uses: julia-actions/julia-docdeploy@v1
+      - name: Install GitHubActions.jl in its own (shared) environment
+        run: |
+          using Pkg
+          Pkg.activate("docs-logger-env"; shared=true)
+          Pkg.add(Pkg.PackageSpec(name="GitHubActions", version="0.1"))
+        shell: julia --color=yes {0}
+      - name: Build the documentation
+        run: |
+          # The Julia command that will be executed
+          xvfb-run -a julia --color=yes --project=docs/ -e '
+              @eval Module() begin
+                  push!(LOAD_PATH, "@docs-logger-env") # access GitHubActions.jl
+                  import Logging, GitHubActions
+                  Logging.global_logger(GitHubActions.GitHubActionsLogger())
+                  pop!(LOAD_PATH)
+              end
+              include("docs/make.jl")'
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          prefix: xvfb-run
       - name: Run doctests
         shell: xvfb-run -a julia --project=docs --color=yes {0}
         run: |
