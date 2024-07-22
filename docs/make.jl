@@ -20,4 +20,4 @@ makedocs(modules = [Tk],
        "API Reference" => "api.md"
    ])
 
-deploydocs(repo = "github.com/LilithHafner/Tk.jl.git")
+deploydocs(repo = "github.com/JuliaGraphics/Tk.jl.git")
