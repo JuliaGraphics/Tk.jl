@@ -1,9 +1,6 @@
 # Julia interface to the Tk windowing toolkit.
 
-| **Documentation**                                                               | **Build Status**                                                                                |
-|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-dev-img]][docs-dev-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][drone-img]][drone-url]  |
-
+[![][docs-dev-img]][docs-dev-url] 
 
 [contrib-url]: https://juliadocs.github.io/Documenter.jl/dev/contributing/
 [discourse-tag-url]: https://discourse.julialang.org/tags/documenter
@@ -14,14 +11,5 @@
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://juliagraphics.github.io/Tk.jl
-
-[travis-img]: https://travis-ci.org/JuliaGraphics/Tk.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JuliaGraphics/Tk.jl
-
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/g14wsptfv2lq4oiv?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/aviks/tk-jl
-
-[drone-img]: https://cloud.drone.io/api/badges/JuliaGraphics/Tk.jl/status.svg
-[drone-url]: https://cloud.drone.io/JuliaGraphics/Tk.jl
 
 [issues-url]: https://github.com/JuliaGraphics/Tk.jl/issues
