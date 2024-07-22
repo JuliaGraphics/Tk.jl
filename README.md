@@ -2,7 +2,7 @@
 
 | **Documentation**                                                               | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][drone-img]][drone-url]  |
+| [![][docs-dev-img]][docs-dev-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][drone-img]][drone-url]  |
 
 
 [contrib-url]: https://juliadocs.github.io/Documenter.jl/dev/contributing/
@@ -10,10 +10,10 @@
 [gitter-url]: https://gitter.im/juliadocs/users
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://https://pkg.julialang.org/docs/Tk
+[docs-dev-url]: https://juliagraphics.github.io/Tk.jl/dev
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://juliahub.com/docs/Tk/
+[docs-stable-url]: https://juliagraphics.github.io/Tk.jl
 
 [travis-img]: https://travis-ci.org/JuliaGraphics/Tk.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaGraphics/Tk.jl
