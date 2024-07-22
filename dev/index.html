@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · Tk.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">Tk.jl</span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#The-Tk-Package-1"><span>The Tk Package</span></a></li><li><a class="tocitem" href="#Examples-1"><span>Examples</span></a></li></ul></li><li><span class="tocitem">More</span><ul><li><a class="tocitem" href="examples/manipulate/">Manipulate</a></li><li><a class="tocitem" href="examples/process/">Process</a></li><li><a class="tocitem" href="examples/sketch/">Sketch</a></li><li><a class="tocitem" href="examples/test/">Test</a></li></ul></li><li><a class="tocitem" href="api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaGraphics/Tk.jl/blob/master/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="The-Tk-Package-1"><a class="docs-heading-anchor" href="#The-Tk-Package-1">The Tk Package</a><a class="docs-heading-anchor-permalink" href="#The-Tk-Package-1" title="Permalink"></a></h2><p>This package provides an interface to the Tcl/Tk libraries, useful for creating graphical user interfaces. The basic functionality is provided by the <code>tcl_eval</code> function, which is used to pass on Tcl commands. The <code>Canvas</code> widget is used to create a device for plotting of <code>julia</code>&#39;s graphics. In particular, among others, the <code>Winston</code> and <code>Images</code> package can render to such a device.</p><p>The example <code>sketch.jl</code> illustrates this widget for a different purpose.</p><p>In addition, there are convenience methods for working with most of the widgets provided by <code>Tk</code> similar to the ones found in <code>R</code>&#39;s <code>tcltk</code> package.  For example, we add the <code>tcl</code> function as a wrapper for <code>tcl_eval</code> which provides translations from <code>julia</code> objects into Tcl constructs.</p><h3 id="Constructors-1"><a class="docs-heading-anchor" href="#Constructors-1">Constructors</a><a class="docs-heading-anchor-permalink" href="#Constructors-1" title="Permalink"></a></h3><p>Constructors are provided  for the following widgets</p><ul><li><code>Toplevel</code>: for top level windows</li><li><code>Frame</code>, <code>Labelframe</code>, <code>Notebook</code>, <code>Panedwindow</code>: for the basic containers</li><li><code>Label</code>, <code>Button</code>, <code>Menu</code>: basic elements</li><li><code>Checkbutton</code>, <code>Radio</code>, <code>Combobox</code>, <code>Slider</code>, <code>Spinbox</code>: selection widgets</li><li><code>Entry</code>, <code>Text</code>: text widgets</li><li><code>Treeview</code>: for trees, but also listboxes and grids</li><li><code>Sizegrip</code>, <code>Separator</code>, <code>Progressbar</code>, <code>Image</code> various widgets</li></ul><p>The basic usage simply calls the <code>ttk::</code> counterpart, though one can use named arguments to pass in configuration options. As well, some have a convenience interfaces.</p><h3 id="Methods-1"><a class="docs-heading-anchor" href="#Methods-1">Methods</a><a class="docs-heading-anchor-permalink" href="#Methods-1" title="Permalink"></a></h3><p>In addition to providing constructors, there are few additional convenience methods defined.</p><ul><li><p>The <code>configure</code>, <code>cget</code>, <code>tclvar</code>, <code>identify</code>, <code>state</code>, <code>instate</code>, <code>winfo</code>, <code>wm</code>, <code>bind</code> methods to simplify the corresponding Tcl commands. For a single option of a widget accessed via <code>cget</code> and modified via <code>configure</code>, one can use the index notation with a symbol, as in <code>widget[:option]</code> or <code>widget[:option] = value</code>.</p></li><li><p>For widget layout, we have <code>pack</code>, <code>pack_configure</code>, <code>forget</code>, <code>grid</code>, <code>grid_configure</code>, <code>grid_forget</code>, ... providing interfaces to the appropriate Tk commands, but also <code>formlayout</code> and <code>page_add</code> for working with simple forms and notebooks and pane windows..</p></li><li><p>We add the methods <code>get_value</code> and <code>set_value</code> to get and set the primary value for a control</p></li><li><p>We add the methods <code>get_items</code> and <code>set_items</code> to get and set the item(s) to select from for selection widgets.</p></li><li><p>We add the methods <code>width</code>, <code>height</code>, <code>get_size</code> to get the on-screen size of a widget. For top level windows there are <code>set_width</code>, <code>set_height</code>, and <code>set_size</code> for adjusting the geometry. The <code>:width</code> and <code>:height</code> properties are common to most widgets, and return the <em>requested</em> width and height, which need not be the actual width and height on screen.</p></li><li><p>The conveniences <code>get_enabled</code> and <code>set_enabled</code> to specify if a widget accepts user input</p></li></ul><h2 id="Examples-1"><a class="docs-heading-anchor" href="#Examples-1">Examples</a><a class="docs-heading-anchor-permalink" href="#Examples-1" title="Permalink"></a></h2><h3 id="Hello-world-1"><a class="docs-heading-anchor" href="#Hello-world-1">Hello world</a><a class="docs-heading-anchor-permalink" href="#Hello-world-1" title="Permalink"></a></h3><p>A simple &quot;Hello world&quot; example, which shows off many of the styles is given by:</p><pre><code class="language-jl">w = Toplevel(&quot;Example&quot;)                                    ## A titled top level window
+f = Frame(w, padding = [3,3,2,2], relief=&quot;groove&quot;)         ## A Frame with some options set
+pack(f, expand = true, fill = &quot;both&quot;)                      ## using pack to manage the layout of f
+#
+b = Button(f, &quot;Click for a message&quot;)                       ## Button constructor has convenience interface
+grid(b, 1, 1)                                              ## use grid to pack in b. 1,1 specifies location
+#
+callback(path) = Messagebox(w, title=&quot;A message&quot;, message=&quot;Hello World&quot;) ## A callback to open a message
+bind(b, &quot;command&quot;, callback)                            ## bind callback to &#39;command&#39; option
+bind(b, &quot;&lt;Return&gt;&quot;, callback)                           ## press return key when button has focus</code></pre><p>We see the use of an internal frame to hold the button. The frame&#39;s layout is managed using <code>pack</code>, the buttons with <code>grid</code>. Both these have some conveniences. For grid, the location of the cell can be specified by 1-based index as shown. The button callback is just a <code>julia</code> function. Its first argument, <code>path</code>, is used internally. In this case, we open a modal dialog with the <code>Messagebox</code> constructor when the callback is called. The button object has this callback bound to the button&#39;s <code>command</code> option. This responds to a mouse click, but not a press of the <code>enter</code> key when the button has the focus. For that, we also bind to the <code>&lt;Return&gt;</code> event.</p><p>For the R package <code>tctlk</code> there are numerous examples at http://bioinf.wehi.edu.au/~wettenhall/RTclTkExamples/ . We borrow a few of these to illustrate the <code>Tk</code> package for <code>julia</code>.</p><p><code>Tk</code> commands are combined strings followed by options. Something like: <code>.button configure -text {button text}</code> is called as <code>configure(button, text = &quot;button text)</code>. Key-value options are specified with through named arguments, which are converted to the underlying Tcl object. Similarly, path names are also translated and functions are converted to callbacks.</p><h3 id="Pack-widgets-into-a-themed-widget-for-better-appearance-1"><a class="docs-heading-anchor" href="#Pack-widgets-into-a-themed-widget-for-better-appearance-1">Pack widgets into a themed widget for better appearance</a><a class="docs-heading-anchor-permalink" href="#Pack-widgets-into-a-themed-widget-for-better-appearance-1" title="Permalink"></a></h3><p><code>Toplevel</code> is the command to create a new top-level window. (<code>Tk.Window</code> is similar, but we give <code>Toplevel</code> a unique type allowing us to add methods, such as <code>set_value</code> to modify the title.) Toplevel windows play a special role, as they start the widget hierarchy needed when constructing child components.</p><p>A top level window is not a themed widget. Immediately packing in a <code>Frame</code> instance is good practice, as otherwise the background of the window may show through:</p><pre><code class="language-jl">w = Toplevel()
+f = Frame(w)
+pack(f, expand=true, fill=&quot;both&quot;)</code></pre><h4 id="Notes:-1"><a class="docs-heading-anchor" href="#Notes:-1">Notes:</a><a class="docs-heading-anchor-permalink" href="#Notes:-1" title="Permalink"></a></h4><ul><li><p>Sometimes the frame is configured with padding so that the sizegrip shows, e.g. <code>frame(w, padding = [3,3,2,2])</code>.</p></li><li><p>The above will get the size from the frame – which has no request. This means the window will disappear. You may want to force the size to come from the top level window. You can use <code>tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false)</code> (wrapped in <code>pack_stop_propagate</code>) to get this:</p></li></ul><pre><code class="language-jl">w = Toplevel(&quot;title&quot;, 400, 300)	## title, width, height
+pack_stop_propagate(w)
+f = Frame(w)
+pack(f, expand=true, fill=&quot;both&quot;)</code></pre><ul><li>resizing top level windows with the mouse can leave visual artifacts, at least on a Mac. This is not optimal! (The picture below can be avoided by packing an expanding frame into the top level widget.)</li></ul><p><img src="munged-window.png" alt="Munged Windows"/></p><h3 id="Message-Box-1"><a class="docs-heading-anchor" href="#Message-Box-1">Message Box</a><a class="docs-heading-anchor-permalink" href="#Message-Box-1" title="Permalink"></a></h3><p>The <code>Messagebox</code> constructor makes a modal message box.</p><pre><code class="language-jl">Messagebox(title=&quot;title&quot;, message=&quot;message&quot;)</code></pre><p>An optional <code>parent</code> argument can be specified to locate the box near the parent, as seen in the examples.</p><h3 id="File-Dialogs-1"><a class="docs-heading-anchor" href="#File-Dialogs-1">File Dialogs</a><a class="docs-heading-anchor-permalink" href="#File-Dialogs-1" title="Permalink"></a></h3><p>File Open, File Save and Choose Directory dialogs can be invoked as follows.</p><pre><code class="language-jl">GetOpenFile()
+GetSaveFile()
+ChooseDirectory()</code></pre><h3 id="Checkbuttons-1"><a class="docs-heading-anchor" href="#Checkbuttons-1">Checkbuttons</a><a class="docs-heading-anchor-permalink" href="#Checkbuttons-1" title="Permalink"></a></h3><p><img src="checkbutton.png" alt="Check button"/></p><p>Check boxes are constructed with <code>Checkbutton</code>:</p><pre><code class="language-jl">w = Toplevel()
+f = Frame(w)
+pack(f, expand=true, fill=&quot;both&quot;)
+cb = Checkbutton(f, &quot;I like Julia&quot;)
+pack(cb)
+
+function callback(path)		   ## callbacks have at least one argument
+  value = get_value(cb)
+  msg = value ? &quot;Glad to hear that&quot; : &quot;Sorry to hear that&quot;
+  Messagebox(w, title=&quot;Thanks for the feedback&quot;, message=msg)
+end
+
+bind(cb, &quot;command&quot;, callback)   ## bind to command option</code></pre><p>The <code>set_items</code> method can be used to change the label.</p><h3 id="Radio-buttons-1"><a class="docs-heading-anchor" href="#Radio-buttons-1">Radio buttons</a><a class="docs-heading-anchor-permalink" href="#Radio-buttons-1" title="Permalink"></a></h3><p><img src="radio.png" alt="Radio button"/></p><pre><code class="language-jl">w = Toplevel()
+f = Frame(w)
+pack(f, expand=true, fill=&quot;both&quot;)
+
+l  = Label(f, &quot;Which do you prefer?&quot;)
+rb = Radio(f, [&quot;apples&quot;, &quot;oranges&quot;])
+b  = Button(f, &quot;ok&quot;)
+map(u -&gt; pack(u, anchor=&quot;w&quot;), (l, rb, b))     ## pack in left to right
+
+
+function callback(path)
+  msg = (get_value(rb) == &quot;apples&quot;) ? &quot;Good choice!  An apple a day keeps the doctor away!&quot; :
+                                      &quot;Good choice!  Oranges are full of Vitamin C!&quot;
+  Messagebox(w, msg)
+end
+
+bind(b, &quot;command&quot;, callback)</code></pre><p>The individual buttons can be accessed via the <code>buttons</code> property. This allows one to edit the labels, as in</p><pre><code class="language-jl">set_items(rb.buttons[1], &quot;Honeycrisp Apples&quot;)</code></pre><p>(The <code>set_items</code> method is used to set the items for a selection widget, in this case the lone item is the name, or label of the button.)</p><h3 id="Menus-1"><a class="docs-heading-anchor" href="#Menus-1">Menus</a><a class="docs-heading-anchor-permalink" href="#Menus-1" title="Permalink"></a></h3><p>Menu bars for top level windows are easily created with the <code>menu_add</code> method. One can add actions items (pass a callback function), check buttons, radio buttons, or separators.</p><pre><code class="language-jl">w = Toplevel()
+tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false) ## or pack_stop_propagate(w)
+
+mb = Menu(w)			## makes menu, adds to top-level window
+fmenu = menu_add(mb, &quot;File&quot;)
+omenu = menu_add(mb, &quot;Options&quot;)
+
+menu_add(fmenu, &quot;Open file...&quot;, (path) -&gt; println(&quot;Open file dialog, ...&quot;))
+menu_add(fmenu, Separator(w))	## second argument is Tk_Separator instance
+menu_add(fmenu, &quot;Close window&quot;, (path) -&gt; destroy(w))
+
+cb = Checkbutton(w, &quot;Something visible&quot;)
+set_value(cb, true)		## initialize
+menu_add(omenu, cb)		## second argument is Tk_Checkbutton instance
+
+menu_add(omenu, Separator(w))	## put in a separator
+
+rb = Radio(w, [&quot;option 1&quot;, &quot;option 2&quot;])
+set_value(rb, &quot;option 1&quot;)	## initialize
+menu_add(omenu, rb)		## second argument is Tk_Radio instance
+
+b = Button(w, &quot;print selected options&quot;)
+pack(b, expand=true, fill=&quot;both&quot;)
+
+function callback(path)
+  vals = map(get_value, (cb, rb))
+  println(vals)
+end
+
+callback_add(b, callback)	## generic way to add callback for most common event
+)</code></pre><h3 id="Entry-widget-1"><a class="docs-heading-anchor" href="#Entry-widget-1">Entry widget</a><a class="docs-heading-anchor-permalink" href="#Entry-widget-1" title="Permalink"></a></h3><p><img src="entry.png" alt="Entry"/></p><p>The entry widget can be used to collect data from the user.</p><pre><code class="language-jl">w = Toplevel()
+f = Frame(w); pack(f, expand=true, fill=&quot;both&quot;)
+
+e = Entry(f)
+b = Button(f, &quot;Ok&quot;)
+
+formlayout(e, &quot;First name:&quot;)
+formlayout(b, nothing)
+focus(e)			## put keyboard focus on widget
+
+function callback(path)
+  val = get_value(e)
+  msg = &quot;You have a nice name $val&quot;
+  Messagebox(w,  msg)
+end
+
+bind(b, &quot;command&quot;, callback)
+bind(b, &quot;&lt;Return&gt;&quot;, callback)
+bind(e, &quot;&lt;Return&gt;&quot;, callback)  ## bind to a certain key press event</code></pre><h3 id="Listboxes-1"><a class="docs-heading-anchor" href="#Listboxes-1">Listboxes</a><a class="docs-heading-anchor-permalink" href="#Listboxes-1" title="Permalink"></a></h3><p><img src="listbox.png" alt="List box"/></p><p>There is no <code>Listbox</code> constructor; rather, we replicate this with <code>Treeview</code> simply by passing a vector of strings. Here we use a scrollbar too:</p><pre><code class="language-jl">fruits = [&quot;Apple&quot;, &quot;Navel orange&quot;, &quot;Banana&quot;, &quot;Pear&quot;]
+w = Toplevel(&quot;Favorite fruit?&quot;)
+tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false)
+f = Frame(w)
+pack(f, expand=true, fill=&quot;both&quot;)
+
+f1 = Frame(f)			## need internal frame for use with scrollbars
+lb = Treeview(f1, fruits)
+scrollbars_add(f1, lb)
+pack(f1,  expand=true, fill=&quot;both&quot;)
+
+b = Button(f, &quot;Ok&quot;)
+pack(b)
+
+bind(b, &quot;command&quot;) do path	## do style
+         fruit_choice = get_value(lb)
+	 msg = (fruit_choice == nothing) ? &quot;What, no choice?&quot; : &quot;Good choice! $(fruit_choice[1])&quot; * &quot;s are delicious!&quot;
+	 Messagebox(w,  msg)
+end</code></pre><p>The value returned by <code>get_value</code> is an array or <code>nothing</code>. Returning <code>nothing</code> may not be the best choice, perhaps a 0-length array is better?</p><p>One can configure the <code>selectmode</code>, e.g. <code>configure(lb, selectmode = &quot;extended&quot;)</code> with either <code>extended</code> (multiple selection possible, <code>browse</code> (single selection), or <code>none</code> (no selection).) The shortcut <code>lb[:selectmode] = &quot;extended&quot;</code> will also work.</p><p>The <code>Treeview</code> widget can also display a matrix of strings in a grid in addition to tree-like data.</p><p>An editable grid could be done, but requires some additional Tk libraries.</p><h3 id="Combo-boxes-1"><a class="docs-heading-anchor" href="#Combo-boxes-1">Combo boxes</a><a class="docs-heading-anchor-permalink" href="#Combo-boxes-1" title="Permalink"></a></h3><p>Selection from a list of choices can be done with a combo box:</p><p><img src="combo.png" alt="Combo box"/></p><pre><code class="language-jl">fruits = [&quot;Apple&quot;, &quot;Navel orange&quot;, &quot;Banana&quot;, &quot;Pear&quot;]
+
+w = Toplevel(&quot;Combo boxes&quot;, 300, 200)
+tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false)
+f = Frame(w); pack(f, expand=true, fill=&quot;both&quot;)
+
+grid(Label(f, &quot;Again, What is your favorite fruit?&quot;), 1, 1)
+cb = Combobox(f, fruits)
+grid(cb, 2,1, sticky=&quot;ew&quot;)
+
+b = Button(f, &quot;Ok&quot;)
+grid(b, 3, 1)
+
+function callback(path)
+  fruit_choice = get_value(cb)
+  msg = (fruit_choice == nothing) ? &quot;What, no choice?&quot; :
+                                    &quot;Good choice! $(fruit_choice)&quot; * &quot;s are delicious!&quot;
+  Messagebox(w, msg)
+end
+
+bind(b, &quot;command&quot;, callback)</code></pre><p>Here no choice also returns <code>nothing</code>. Use this value with <code>set_value</code> to clear the selection, if desired.</p><p>Editable combo boxes need to be configured by hand. (So combo isn&#39;t really what we have here :)</p><h3 id="Text-windows-1"><a class="docs-heading-anchor" href="#Text-windows-1">Text windows</a><a class="docs-heading-anchor-permalink" href="#Text-windows-1" title="Permalink"></a></h3><p>The basic multi-line text widget can be done through:</p><pre><code class="language-jl">w = Toplevel()
+tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false)
+f = Frame(w)
+txt = Text(f)
+scrollbars_add(f, txt)
+pack(f, expand=true, fill = &quot;both&quot;)</code></pre><p>Only a <code>get_value</code> and <code>set_value</code> is provided. One can configure other things (adding/inserting text, using tags, ...) directly with <code>tcl</code> or <code>tcl_eval</code>.</p><h3 id="Events-1"><a class="docs-heading-anchor" href="#Events-1">Events</a><a class="docs-heading-anchor-permalink" href="#Events-1" title="Permalink"></a></h3><p>One can bind a callback to an event in Tcl/Tk. There are few things to know:</p><ul><li><p>Callbacks have at least one argument (we use <code>path</code>). With <code>bind</code>, other arguments are matched by name to correspond to Tcl/Tk&#39;s percent substitution. E.g. <code>f(path, x, y)</code> would get values for x and y through <code>%x %y</code>.</p></li><li><p>We show how to bind to a widget event, but this can be more general. E.g., top level events are for all children of the window a style can match all object of that style.</p></li><li><p>many widgets have a standard <code>command</code> argument in addition to window manager events they respond to. The value <code>command</code> can be passed to <code>bind</code> as the event.</p></li><li><p>The <code>bind</code> method does most of the work. The <code>callback_add</code> method binds to the most common event, mostly the <code>command</code> one. This can be used to bind the same callback to multiple widgets at once.</p></li></ul><h3 id="Sliders-1"><a class="docs-heading-anchor" href="#Sliders-1">Sliders</a><a class="docs-heading-anchor-permalink" href="#Sliders-1" title="Permalink"></a></h3><p>The <code>Slider</code> widget presents a slider for selection from a range of values. The convenience constructor allows one to specify the range of values through a <code>Range</code> object, or the low and high <code>float</code> values of the range.  Note that <code>get_value</code> returns a <code>float</code>, even if used with an integer range.</p><pre><code class="language-jl">w = Toplevel()
+f = Frame(w)
+pack(f, expand=true, fill=&quot;both&quot;)
+pack(Label(f, &quot;Int Range slider&quot;), side=&quot;top&quot;)
+s_range = Slider(f, 1:100)
+pack(s_range, side=&quot;top&quot;, expand=true, fill=&quot;both&quot;, anchor=&quot;w&quot;)
+bind(s_range, &quot;command&quot;, path -&gt; println(&quot;The range value is $(int(get_value(s_range)))&quot;))
+
+pack(Label(f, &quot;Float slider&quot;), side=&quot;top&quot;)
+s_float = Slider(f, 0.0, 1.0)
+pack(s_float, side=&quot;top&quot;, expand=true, fill=&quot;both&quot;, anchor=&quot;w&quot;)
+bind(s_float, &quot;command&quot;, path -&gt; println(&quot;The float value is $(get_value(s_float))&quot;))</code></pre><p>One can also call <code>bind</code> using the <code>do</code> idiom:</p><pre><code class="language-jl">bind(sc, &quot;command&quot;) do path
+  println(&quot;The value is $(get_value(sc))&quot;)
+end</code></pre><h3 id="Sharing-a-variable-between-widgets-1"><a class="docs-heading-anchor" href="#Sharing-a-variable-between-widgets-1">Sharing a variable between widgets</a><a class="docs-heading-anchor-permalink" href="#Sharing-a-variable-between-widgets-1" title="Permalink"></a></h3><p><img src="scale-label.png" alt="Scale label"/></p><p>Some widgets have a <code>textvariable</code> option. These can be shared to have automatic synchronization. For example, the scale widget does not have any indication as to the value, we remedy this with a label.</p><pre><code class="language-jl">w = Toplevel(&quot;Slider and label&quot;, 300, 200)
+f = Frame(w); pack(f, expand = true, fill = &quot;both&quot;)
+
+sc = Slider(f, 1:20)
+l = Label(f)
+l[:textvariable] = sc[:variable]
+
+grid(sc, 1, 1, sticky=&quot;ew&quot;)
+grid(l,  2, 1, sticky=&quot;nw&quot;)
+grid_columnconfigure(f, 1, weight=1)</code></pre><p>This combination above is not ideal, as the length of the label is not fixed. It would be better to format the value and use <code>set_value</code> in a callback.</p><h3 id="Spinbox-1"><a class="docs-heading-anchor" href="#Spinbox-1">Spinbox</a><a class="docs-heading-anchor-permalink" href="#Spinbox-1" title="Permalink"></a></h3><p><img src="scale-spinbox.png" alt="Scale spinbox"/></p><p>The scale widget easily lets one pick a value, but it can be hard to select a precise one. The spinbox makes this easier. Here we link the two using a callback:</p><pre><code class="language-jl">w = Toplevel(&quot;Slider/Spinbox&quot;)
+f = Frame(w); pack(f, expand = true, fill = &quot;both&quot;)
+
+sc = Slider(f, 1:100)
+sp = Spinbox(f, 1:100)
+map(pack, (sc, sp))
+
+bind(sc, &quot;command&quot;, path -&gt; set_value(sp, get_value(sc)))
+bind(sp, &quot;command&quot;, path -&gt; set_value(sc, get_value(sp)))</code></pre><h3 id="Images-1"><a class="docs-heading-anchor" href="#Images-1">Images</a><a class="docs-heading-anchor-permalink" href="#Images-1" title="Permalink"></a></h3><p><img src="image.png" alt="Image"/></p><p>The <code>Image</code> widget can be used to show <code>gif</code> files.</p><pre><code class="language-jl">fname = Pkg.dir(&quot;Tk&quot;, &quot;examples&quot;, &quot;logo.gif&quot;)
+img = Image(fname)
+
+w = Toplevel(&quot;Image&quot;)
+f = Frame(w); pack(f, expand = true, fill = &quot;both&quot;)
+l = Label(f, img)
+pack(l)</code></pre><p>This example adds an image to a button.</p><pre><code class="language-jl">fname = Pkg.dir(&quot;Tk&quot;, &quot;examples&quot;, &quot;weather-overcast.gif&quot;) ## https://code.google.com/p/ultimate-gnome/
+img = Image(fname)
+
+w = Toplevel(&quot;Icon in button&quot;)
+f = Frame(w); pack(f, expand = true, fill = &quot;both&quot;)
+b = Button(f, &quot;weather&quot;, img)   ## or: b = Button(f, text=&quot;weather&quot;, image=img, compound=&quot;left&quot;)
+pack(b)</code></pre><h3 id="Graphics-1"><a class="docs-heading-anchor" href="#Graphics-1">Graphics</a><a class="docs-heading-anchor-permalink" href="#Graphics-1" title="Permalink"></a></h3><p>The <code>Canvas</code> widget can be placed in a GUI to embed a graphics device. In the examples directory you can find an implementation of RStudio&#39;s <code>manipulate</code> function.  This functions makes it very straightforward to define basic interactive GUIs for plotting with <code>Winston</code>.</p><p>To try it, run</p><pre><code class="language-jl">require(Pkg.dir(&quot;Tk&quot;, &quot;examples&quot;, &quot;manipulate.jl&quot;))</code></pre><p>The above graphic was produced with:</p><pre><code class="language-jl">ex = quote
+    x = linspace( 0, n * pi, 100 )
+    c = cos(x)
+    s = sin(x)
+    p = FramedPlot()
+    setattr(p, &quot;title&quot;, title)
+    if
+        fillbetween add(p, FillBetween(x, c, x, s) )
+    end
+    add(p, Curve(x, c, &quot;color&quot;, color) )
+    add(p, Curve(x, s, &quot;color&quot;, &quot;blue&quot;) )
+    file(p, &quot;example1.png&quot;)
+    p				## return a winston object
+end
+obj = manipulate(ex,
+                 slider(&quot;n&quot;, &quot;[0, n*pi]&quot;, 1:10)
+                 ,entry(&quot;title&quot;, &quot;Title&quot;, &quot;title&quot;)
+                 ,checkbox(&quot;fillbetween&quot;, &quot;Fill between?&quot;, true)
+                 ,picker(&quot;color&quot;, &quot;Cos color&quot;, [&quot;red&quot;, &quot;green&quot;, &quot;yellow&quot;])
+                 ,button(&quot;update&quot;)
+                 )</code></pre><h3 id="Frames-1"><a class="docs-heading-anchor" href="#Frames-1">Frames</a><a class="docs-heading-anchor-permalink" href="#Frames-1" title="Permalink"></a></h3><p>The basic widget to hold child widgets is the Frame. As seen in the previous examples, it is simply constructed with <code>Frame</code>. The <code>padding</code> option can be used to give some breathing room.</p><p>Laying out child components is done with a layout manager, one of <code>pack</code>, <code>grid</code>, or <code>place</code> in Tk.</p><h4 id="pack-1"><a class="docs-heading-anchor" href="#pack-1">pack</a><a class="docs-heading-anchor-permalink" href="#pack-1" title="Permalink"></a></h4><p>For <code>pack</code> there are several configuration options that are used to indicate how packing of child components is to be done. The examples make use of</p><ul><li><p><code>side</code>: to indicate the side of the cavity that the child should be packed against. Typically &quot;top&quot; to top to bottom packing or &quot;left&quot; for left to right packing.</p></li><li><p><code>anchor</code>: One of the compass points indicating what part of the cavity the child should be attached to.</p></li><li><p><code>expand</code>: should the child expand when packed</p></li><li><p><code>fill</code>: how should an expanding child fill its space. We use <code>{:expand=&gt;true, :fill=&gt;&quot;both&quot;}</code> to indicate the child should take all the available space it can. Use <code>&quot;x&quot;</code> to stretch horizontally, and <code>&quot;y&quot;</code> to stretch vertically.</p></li></ul><p>Unlike other toolkits (Gtk, Qt), one can pack both horizontally and vertically within a frame. So to pack horizontally, one must add the <code>side</code> option each time. It can be convenient to do this using a map by first creating the widgets, then managing them:</p><pre><code class="language-jl">w = Toplevel(&quot;packing example&quot;)
+f = Frame(w); pack(f, expand=true, fill=&quot;both&quot;)
+ok_b = Button(f, &quot;Ok&quot;)
+cancel_b = Button(f, &quot;Cancel&quot;)
+help_b = Button(f, &quot;Help&quot;)
+map(u -&gt; pack(u, side = &quot;left&quot;), (ok_b, cancel_b, help_b))</code></pre><h4 id="grid-1"><a class="docs-heading-anchor" href="#grid-1">grid</a><a class="docs-heading-anchor-permalink" href="#grid-1" title="Permalink"></a></h4><p>For <code>grid</code>, the arguments are the row and column. We use integers or ranges. When given a range, the widget can span multiple rows or columns. Within a cell, the <code>sticky</code> argument replaces the <code>expand</code>, <code>fill</code>, and <code>anchor</code> arguments. This is a string with one or more directions to attach. A value of <code>news</code> is like <code>Dict(:expand=&gt;true, :fill=&gt;&quot;both&quot;)</code>, as all four sides are attached to.</p><p><img src="grid.png" alt="Grid"/></p><pre><code class="language-jl">w = Toplevel(&quot;Grid&quot;)
+f = Frame(w, padding = 10); pack(f, expand=true, fill=&quot;both&quot;)
+
+s1 = Slider(f, 1:10)
+s2 = Slider(f, 1:10, orient=&quot;vertical&quot;)
+b3 = Button(f, &quot;ew sticky&quot;)
+b4 = Button(f, &quot;ns sticky&quot;)
+
+grid(s1, 1, 1:2, sticky=&quot;news&quot;)
+grid(s2, 2:3, 2, sticky=&quot;news&quot;)
+grid(b3, 2, 1)
+grid(b4, 3, 1,   sticky=&quot;ns&quot;) ## breaks theme</code></pre><p>We provide the <code>formlayout</code> method for conveniently laying out widgets in a form-like manner, with a label on the left. (Pass <code>nothing</code> to suppress this.)</p><p>One thing to keep in mind: <em>a container in Tk can only employ one layout style for its immediate children</em> That is, you can&#39;t manage children both with <code>pack</code> and <code>grid</code>, though you can nest frames and mix and match layout managers.</p><h3 id="Notebooks-1"><a class="docs-heading-anchor" href="#Notebooks-1">Notebooks</a><a class="docs-heading-anchor-permalink" href="#Notebooks-1" title="Permalink"></a></h3><p>A notebook container holds various pages and draws tabs to allow the user to switch between them. The <code>page_add</code> method makes this easy:</p><pre><code class="language-jl">w = Toplevel()
+tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false)
+nb = Notebook(w)
+pack(nb, expand=true, fill=&quot;both&quot;)
+
+page1 = Frame(nb)
+page_add(page1, &quot;Tab 1&quot;)
+pack(Button(page1, &quot;page 1&quot;))
+
+page2 = Frame(nb)
+page_add(page2, &quot;Tab 2&quot;)
+pack(Label(page2, &quot;Some label&quot;))
+
+set_value(nb, 2)		## position on page 2</code></pre><h3 id="Panedwindows-1"><a class="docs-heading-anchor" href="#Panedwindows-1">Panedwindows</a><a class="docs-heading-anchor-permalink" href="#Panedwindows-1" title="Permalink"></a></h3><p>A paned window allows a user to allocate space between child components using their mouse. This is done by dragging a &quot;sash&quot;. As with <code>Notebook</code> containers, children are added through <code>page_add</code>.</p><pre><code class="language-jl">w = Toplevel(&quot;Panedwindow&quot;, 800, 300)
+tcl(&quot;pack&quot;, &quot;propagate&quot;, w, false)
+f = Frame(w); pack(f, expand=true, fill=&quot;both&quot;)
+
+pg = Panedwindow(f, &quot;horizontal&quot;) ## orientation. Use &quot;vertical&quot; for up down.
+grid(pg, 1, 1, sticky = &quot;news&quot;)
+
+page_add(Button(pg, &quot;button&quot;))
+page_add(Label(pg, &quot;label&quot;))
+
+f = Frame(pg)
+formlayout(Entry(f), &quot;Name:&quot;)
+formlayout(Entry(f), &quot;Rank:&quot;)
+formlayout(Entry(f), &quot;Serial Number:&quot;)
+page_add(f)
+
+set_value(pg, 100)                 ## set divider between first two pixels
+tcl(pg, &quot;sashpos&quot;, 1, 200)	   ## others set the tcl way</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="examples/manipulate/">Manipulate »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 22 July 2024 12:08">Monday 22 July 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Manipulate · Tk.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">Tk.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">More</span><ul><li class="is-active"><a class="tocitem" href>Manipulate</a></li><li><a class="tocitem" href="../process/">Process</a></li><li><a class="tocitem" href="../sketch/">Sketch</a></li><li><a class="tocitem" href="../test/">Test</a></li></ul></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">More</a></li><li class="is-active"><a href>Manipulate</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Manipulate</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaGraphics/Tk.jl/blob/master/examples/manipulate.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><p>This is an example mimicking RStudio&#39;s <code>manipulate</code> package (inspired by Mathematica&#39;s no doubt) The manipulate function makes it easy to create &quot;interactive&quot; GUIs. In this case, we can dynamically control parameters of a <code>Winston</code> graph. To add a control is easy. There are just a few: slider, picker, checkbox, button, and entry</p><pre><code class="language-">using Winston
+using Tk
+using Compat; import Compat.String
+
+
+function render(c, p)
+    ctx = getgc(c)
+    Base.Graphics.set_source_rgb(ctx, 1, 1, 1)
+    Base.Graphics.paint(ctx)
+    Winston.page_compose(p, Tk.cairo_surface(c))
+    reveal(c)
+    Tk.update()
+end</code></pre><p>do a manipulate type thing</p><p>context to store dynamic values</p><pre><code class="language-">module ManipulateContext
+using Winston
+end
+
+
+abstract type ManipulateWidget end
+get_label(widget::ManipulateWidget) = widget.label
+
+mutable struct SliderWidget &lt;: ManipulateWidget
+    nm
+    label
+    initial
+    rng
+end
+function make_widget(parent, widget::SliderWidget)
+    sl = Slider(parent, widget.rng)
+    set_value(sl, widget.initial)
+    sl
+end
+
+slider(nm::AbstractString, label::AbstractString, rng::UnitRange, initial::Integer) = SliderWidget(nm, label, initial, rng)
+slider(nm::AbstractString, label::AbstractString, rng::UnitRange) = slider(nm, label, rng, minimum(rng))
+slider(nm::AbstractString,  rng::UnitRange) = slider(nm, nm, rng, minimum(rng))
+
+mutable struct PickerWidget &lt;: ManipulateWidget
+    nm
+    label
+    initial
+    vals
+end
+
+function make_widget(parent, widget::PickerWidget)
+    cb = Combobox(parent)
+    set_items(cb, widget.vals)
+    set_value(cb, widget.initial)
+    set_editable(cb, false)
+    cb
+end
+
+
+picker(nm::AbstractString, label::AbstractString, vals::Vector{T}, initial) where {T &lt;: AbstractString} = PickerWidget(nm, label, initial, vals)
+picker(nm::AbstractString, label::AbstractString, vals::Vector{T}) where {T &lt;: AbstractString} = picker(nm, label, vals, vals[1])
+picker(nm::AbstractString, vals::Vector{T}) where {T &lt;: AbstractString} = picker(nm, nm, vals)
+picker(nm::AbstractString, label::AbstractString, vals::Dict, initial) = PickerWidget(nm, label, vals, initial)
+picker(nm::AbstractString, label::AbstractString, vals::Dict) = PickerWidget(nm, label, vals, [string(k) for (k,v) in vals][1])
+picker(nm::AbstractString, vals::Dict) = picker(nm, nm, vals)
+
+mutable struct CheckboxWidget &lt;: ManipulateWidget
+    nm
+    label
+    initial
+end
+function make_widget(parent, widget::CheckboxWidget)
+    w = Checkbutton(parent, widget.label)
+    set_value(w, widget.initial)
+    w
+end
+get_label(widget::CheckboxWidget) = nothing
+
+checkbox(nm::AbstractString, label::AbstractString, initial::Bool) = CheckboxWidget(nm, label, initial)
+checkbox(nm::AbstractString, label::AbstractString) = checkbox(nm, label, false)
+
+
+mutable struct ButtonWidget &lt;: ManipulateWidget
+    label
+    nm
+end
+make_widget(parent, widget::ButtonWidget) = Button(parent, widget.label)
+get_label(widget::ButtonWidget) = nothing
+button(label::AbstractString) = ButtonWidget(label, nothing)</code></pre><p>Add text widget to gather one-line of text</p><pre><code class="language-">mutable struct EntryWidget &lt;: ManipulateWidget
+    nm
+    label
+    initial
+end
+make_widget(parent, widget::EntryWidget) = Entry(parent, widget.initial)
+entry(nm::AbstractString, label::AbstractString, initial::AbstractString) = EntryWidget(nm, label, initial)
+entry(nm::AbstractString, initial::AbstractString) = EntryWidget(nm, nm, initial)
+entry(nm::AbstractString) = EntryWidget(nm, nm, &quot;{}&quot;)</code></pre><p>Expression returns a plot object. Use names as values</p><pre><code class="language-julia">function manipulate(ex::(Union{Symbol,Expr}), controls...)
+    widgets = Array(Tk.Widget, 0)
+
+    w = Toplevel(&quot;Manipulate&quot;, 800, 500)
+    pack_stop_propagate(w)
+    graph = Canvas(w, 500, 500); pack(graph, side=&quot;left&quot;)
+    control_pane= Frame(w); pack(control_pane, side=&quot;left&quot;, expand=true, fill=&quot;both&quot;)
+
+
+    # create, layout widgets
+    for i in controls
+        widget = make_widget(control_pane, i)
+        push!(widgets, widget)
+        formlayout(widget, get_label(i))
+    end
+
+    get_values() = [get_value(i) for i in  widgets]
+    get_nms() = map(u -&gt; u.nm, controls)
+    function get_vals()
+        d = Dict()                      # return Dict of values
+        vals = get_values(); keys = get_nms()
+        for i in 1:length(vals)
+            if !isa(keys[i], Nothing)
+                d[keys[i]] = vals[i]
+            end
+        end
+        d
+    end
+
+    function dict_to_module(d::Dict) ## stuff values into Manipulate Context
+        for (k,v) in d
+            eval(ManipulateContext, :($(Symbol(k)) = $v))
+        end
+    end
+
+    function make_graphic(x...)
+        d = get_vals()
+        dict_to_module(d)
+        p = eval(ManipulateContext, ex)
+        render(graph, p)
+    end
+    map(u -&gt; callback_add(u, make_graphic), widgets)
+    widgets
+end</code></pre><pre><code class="language-none">manipulate (generic function with 1 method)</code></pre><p>we need to make an expression. here we need to</p><ul><li>use semicolon (perhaps)</li><li>return p, the FramedPlot object to draw</li></ul><pre><code class="language-">ex = quote
+    x = linspace( 0, n * pi, 100 )
+    c = cos(x)
+    s = sin(x)
+    p = FramedPlot()
+    setattr(p, &quot;title&quot;, title)
+    if fillbetween
+        add(p, FillBetween(x, c, x, s) )
+    end
+    add(p, Curve(x, c, &quot;color&quot;, color) )
+    add(p, Curve(x, s, &quot;color&quot;, &quot;blue&quot;) )
+    file(p, &quot;example1.png&quot;)
+    p
+end
+
+obj = manipulate(ex,
+                 slider(&quot;n&quot;, &quot;[0, n*pi]&quot;, 1:10)
+                 ,entry(&quot;title&quot;, &quot;Title&quot;, &quot;title&quot;)
+                 ,checkbox(&quot;fillbetween&quot;, &quot;Fill between?&quot;, true)
+                 ,picker(&quot;color&quot;, &quot;Cos color&quot;, [&quot;red&quot;, &quot;green&quot;, &quot;yellow&quot;])
+                 ,button(&quot;update&quot;)
+                 )</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../process/">Process »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 22 July 2024 12:08">Monday 22 July 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
