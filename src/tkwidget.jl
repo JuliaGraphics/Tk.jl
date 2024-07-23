@@ -408,12 +408,12 @@ get_visible(c::Canvas) = get_visible(c.c.parent)
 
 initialized(c::Canvas) = c.initialized
 
-function pack(c::Canvas, args...)
-    pack(c.c, args...)
+function pack(c::Canvas; kwargs...)
+    pack(c.c; kwargs...)
 end
 
-function grid(c::Canvas, args...)
-    grid(c.c, args...)
+function grid(c::Canvas, args...; kwargs...)
+    grid(c.c, args...; kwargs...)
 end
 
 function place(c::Canvas, x::Int, y::Int)
