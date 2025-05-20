@@ -50,10 +50,12 @@ function init()
         throw(TclError(string("error initializing Tk: ", tcl_result(tclinterp))))
     end
     global timeout
-    @static if VERSION >= v"0.7.0-DEV.3526"
-        timeout = Timer(tcl_doevent, 0.1, interval=0.01)
-    else
-        timeout = Timer(tcl_doevent, 0.1, 0.01)
+    if ccall(:jl_generating_output, Cint, ()) != 1
+        @static if VERSION >= v"0.7.0-DEV.3526"
+            timeout = Timer(tcl_doevent, 0.1, interval=0.01)
+        else
+            timeout = Timer(tcl_doevent, 0.1, 0.01)
+        end
     end
     tclinterp
 end
