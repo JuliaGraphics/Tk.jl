@@ -1,3 +1,6 @@
+# # Sketch Example
+# A simple drawing canvas that lets you sketch with the mouse.
+
 using Tk
 using Graphics
 
