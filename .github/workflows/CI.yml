@@ -49,8 +49,9 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     permissions:
-      actions: write # needed to allow julia-actions/cache to proactively delete old caches that it has created
+      actions: write
       contents: write
+      pull-requests: read
       statuses: write
     steps:
       - uses: actions/checkout@v4
@@ -58,39 +59,15 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@v2
-      - name: Configure doc environment
+      - name: Install dependencies
         shell: julia --project=docs --color=yes {0}
         run: |
           using Pkg
           Pkg.develop(PackageSpec(path=pwd()))
           Pkg.instantiate()
-      - uses: julia-actions/julia-buildpkg@v1
       - run: sudo apt-get update
       - run: sudo apt-get install -y xvfb xauth
-      - name: Install GitHubActions.jl in its own (shared) environment
-        run: |
-          using Pkg
-          Pkg.activate("docs-logger-env"; shared=true)
-          Pkg.add(Pkg.PackageSpec(name="GitHubActions", version="0.1"))
-        shell: julia --color=yes {0}
-      - name: Build the documentation
-        run: |
-          # The Julia command that will be executed
-          xvfb-run -a julia --color=yes --project=docs/ -e '
-              @eval Module() begin
-                  push!(LOAD_PATH, "@docs-logger-env") # access GitHubActions.jl
-                  import Logging, GitHubActions
-                  Logging.global_logger(GitHubActions.GitHubActionsLogger())
-                  pop!(LOAD_PATH)
-              end
-              include("docs/make.jl")'
-        shell: bash
+      - name: Build and deploy
+        run: xvfb-run -a julia --color=yes --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run doctests
-        shell: xvfb-run -a julia --project=docs --color=yes {0}
-        run: |
-          using Documenter: DocMeta, doctest
-          using Tk
-          DocMeta.setdocmeta!(Tk, :DocTestSetup, :(using Tk); recursive=true)
-          doctest(Tk)

@@ -4,5 +4,5 @@ Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 Tk = "4225ea8a-3324-57e7-9ddc-5798a2cb9eab"
 
 [compat]
-Documenter = "0.24"
-Literate = "2.2.1"
+Documenter = "1"
+Literate = "2"

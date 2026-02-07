@@ -9,6 +9,7 @@ Literate.markdown(joinpath(dirname(dir), "examples", "test.jl"), joinpath(dir, "
 
 makedocs(modules = [Tk],
         sitename = "Tk.jl",
+        warnonly = [:example_block],
         pages = Any[
             "Home" => "index.md",
             "More" => Any[
