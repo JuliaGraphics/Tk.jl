@@ -46,7 +46,9 @@ function init()
         throw(TclError(string("error initializing Tk: ", tcl_result(tclinterp))))
     end
     global timeout
-    timeout = Timer(tcl_doevent, 0.1, interval=0.01)
+    if ccall(:jl_generating_output, Cint, ()) != 1
+        timeout = Timer(tcl_doevent, 0.1, interval=0.01)
+    end
     tclinterp
 end
 
