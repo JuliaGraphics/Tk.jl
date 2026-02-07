@@ -32,29 +32,21 @@ function init()
     ccall((:g_type_init,Cairo.libgobject),Cvoid,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
 
-    libpath = IOBuffer()
-    print(libpath,"set env(TCL_LIBRARY) [subst -nocommands -novariables {")
-    escape_string(libpath, joinpath(dirname(dirname(Tcl_jll.libtcl_path)), "lib", "tcl8.6"), "{}")
-    print(libpath,"}]")
-    tcl_eval(String(take!(libpath)),tclinterp)
-    print(libpath,"set env(TK_LIBRARY) [subst -nocommands -novariables {")
-    escape_string(libpath, joinpath(dirname(dirname(Tk_jll.libtk_path)), "lib", "tk8.6"), "{}")
-    print(libpath,"}]")
-    tcl_eval(String(take!(libpath)),tclinterp)
-
-
     if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Cvoid},), tclinterp) == TCL_ERROR
         throw(TclError(string("error initializing Tcl: ", tcl_result(tclinterp))))
+    end
+    # In Tcl/Tk 9, library scripts are embedded in the .so via zipfs.
+    # Tcl mounts its own zipfs automatically, but we must mount Tk's.
+    if ccall((:TclZipfs_Mount,libtcl), Int32,
+             (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}, Ptr{UInt8}),
+             tclinterp, Tk_jll.libtk_path, "//zipfs:/lib/tk", C_NULL) == TCL_ERROR
+        throw(TclError(string("error mounting Tk zipfs: ", tcl_result(tclinterp))))
     end
     if ccall((:Tk_Init,libtk), Int32, (Ptr{Cvoid},), tclinterp) == TCL_ERROR
         throw(TclError(string("error initializing Tk: ", tcl_result(tclinterp))))
     end
     global timeout
-    @static if VERSION >= v"0.7.0-DEV.3526"
-        timeout = Timer(tcl_doevent, 0.1, interval=0.01)
-    else
-        timeout = Timer(tcl_doevent, 0.1, 0.01)
-    end
+    timeout = Timer(tcl_doevent, 0.1, interval=0.01)
     tclinterp
 end
 
@@ -68,8 +60,8 @@ end
 
 tcl_result() = tcl_result(tcl_interp[])
 function tcl_result(tclinterp)
-    unsafe_string(ccall((:Tcl_GetStringResult,libtcl),
-                        Ptr{UInt8}, (Ptr{Cvoid},), tclinterp))
+    objPtr = ccall((:Tcl_GetObjResult,libtcl), Ptr{Cvoid}, (Ptr{Cvoid},), tclinterp)
+    unsafe_string(ccall((:Tcl_GetString,libtcl), Ptr{UInt8}, (Ptr{Cvoid},), objPtr))
 end
 
 function tcl_evalfile(name)
@@ -83,8 +75,8 @@ end
 tcl_eval(cmd) = tcl_eval(cmd,tcl_interp[])
 function tcl_eval(cmd,tclinterp)
     #@show cmd
-    code = ccall((:Tcl_Eval,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}),
-                 tclinterp, cmd)
+    code = ccall((:Tcl_EvalEx,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}, Int, Int32),
+                 tclinterp, cmd, -1, 0)
     result = tcl_result(tclinterp)
     if code != 0
         throw(TclError(result))
@@ -146,11 +138,15 @@ function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})::Int3
         return TCL_ERROR
     end
     if isa(result,String)
-        ccall((:Tcl_SetResult,libtcl), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}, Int32),
-              interp, result, TCL_VOLATILE)
+        obj = ccall((:Tcl_NewStringObj,libtcl), Ptr{Cvoid}, (Ptr{UInt8}, Int32),
+                    result, -1)
+        ccall((:Tcl_SetObjResult,libtcl), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}),
+              interp, obj)
     else
-        ccall((:Tcl_SetResult,libtcl), Cvoid, (Ptr{Cvoid}, Ptr{UInt8}, Int32),
-              interp, empty_str, TCL_STATIC)
+        obj = ccall((:Tcl_NewStringObj,libtcl), Ptr{Cvoid}, (Ptr{UInt8}, Int32),
+                    empty_str, 0)
+        ccall((:Tcl_SetObjResult,libtcl), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}),
+              interp, obj)
     end
     return TCL_OK
 end
