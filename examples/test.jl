@@ -1,4 +1,5 @@
-# Example of widgets put into container with change handler assigned
+# # Widget Test Example
+# This example creates a window with various widgets and a change handler.
 
 using Tk
 
@@ -11,32 +12,17 @@ pack(f, expand=true, fill="both")
 # widgets
 b  = Button(f, "one")
 cb = Checkbutton(f, "checkbutton")
-rg = Radio(f, ["one", "two", "trhee"])
+rg = Radio(f, ["one", "two", "three"])
 sc = Slider(f, 1:10)
 sl = Spinbox(f, 1:10)
 e  = Entry(f, "starting text")
 widgets = (b, cb, rg, sc, sl, e)
 
-# oops, typo!
-set_items(rg.buttons[3], "three")
-
 # packing
-pack_style = ["pack", "grid", "formlayout"][3]
-
-if pack_style == "pack"
-    map(pack, widgets)
-    map(u -> pack_configure(u, Dict(:anchor => "w")), widgets)
-elseif pack_style == "grid"
-    for i in 1:length(widgets)
-        grid(widgets[i], i, 1)
-        grid_configure(widgets[i], Dict(:sticky => "we"))
-    end
-else
-    map(u -> formlayout(u, "label"), widgets)
-end
+map(u -> formlayout(u, "label"), widgets)
 
 # bind a callback to each widget
-change_handler(path,xs...) = println(map(get_value, widgets))
+change_handler(path, xs...) = println(map(get_value, widgets))
 map(u -> callback_add(u, change_handler), widgets)
 
 set_visible(w, true)
