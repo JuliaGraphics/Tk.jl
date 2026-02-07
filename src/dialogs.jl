@@ -18,4 +18,4 @@ function Messagebox(parent::MaybeWidget; title::AbstractString="", message::Abst
 end
 Messagebox(;kwargs...) = Messagebox(nothing; kwargs...)
 Messagebox(parent::Widget, message::AbstractString) = Messagebox(parent, message=message)
-Messagebox(message::AbstractString) = Message(nothing, message=message)
+Messagebox(message::AbstractString) = Messagebox(nothing, message=message)
