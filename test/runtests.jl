@@ -261,7 +261,7 @@ end
     w = Toplevel("Text")
     pack_stop_propagate(w)
     f = Frame(w); pack(f, expand=true, fill="both")
-    txt = Text(f)
+    txt = Tk.Text(f)
     scrollbars_add(f, txt)
     set_value(txt, "new text\n")
     @test get_value(txt) == "new text\n"
