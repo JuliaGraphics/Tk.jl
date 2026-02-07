@@ -19,7 +19,7 @@ using Tk_jll
 using Cairo
 using Random
 
-import Base: ==, bind, getindex, isequal, parent, setindex!, show, string, Text
+import Base: ==, bind, getindex, isequal, parent, setindex!, show, string
 
 import Graphics: width, height, getgc
 
@@ -57,7 +57,7 @@ export Toplevel, Frame, Labelframe, Notebook, Panedwindow
 export Label, Button
 export Checkbutton, Radio, Combobox
 export Slider, Spinbox
-export Entry, set_validation, Text
+export Entry, set_validation
 export Treeview, selected_nodes, node_insert, node_move, node_delete, node_open
 export tree_headers, tree_column_widths, tree_key_header, tree_key_width
 export Sizegrip, Separator, Progressbar, Image, Scrollbar
