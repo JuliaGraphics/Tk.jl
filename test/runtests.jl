@@ -311,12 +311,12 @@ const exampledir = joinpath(splitdir(splitdir(@__FILE__)[1])[1], "examples")
 dcur = pwd()
 cd(exampledir)
 
-# TODO: Uncomment when Winston supports 0.6
-#module example_manipulate
-#    if Pkg.installed("Winston")!=nothing
-#        include("../examples/manipulate.jl")
-#    end
-#end
+module example_manipulate
+    using Test
+    @testset "Examples_Manipulate" begin
+    @test_nowarn include(joinpath("..","examples","manipulate.jl"))
+    end
+end
 
 
 module example_process

@@ -4,8 +4,7 @@ This package provides an interface to the Tcl/Tk libraries, useful for
 creating graphical user interfaces. The basic functionality is
 provided by the `tcl_eval` function, which is used to pass on Tcl
 commands. The `Canvas` widget is used to create a device for plotting
-of `julia`'s graphics. In particular, among others, the `Winston` and
-`Images` package can render to such a device.
+of `julia`'s graphics, using `Cairo` for rendering.
 
 The example `sketch.jl` illustrates this widget for a different purpose.
 
@@ -529,40 +528,13 @@ pack(b)
 
 The `Canvas` widget can be placed in a GUI to embed a graphics device. In the
 examples directory you can find an implementation of RStudio's `manipulate`
-function.  This functions makes it very straightforward to define basic
-interactive GUIs for plotting with `Winston`.
-
+concept, using `Cairo` for drawing. It demonstrates interactive controls
+(slider, combobox, checkbox) that dynamically update a plot.
 
 To try it, run
 
 ```jl
-require(Pkg.dir("Tk", "examples", "manipulate.jl"))
-```
-
-The above graphic was produced with:
-
-```jl
-ex = quote
-    x = linspace( 0, n * pi, 100 )
-    c = cos(x)
-    s = sin(x)
-    p = FramedPlot()
-    setattr(p, "title", title)
-    if
-        fillbetween add(p, FillBetween(x, c, x, s) )
-    end
-    add(p, Curve(x, c, "color", color) )
-    add(p, Curve(x, s, "color", "blue") )
-    file(p, "example1.png")
-    p				## return a winston object
-end
-obj = manipulate(ex,
-                 slider("n", "[0, n*pi]", 1:10)
-                 ,entry("title", "Title", "title")
-                 ,checkbox("fillbetween", "Fill between?", true)
-                 ,picker("color", "Cos color", ["red", "green", "yellow"])
-                 ,button("update")
-                 )
+include(joinpath(pkgdir(Tk), "examples", "manipulate.jl"))
 ```
 
 

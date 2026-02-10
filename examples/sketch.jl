@@ -2,7 +2,7 @@
 # A simple drawing canvas that lets you sketch with the mouse.
 
 using Tk
-using Graphics
+using Cairo: set_source_rgb, move_to, line_to, stroke, paint
 
 function sketch_window()
     w = Window("drawing", 400, 300)

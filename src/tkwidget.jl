@@ -28,18 +28,35 @@ tk_display(w) = unsafe_load(convert(Ptr{Ptr{Cvoid}},w))
 
 const TCL_GLOBAL_ONLY = Int32(1)
 
+function _find_tcl_scripts(artifact_dir, filename)
+    # Check common locations for Tcl/Tk library scripts
+    for subdir in ("lib/tcl9.0", "lib/tk9.0", "share/tcl9.0", "share/tk9.0")
+        candidate = joinpath(artifact_dir, subdir)
+        if isfile(joinpath(candidate, filename))
+            return candidate
+        end
+    end
+    # Fall back to searching the artifact
+    for (root, dirs, files) in walkdir(artifact_dir)
+        if filename in files
+            return root
+        end
+    end
+    # Return default guess if not found; Tcl_Init will produce a clear error
+    return joinpath(artifact_dir, "lib", "tcl9.0")
+end
+
 function init()
     ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
           joinpath(Sys.BINDIR, "julia"))
-    ccall((:g_type_init,Cairo.libgobject),Cvoid,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
 
     # Point Tcl and Tk to their library scripts in the JLL artifacts.
-    # The JLL-built shared libraries don't reliably auto-mount zipfs,
-    # so we set the tcl_library / tk_library variables directly in the
-    # interpreter instead of relying on environment variables.
-    tcl_lib = joinpath(dirname(dirname(Tcl_jll.libtcl_path)), "lib", "tcl9.0")
-    tk_lib  = joinpath(dirname(dirname(Tk_jll.libtk_path)),  "lib", "tk9.0")
+    # The directory layout varies by platform, so search for init.tcl.
+    tcl_lib = _find_tcl_scripts(dirname(dirname(Tcl_jll.libtcl_path)), "init.tcl")
+    tk_lib  = _find_tcl_scripts(dirname(dirname(Tk_jll.libtk_path)),  "tk.tcl")
+    ENV["TCL_LIBRARY"] = tcl_lib
+    ENV["TK_LIBRARY"]  = tk_lib
     ccall((:Tcl_SetVar2,libtcl), Ptr{UInt8},
           (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{UInt8}, Int32),
           tclinterp, "tcl_library", C_NULL, tcl_lib, TCL_GLOBAL_ONLY)

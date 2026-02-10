@@ -21,8 +21,6 @@ using Random
 
 import Base: ==, bind, getindex, isequal, parent, setindex!, show, string
 
-import Graphics: width, height, getgc
-
 import Cairo: destroy
 
 include("tkwidget.jl")                  # old Tk
