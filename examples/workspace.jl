@@ -43,7 +43,7 @@ function get_names_summaries(m::Module, pat::MaybeRegex, dtype::MaybeType, dtype
     nms = get_names(m)
 
     if pat != nothing
-        nms = filter(s -> ismatch(pat, s), nms)
+        nms = filter(s -> occursin(pat, s), nms)
     end
     ## filter out this type
     if dtype != nothing
