@@ -24,7 +24,9 @@ end
 global timeout = nothing
 
 # fetch first word from struct
-tk_display(w) = pointer_to_array(convert(Ptr{Ptr{Cvoid}},w), (1,), false)[1]
+tk_display(w) = unsafe_load(convert(Ptr{Ptr{Cvoid}},w))
+
+const TCL_GLOBAL_ONLY = Int32(1)
 
 function init()
     ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
@@ -32,15 +34,21 @@ function init()
     ccall((:g_type_init,Cairo.libgobject),Cvoid,())
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
 
+    # Point Tcl and Tk to their library scripts in the JLL artifacts.
+    # The JLL-built shared libraries don't reliably auto-mount zipfs,
+    # so we set the tcl_library / tk_library variables directly in the
+    # interpreter instead of relying on environment variables.
+    tcl_lib = joinpath(dirname(dirname(Tcl_jll.libtcl_path)), "lib", "tcl9.0")
+    tk_lib  = joinpath(dirname(dirname(Tk_jll.libtk_path)),  "lib", "tk9.0")
+    ccall((:Tcl_SetVar2,libtcl), Ptr{UInt8},
+          (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{UInt8}, Int32),
+          tclinterp, "tcl_library", C_NULL, tcl_lib, TCL_GLOBAL_ONLY)
+    ccall((:Tcl_SetVar2,libtcl), Ptr{UInt8},
+          (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{UInt8}, Int32),
+          tclinterp, "tk_library", C_NULL, tk_lib, TCL_GLOBAL_ONLY)
+
     if ccall((:Tcl_Init,libtcl), Int32, (Ptr{Cvoid},), tclinterp) == TCL_ERROR
         throw(TclError(string("error initializing Tcl: ", tcl_result(tclinterp))))
-    end
-    # In Tcl/Tk 9, library scripts are embedded in the .so via zipfs.
-    # Tcl mounts its own zipfs automatically, but we must mount Tk's.
-    if ccall((:TclZipfs_Mount,libtcl), Int32,
-             (Ptr{Cvoid}, Ptr{UInt8}, Ptr{UInt8}, Ptr{UInt8}),
-             tclinterp, Tk_jll.libtk_path, "//zipfs:/lib/tk", C_NULL) == TCL_ERROR
-        throw(TclError(string("error mounting Tk zipfs: ", tcl_result(tclinterp))))
     end
     if ccall((:Tk_Init,libtk), Int32, (Ptr{Cvoid},), tclinterp) == TCL_ERROR
         throw(TclError(string("error initializing Tk: ", tcl_result(tclinterp))))

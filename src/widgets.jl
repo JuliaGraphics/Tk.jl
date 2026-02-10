@@ -1,5 +1,9 @@
 ## Create basic widgets here
 
+# Declare Text as a new function in this module so the @eval loop below
+# does not accidentally extend Base.Text (which exists in Julia >= 1.12).
+function Text end
+
 ## Most structs are simple, some have other properties
 mutable struct Tk_Label       <: TTk_Widget w::TkWidget end
 mutable struct Tk_Button      <: TTk_Widget w::TkWidget end
@@ -360,7 +364,7 @@ function x11encode(data::BitArray{2})
         print(s, u8[i], ",")
     end
     println(s, u8[end], "\n};")
-    takebuf_string(s)
+    String(take!(s))
 end
 
 ## Entry
