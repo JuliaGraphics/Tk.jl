@@ -394,7 +394,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         return
     end
     @static if Sys.iswindows()
-        state = Vector{UInt8}(sizeof(Int)*2) # 8.4, 8.5, 8.6
+        state = Vector{UInt8}(undef, sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
         hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Cvoid}, (Ptr{Cvoid}, Int, Ptr{UInt8}),
             jl_tkwin_display(win), drawable, state)
