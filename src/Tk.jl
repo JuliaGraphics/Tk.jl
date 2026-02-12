@@ -41,6 +41,11 @@ function __init__()
     ## remove tearoff menus
     tcl_eval("option add *tearOff 0")
 
+    # Tk 9 removed ::tkerror in favor of ::tk::error
+    if tk_version[] >= v"9"
+        tcl_eval("proc ::tkerror {msg} { ::tk::error \$msg }")
+    end
+
     global jl_tcl_callback_ptr = @cfunction(jl_tcl_callback,
                                     Int32, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Ptr{Ptr{UInt8}}))
 end
