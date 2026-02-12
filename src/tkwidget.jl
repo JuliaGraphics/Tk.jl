@@ -47,16 +47,18 @@ function _find_tcl_scripts(artifact_dir, filename)
 end
 
 function init()
-    ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
-          joinpath(Sys.BINDIR, "julia"))
-    tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
-
     # Point Tcl and Tk to their library scripts in the JLL artifacts.
-    # The directory layout varies by platform, so search for init.tcl.
+    # Set env vars BEFORE any Tcl calls so that Tcl_FindExecutable and
+    # Tcl_CreateInterp can find encoding files and init scripts.
     tcl_lib = _find_tcl_scripts(dirname(dirname(Tcl_jll.libtcl_path)), "init.tcl")
     tk_lib  = _find_tcl_scripts(dirname(dirname(Tk_jll.libtk_path)),  "tk.tcl")
     ENV["TCL_LIBRARY"] = tcl_lib
     ENV["TK_LIBRARY"]  = tk_lib
+
+    ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
+          Tcl_jll.libtcl_path)
+    tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
+
     ccall((:Tcl_SetVar2,libtcl), Ptr{UInt8},
           (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{UInt8}, Int32),
           tclinterp, "tcl_library", C_NULL, tcl_lib, TCL_GLOBAL_ONLY)
