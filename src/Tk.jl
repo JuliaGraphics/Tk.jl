@@ -48,6 +48,16 @@ function __init__()
 
     global jl_tcl_callback_ptr = @cfunction(jl_tcl_callback,
                                     Int32, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Ptr{Ptr{UInt8}}))
+
+    # Stop the Tcl event timer before process exit to prevent segfaults
+    # when the Tcl libraries are unloaded during shutdown.
+    atexit() do
+        global timeout
+        if timeout !== nothing
+            close(timeout)
+            timeout = nothing
+        end
+    end
 end
 
 export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
