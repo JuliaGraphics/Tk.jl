@@ -250,10 +250,15 @@ function configure(c::Canvas)
         Cairo.destroy(c.backcc)
         Cairo.destroy(c.back)
     end
-    render_to_cairo(c.c, false) do surf
-        w = width(c.c)
-        h = height(c.c)
-        c.back = surface_create_similar(surf, w, h)
+    w = width(c.c)
+    h = height(c.c)
+    @static if Sys.isapple()
+        # Use an image surface on macOS; reveal() displays it via Tk photo
+        c.back = CairoImageSurface(w, h, Cairo.FORMAT_ARGB32)
+    else
+        render_to_cairo(c.c, false) do surf
+            c.back = surface_create_similar(surf, w, h)
+        end
     end
     c.backcc = CairoContext(c.back)
     # Check c.initialized to prevent infinite recursion if initialized from
@@ -269,7 +274,35 @@ function draw(c::Canvas)
     reveal(c)
 end
 
+const _reveal_active = Set{String}()
+
 function reveal(c::Canvas)
+    @static if Sys.isapple()
+        # On macOS with Tk 9, layer-backed views prevent direct CGContext
+        # rendering. Display the back buffer as a Tk photo image instead.
+        c.c.path in _reveal_active && return
+        push!(_reveal_active, c.c.path)
+        try
+            back = cairo_surface(c)
+            io = IOBuffer()
+            write_to_png(back, io)
+            png_b64 = base64encode(take!(io))
+            imgname = "jl_photo_" * replace(c.c.path[2:end], r"[.:]" => "_")
+            tcl_eval("image create photo $imgname -data {$png_b64}")
+            lblpath = c.c.path * ".jl_img"
+            if tcl_eval("winfo exists $lblpath") == "0"
+                tcl_eval("label $lblpath -image $imgname -bd 0 -highlightthickness 0")
+                tcl_eval("place $lblpath -x 0 -y 0 -relwidth 1 -relheight 1")
+                # Forward mouse/keyboard events from label through the Canvas frame
+                tcl_eval("bindtags $lblpath [list $lblpath $(c.c.path) [winfo class $lblpath] . all]")
+            else
+                tcl_eval("$lblpath configure -image $imgname")
+            end
+        finally
+            delete!(_reveal_active, c.c.path)
+        end
+        return
+    end
     render_to_cairo(c.c) do front
         frontcc = CairoContext(front)
         back = cairo_surface(c)
@@ -310,60 +343,39 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         return
     end
     @static if Sys.isapple()
-        ## TkMacOSXSetupDrawingContext()
         drawable = jl_tkwin_id(win)
-        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Cvoid}, (Int,), drawable) # NSView*
+        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Cvoid}, (Int,), drawable)
         if view == C_NULL
-            error("Invalid OS X window at getView")
+            error("Invalid macOS window")
         end
-        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Cvoid}, (Ptr{UInt8},), "NSView"), "focusView");
+        # Lock focus on the view to get a valid drawing context
+        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Cvoid}, (Ptr{UInt8},), "NSView"), "focusView")
         focusLocked = false
         if view != focusView
             focusLocked = objc_msgSend(view, "lockFocusIfCanDraw", Int32) != 0
-            dontDraw = !focusLocked
-        else
-            dontDraw = 0 == objc_msgSend(view, "canDraw", Int32)
+            if !focusLocked
+                error("Cannot draw to macOS window")
+            end
+        elseif 0 == objc_msgSend(view, "canDraw", Int32)
+            error("Cannot draw to macOS window")
         end
-        if dontDraw
-            error("Cannot draw to OS X Window")
-        end
-        window = objc_msgSend(view, "window")
-        objc_msgSend(window, "disableFlushWindow")
-        context = objc_msgSend(objc_msgSend(window, "graphicsContext"), "graphicsPort")
+        # Get CGContext from the current NSGraphicsContext (modern API)
+        nsGC = objc_msgSend(
+            ccall(:objc_getClass, Ptr{Cvoid}, (Ptr{UInt8},), "NSGraphicsContext"),
+            "currentContext")
+        context = objc_msgSend(nsGC, "CGContext")
         if !focusLocked
             ccall(:CGContextSaveGState, Cvoid, (Ptr{Cvoid},), context)
         end
         try
-            ## TkMacOSXGetClipRgn
             wi, hi = width(w), height(w)
             if clipped
-                macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
-                if macDraw.winPtr != C_NULL
-                    TK_CLIP_INVALID = 0x02 # 8.4, 8.5, 8.6
-                    if macDraw.flags & TK_CLIP_INVALID != 0
-                        ccall((:TkMacOSXUpdateClipRgn,libtk), Cvoid, (Ptr{Cvoid},), macDraw.winPtr)
-                        macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
-                    end
-                    clipRgn = if macDraw.drawRgn != C_NULL
-                        macDraw.drawRgn
-                    elseif macDraw.visRgn != C_NULL
-                        macDraw.visRgn
-                    else
-                        C_NULL
-                    end
-                end
-                ##
+                # Flip Y axis: CG uses bottom-left origin, Tk uses top-left
                 ccall(:CGContextTranslateCTM, Cvoid, (Ptr{Cvoid}, CGFloat, CGFloat), context, 0, height(toplevel(w)))
                 ccall(:CGContextScaleCTM, Cvoid, (Ptr{Cvoid}, CGFloat, CGFloat), context, 1, -1)
-                if clipRgn != C_NULL
-                    if ccall(:HIShapeIsEmpty, UInt8, (Ptr{Cvoid},), clipRgn) != 0
-                        return
-                    end
-                    @assert 0 == ccall(:HIShapeReplacePathInCGContext, Cint, (Ptr{Cvoid}, Ptr{Cvoid}), clipRgn, context)
-                    ccall(:CGContextEOClip, Cvoid, (Ptr{Cvoid},), context)
-                end
+                # Apply widget offset within toplevel
+                macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
                 ccall(:CGContextTranslateCTM, Cvoid, (Ptr{Cvoid}, CGFloat, CGFloat), context, macDraw.xOff, macDraw.yOff)
-                ##
             end
             surf = CairoQuartzSurface(context, wi, hi)
             try
@@ -372,16 +384,13 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
                 destroy(surf)
             end
         finally
-            ## TkMacOSXRestoreDrawingContext
             ccall(:CGContextSynchronize, Cvoid, (Ptr{Cvoid},), context)
-            objc_msgSend(window, "enableFlushWindow")
             if focusLocked
                 objc_msgSend(view, "unlockFocus")
             else
                 ccall(:CGContextRestoreGState, Cvoid, (Ptr{Cvoid},), context)
             end
         end
-        ##
         return
     end
     @static if Sys.iswindows()

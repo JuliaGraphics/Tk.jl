@@ -17,6 +17,7 @@ module Tk
 using Tcl_jll
 using Tk_jll
 using Cairo
+using Base64
 using Random
 
 import Base: ==, bind, getindex, isequal, parent, setindex!, show, string
