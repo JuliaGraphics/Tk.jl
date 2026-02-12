@@ -286,7 +286,7 @@ end
     else
         const CGFloat = Float64
     end
-    function objc_msgSend(id, uid, ::Type{T}=Ptr{Void}) where T
+    function objc_msgSend(id, uid, ::Type{T}=Ptr{Cvoid}) where T
         convert(T, ccall(:objc_msgSend, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}),
                          id, ccall(:sel_getUid, Ptr{Cvoid}, (Ptr{UInt8},), uid)))
     end
