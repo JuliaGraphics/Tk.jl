@@ -88,11 +88,11 @@ function manipulate_demo()
     w = Toplevel("Manipulate", 700, 500)
     pack_stop_propagate(w)
 
-    graph = Canvas(w)
-    pack(graph, side="left", expand=true, fill="both")
-
     control_pane = Frame(w)
     pack(control_pane, side="right", fill="y", padx=10, pady=10)
+
+    graph = Canvas(w)
+    pack(graph, side="left", expand=true, fill="both")
 
     sl = Slider(control_pane, 1:10)
     set_value(sl, 2)
@@ -124,3 +124,7 @@ function manipulate_demo()
 end
 
 manipulate_demo()
+
+if isinteractive()
+    wait(Condition())
+end
