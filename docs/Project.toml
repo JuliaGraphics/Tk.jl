@@ -1,6 +1,6 @@
 [deps]
+Cairo = "159f3aea-2a34-519c-b102-8c37f9878175"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-Graphics = "a2bd30eb-e257-5431-a919-1863eab51364"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 Tk = "4225ea8a-3324-57e7-9ddc-5798a2cb9eab"
 
