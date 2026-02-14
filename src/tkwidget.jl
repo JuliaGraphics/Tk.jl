@@ -8,17 +8,63 @@ const TCL_VOLATILE = convert(Ptr{Cvoid}, 1)
 const TCL_STATIC   = convert(Ptr{Cvoid}, 0)
 const TCL_DYNAMIC  = convert(Ptr{Cvoid}, 3)
 
-tcl_doevent() = tcl_doevent(nothing,0)
-function tcl_doevent(timer,status=0)
-    # https://www.tcl.tk/man/tcl8.6/TclLib/DoOneEvent.htm
-    # DONT_WAIT* = 1 shl 1
-    # WINDOW_EVENTS* = 1 shl 2
-    # FILE_EVENTS* = 1 shl 3
-    # TIMER_EVENTS* = 1 shl 4
-    # IDLE_EVENTS* = 1 shl 5
-    # ALL_EVENTS* = not DONT_WAIT
+# Thread-safety: Tcl/Tk requires all interpreter calls from the OS thread
+# that created it.  We dispatch all Tcl calls through the timer task, which
+# runs on the creating thread (interactive threadpool, thread 1).
+const _tcl_call_queue = Channel{Any}(256)
+const _tcl_timer_task = Ref{Any}(nothing)   # set to current_task() in timer cb
+const _tcl_initialized = Ref{Bool}(false)   # set to true after Timer is created
+
+"""
+    _tcl_do(f) -> result
+
+Execute `f()` on the Tcl thread.  If the caller is already on the timer task
+(or during `init()` before the timer starts), `f` is called directly.
+Otherwise, `f` is queued for the timer callback and the caller blocks until
+the result is available.
+"""
+function _tcl_do(f::Function)
+    # During init (before timer exists): call directly, we're on the creating thread
+    if !_tcl_initialized[]
+        return f()
+    end
+    # Already on the timer task (e.g., within a Tcl callback): call directly
+    if current_task() === _tcl_timer_task[]
+        return f()
+    end
+    # Dispatch to the timer thread and wait for result
+    result_ch = Channel{Any}(1)
+    put!(_tcl_call_queue, (f, result_ch))
+    response = take!(result_ch)
+    if response isa Exception
+        throw(response)
+    end
+    return response
+end
+
+function _process_tcl_queue()
+    while isready(_tcl_call_queue)
+        (f, result_ch) = take!(_tcl_call_queue)
+        try
+            result = f()
+            put!(result_ch, result)
+        catch e
+            put!(result_ch, e)
+        end
+    end
+end
+
+tcl_doevent() = _tcl_do(_tcl_process_events)
+function _tcl_process_events()
     while (ccall((:Tcl_DoOneEvent,libtcl), Int32, (Int32,), (1<<1))!=0)
     end
+end
+function tcl_doevent(timer,status=0)
+    _tcl_timer_task[] = current_task()
+    # https://www.tcl.tk/man/tcl8.6/TclLib/DoOneEvent.htm
+    # DONT_WAIT* = 1 shl 1
+    _process_tcl_queue()
+    _tcl_process_events()
 end
 
 global timeout = nothing
@@ -75,12 +121,14 @@ function init()
     global timeout
     if ccall(:jl_generating_output, Cint, ()) != 1
         timeout = Timer(tcl_doevent, 0.1, interval=0.01)
+        _tcl_initialized[] = true
     end
     tclinterp
 end
 
-mainwindow(interp) =
+mainwindow(interp) = _tcl_do() do
     ccall((:Tk_MainWindow,libtk), Ptr{Cvoid}, (Ptr{Cvoid},), interp)
+end
 mainwindow() = mainwindow(tcl_interp[])
 
 mutable struct TclError <: Exception
@@ -94,25 +142,27 @@ function tcl_result(tclinterp)
 end
 
 function tcl_evalfile(name)
-    if ccall((:Tcl_EvalFile,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}),
-             tcl_interp[], name) != 0
-        throw(TclError(tcl_result()))
+    _tcl_do() do
+        if ccall((:Tcl_EvalFile,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}),
+                 tcl_interp[], name) != 0
+            throw(TclError(tcl_result()))
+        end
+        nothing
     end
-    nothing
 end
 
 tcl_eval(cmd) = tcl_eval(cmd,tcl_interp[])
 function tcl_eval(cmd,tclinterp)
-    #@show cmd
-    code = ccall((:Tcl_EvalEx,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}, Int, Int32),
-                 tclinterp, cmd, -1, 0)
-    result = tcl_result(tclinterp)
-    if code != 0
-        throw(TclError(result))
-    else
-        result
+    _tcl_do() do
+        code = ccall((:Tcl_EvalEx,libtcl), Int32, (Ptr{Cvoid}, Ptr{UInt8}, Int, Int32),
+                     tclinterp, cmd, -1, 0)
+        result = tcl_result(tclinterp)
+        if code != 0
+            throw(TclError(result))
+        else
+            result
+        end
     end
-
 end
 
 mutable struct TkWidget
@@ -145,9 +195,11 @@ Window(title) = Window(title, 200, 200)
 place(widget::TkWidget, x::Int, y::Int) = tcl_eval("place $(widget.path) -x $x -y $y")
 
 function nametowindow(name)
-    ccall((:Tk_NameToWindow,libtk), Ptr{Cvoid},
-          (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}),
-          tcl_interp[], name, mainwindow(tcl_interp[]))
+    _tcl_do() do
+        ccall((:Tk_NameToWindow,libtk), Ptr{Cvoid},
+              (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}),
+              tcl_interp[], name, ccall((:Tk_MainWindow,libtk), Ptr{Cvoid}, (Ptr{Cvoid},), tcl_interp[]))
+    end
 end
 
 const _callbacks = Dict{String, Any}()
@@ -182,12 +234,14 @@ end
 
 function tcl_callback(f)
     cname = string("jl_cb", repr(objectid(f)))
-    # TODO: use Tcl_CreateObjCommand instead
-    ccall((:Tcl_CreateCommand,libtcl), Ptr{Cvoid},
-          (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
-          tcl_interp[], cname, jl_tcl_callback_ptr, pointer_from_objref(cname), C_NULL)
-    # TODO: use a delete proc (last arg) to remove this
-    _callbacks[cname] = f
+    _tcl_do() do
+        # TODO: use Tcl_CreateObjCommand instead
+        ccall((:Tcl_CreateCommand,libtcl), Ptr{Cvoid},
+              (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
+              tcl_interp[], cname, jl_tcl_callback_ptr, pointer_from_objref(cname), C_NULL)
+        # TODO: use a delete proc (last arg) to remove this
+        _callbacks[cname] = f
+    end
     cname
 end
 
@@ -330,7 +384,14 @@ end
 # NOTE: This has to be ported to each window environment.
 # But, this should be the only such function needed.
 function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
-    win = nametowindow(w.path)
+    _tcl_do() do
+        _render_to_cairo_impl(f, w, clipped)
+    end
+end
+function _render_to_cairo_impl(f::Function, w::TkWidget, clipped::Bool)
+    win = ccall((:Tk_NameToWindow,libtk), Ptr{Cvoid},
+          (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}),
+          tcl_interp[], w.path, ccall((:Tk_MainWindow,libtk), Ptr{Cvoid}, (Ptr{Cvoid},), tcl_interp[]))
     win == C_NULL && error("invalid window")
     @static if Sys.islinux()
         disp = jl_tkwin_display(win)
