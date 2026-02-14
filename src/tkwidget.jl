@@ -403,7 +403,7 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         surf = CairoWin32Surface(hdc, width(w), height(w))
         f(surf)
         destroy(surf)
-        ccall((:TkWinReleaseDrawableDC,libtk), Cvoid, (Int, Int, Ptr{UInt8}),
+        ccall((:TkWinReleaseDrawableDC,libtk), Cvoid, (Int, Ptr{Cvoid}, Ptr{UInt8}),
             drawable, hdc, state)
         return
     end

@@ -305,6 +305,20 @@ end
     destroy(w)
 end
 
+@testset "render_to_cairo types" begin
+    # Regression test for #88: on Windows, TkWinReleaseDrawableDC was called
+    # with hdc typed as Int instead of Ptr{Cvoid}, causing InexactError.
+    # This test exercises render_to_cairo via Canvas init on all platforms.
+    w = Toplevel("render_to_cairo test", 100, 100)
+    pack_stop_propagate(w)
+    f = Frame(w); pack(f, expand=true, fill="both")
+    c = Canvas(f, 80, 80)
+    pack(c, expand=true, fill="both")
+    Tk.wait_initialized(c)
+    @test Tk.initialized(c)
+    destroy(w)
+end
+
 ## Examples
 # Wrap each test in its own module to avoid namespace leaks between files
 const exampledir = joinpath(splitdir(splitdir(@__FILE__)[1])[1], "examples")
