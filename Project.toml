@@ -1,6 +1,6 @@
 name = "Tk"
 uuid = "4225ea8a-3324-57e7-9ddc-5798a2cb9eab"
-version = "0.8.0"
+version = "0.9.0"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -15,4 +15,4 @@ Tk_jll = "056b5f69-f28f-5060-ad8a-df43647a2b5c"
 Cairo = "1"
 Tcl_jll = "9"
 Tk_jll = "9"
-julia = "1.6"
+julia = "1.10"
