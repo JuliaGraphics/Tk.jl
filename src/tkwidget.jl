@@ -28,18 +28,37 @@ tk_display(w) = unsafe_load(convert(Ptr{Ptr{Cvoid}},w))
 
 const TCL_GLOBAL_ONLY = Int32(1)
 
+function _find_tcl_scripts(artifact_dir, filename)
+    # Check common locations for Tcl/Tk library scripts
+    for subdir in ("lib/tcl9.0", "lib/tk9.0", "share/tcl9.0", "share/tk9.0")
+        candidate = joinpath(artifact_dir, subdir)
+        if isfile(joinpath(candidate, filename))
+            return candidate
+        end
+    end
+    # Fall back to searching the artifact
+    for (root, dirs, files) in walkdir(artifact_dir)
+        if filename in files
+            return root
+        end
+    end
+    # Return default guess if not found; Tcl_Init will produce a clear error
+    return joinpath(artifact_dir, "lib", "tcl9.0")
+end
+
 function init()
+    # Point Tcl and Tk to their library scripts in the JLL artifacts.
+    # Set env vars BEFORE any Tcl calls so that Tcl_FindExecutable and
+    # Tcl_CreateInterp can find encoding files and init scripts.
+    tcl_lib = _find_tcl_scripts(dirname(dirname(Tcl_jll.libtcl_path)), "init.tcl")
+    tk_lib  = _find_tcl_scripts(dirname(dirname(Tk_jll.libtk_path)),  "tk.tcl")
+    ENV["TCL_LIBRARY"] = tcl_lib
+    ENV["TK_LIBRARY"]  = tk_lib
+
     ccall((:Tcl_FindExecutable,libtcl), Cvoid, (Ptr{UInt8},),
-          joinpath(Sys.BINDIR, "julia"))
-    ccall((:g_type_init,Cairo.libgobject),Cvoid,())
+          Tcl_jll.libtcl_path)
     tclinterp = ccall((:Tcl_CreateInterp,libtcl), Ptr{Cvoid}, ())
 
-    # Point Tcl and Tk to their library scripts in the JLL artifacts.
-    # The JLL-built shared libraries don't reliably auto-mount zipfs,
-    # so we set the tcl_library / tk_library variables directly in the
-    # interpreter instead of relying on environment variables.
-    tcl_lib = joinpath(dirname(dirname(Tcl_jll.libtcl_path)), "lib", "tcl9.0")
-    tk_lib  = joinpath(dirname(dirname(Tk_jll.libtk_path)),  "lib", "tk9.0")
     ccall((:Tcl_SetVar2,libtcl), Ptr{UInt8},
           (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}, Ptr{UInt8}, Int32),
           tclinterp, "tcl_library", C_NULL, tcl_lib, TCL_GLOBAL_ONLY)
@@ -233,10 +252,15 @@ function configure(c::Canvas)
         Cairo.destroy(c.backcc)
         Cairo.destroy(c.back)
     end
-    render_to_cairo(c.c, false) do surf
-        w = width(c.c)
-        h = height(c.c)
-        c.back = surface_create_similar(surf, w, h)
+    w = width(c.c)
+    h = height(c.c)
+    @static if Sys.isapple()
+        # Use an image surface on macOS; reveal() displays it via Tk photo
+        c.back = CairoImageSurface(w, h, Cairo.FORMAT_ARGB32)
+    else
+        render_to_cairo(c.c, false) do surf
+            c.back = surface_create_similar(surf, w, h)
+        end
     end
     c.backcc = CairoContext(c.back)
     # Check c.initialized to prevent infinite recursion if initialized from
@@ -252,7 +276,35 @@ function draw(c::Canvas)
     reveal(c)
 end
 
+const _reveal_active = Set{String}()
+
 function reveal(c::Canvas)
+    @static if Sys.isapple()
+        # On macOS with Tk 9, layer-backed views prevent direct CGContext
+        # rendering. Display the back buffer as a Tk photo image instead.
+        c.c.path in _reveal_active && return
+        push!(_reveal_active, c.c.path)
+        try
+            back = cairo_surface(c)
+            io = IOBuffer()
+            write_to_png(back, io)
+            png_b64 = base64encode(take!(io))
+            imgname = "jl_photo_" * replace(c.c.path[2:end], r"[.:]" => "_")
+            tcl_eval("image create photo $imgname -data {$png_b64}")
+            lblpath = c.c.path * ".jl_img"
+            if tcl_eval("winfo exists $lblpath") == "0"
+                tcl_eval("label $lblpath -image $imgname -bd 0 -highlightthickness 0")
+                tcl_eval("place $lblpath -x 0 -y 0 -relwidth 1 -relheight 1")
+                # Forward mouse/keyboard events from label through the Canvas frame
+                tcl_eval("bindtags $lblpath [list $lblpath $(c.c.path) [winfo class $lblpath] . all]")
+            else
+                tcl_eval("$lblpath configure -image $imgname")
+            end
+        finally
+            delete!(_reveal_active, c.c.path)
+        end
+        return
+    end
     render_to_cairo(c.c) do front
         frontcc = CairoContext(front)
         back = cairo_surface(c)
@@ -269,7 +321,7 @@ end
     else
         const CGFloat = Float64
     end
-    function objc_msgSend(id, uid, ::Type{T}=Ptr{Void}) where T
+    function objc_msgSend(id, uid, ::Type{T}=Ptr{Cvoid}) where T
         convert(T, ccall(:objc_msgSend, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}),
                          id, ccall(:sel_getUid, Ptr{Cvoid}, (Ptr{UInt8},), uid)))
     end
@@ -293,60 +345,39 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
         return
     end
     @static if Sys.isapple()
-        ## TkMacOSXSetupDrawingContext()
         drawable = jl_tkwin_id(win)
-        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Cvoid}, (Int,), drawable) # NSView*
+        view = ccall((:TkMacOSXGetRootControl,libtk), Ptr{Cvoid}, (Int,), drawable)
         if view == C_NULL
-            error("Invalid OS X window at getView")
+            error("Invalid macOS window")
         end
-        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Cvoid}, (Ptr{UInt8},), "NSView"), "focusView");
+        # Lock focus on the view to get a valid drawing context
+        focusView = objc_msgSend(ccall(:objc_getClass, Ptr{Cvoid}, (Ptr{UInt8},), "NSView"), "focusView")
         focusLocked = false
         if view != focusView
             focusLocked = objc_msgSend(view, "lockFocusIfCanDraw", Int32) != 0
-            dontDraw = !focusLocked
-        else
-            dontDraw = 0 == objc_msgSend(view, "canDraw", Int32)
+            if !focusLocked
+                error("Cannot draw to macOS window")
+            end
+        elseif 0 == objc_msgSend(view, "canDraw", Int32)
+            error("Cannot draw to macOS window")
         end
-        if dontDraw
-            error("Cannot draw to OS X Window")
-        end
-        window = objc_msgSend(view, "window")
-        objc_msgSend(window, "disableFlushWindow")
-        context = objc_msgSend(objc_msgSend(window, "graphicsContext"), "graphicsPort")
+        # Get CGContext from the current NSGraphicsContext (modern API)
+        nsGC = objc_msgSend(
+            ccall(:objc_getClass, Ptr{Cvoid}, (Ptr{UInt8},), "NSGraphicsContext"),
+            "currentContext")
+        context = objc_msgSend(nsGC, "CGContext")
         if !focusLocked
             ccall(:CGContextSaveGState, Cvoid, (Ptr{Cvoid},), context)
         end
         try
-            ## TkMacOSXGetClipRgn
             wi, hi = width(w), height(w)
             if clipped
-                macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
-                if macDraw.winPtr != C_NULL
-                    TK_CLIP_INVALID = 0x02 # 8.4, 8.5, 8.6
-                    if macDraw.flags & TK_CLIP_INVALID != 0
-                        ccall((:TkMacOSXUpdateClipRgn,libtk), Cvoid, (Ptr{Cvoid},), macDraw.winPtr)
-                        macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
-                    end
-                    clipRgn = if macDraw.drawRgn != C_NULL
-                        macDraw.drawRgn
-                    elseif macDraw.visRgn != C_NULL
-                        macDraw.visRgn
-                    else
-                        C_NULL
-                    end
-                end
-                ##
+                # Flip Y axis: CG uses bottom-left origin, Tk uses top-left
                 ccall(:CGContextTranslateCTM, Cvoid, (Ptr{Cvoid}, CGFloat, CGFloat), context, 0, height(toplevel(w)))
                 ccall(:CGContextScaleCTM, Cvoid, (Ptr{Cvoid}, CGFloat, CGFloat), context, 1, -1)
-                if clipRgn != C_NULL
-                    if ccall(:HIShapeIsEmpty, UInt8, (Ptr{Cvoid},), clipRgn) != 0
-                        return
-                    end
-                    @assert 0 == ccall(:HIShapeReplacePathInCGContext, Cint, (Ptr{Cvoid}, Ptr{Cvoid}), clipRgn, context)
-                    ccall(:CGContextEOClip, Cvoid, (Ptr{Cvoid},), context)
-                end
+                # Apply widget offset within toplevel
+                macDraw = unsafe_load(convert(Ptr{TkWindowPrivate}, drawable))
                 ccall(:CGContextTranslateCTM, Cvoid, (Ptr{Cvoid}, CGFloat, CGFloat), context, macDraw.xOff, macDraw.yOff)
-                ##
             end
             surf = CairoQuartzSurface(context, wi, hi)
             try
@@ -355,20 +386,17 @@ function render_to_cairo(f::Function, w::TkWidget, clipped::Bool=true)
                 destroy(surf)
             end
         finally
-            ## TkMacOSXRestoreDrawingContext
             ccall(:CGContextSynchronize, Cvoid, (Ptr{Cvoid},), context)
-            objc_msgSend(window, "enableFlushWindow")
             if focusLocked
                 objc_msgSend(view, "unlockFocus")
             else
                 ccall(:CGContextRestoreGState, Cvoid, (Ptr{Cvoid},), context)
             end
         end
-        ##
         return
     end
     @static if Sys.iswindows()
-        state = Vector{UInt8}(sizeof(Int)*2) # 8.4, 8.5, 8.6
+        state = Vector{UInt8}(undef, sizeof(Int)*2) # 8.4, 8.5, 8.6
         drawable = jl_tkwin_id(win)
         hdc = ccall((:TkWinGetDrawableDC,libtk), Ptr{Cvoid}, (Ptr{Cvoid}, Int, Ptr{UInt8}),
             jl_tkwin_display(win), drawable, state)

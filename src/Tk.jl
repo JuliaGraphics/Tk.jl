@@ -17,11 +17,10 @@ module Tk
 using Tcl_jll
 using Tk_jll
 using Cairo
+using Base64
 using Random
 
 import Base: ==, bind, getindex, isequal, parent, setindex!, show, string
-
-import Graphics: width, height, getgc
 
 import Cairo: destroy
 
@@ -42,8 +41,23 @@ function __init__()
     ## remove tearoff menus
     tcl_eval("option add *tearOff 0")
 
+    # Tk 9 removed ::tkerror in favor of ::tk::error
+    if tk_version[] >= v"9"
+        tcl_eval("proc ::tkerror {msg} { ::tk::error \$msg }")
+    end
+
     global jl_tcl_callback_ptr = @cfunction(jl_tcl_callback,
                                     Int32, (Ptr{Cvoid}, Ptr{Cvoid}, Int32, Ptr{Ptr{UInt8}}))
+
+    # Stop the Tcl event timer before process exit to prevent segfaults
+    # when the Tcl libraries are unloaded during shutdown.
+    atexit() do
+        global timeout
+        if timeout !== nothing
+            close(timeout)
+            timeout = nothing
+        end
+    end
 end
 
 export Window, TkCanvas, Canvas, pack, place, tcl_eval, TclError,
