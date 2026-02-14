@@ -167,12 +167,12 @@ function jl_tcl_callback(fptr, interp, argc::Int32, argv::Ptr{Ptr{UInt8}})::Int3
         return TCL_ERROR
     end
     if isa(result,String)
-        obj = ccall((:Tcl_NewStringObj,libtcl), Ptr{Cvoid}, (Ptr{UInt8}, Int32),
+        obj = ccall((:Tcl_NewStringObj,libtcl), Ptr{Cvoid}, (Ptr{UInt8}, Int),
                     result, -1)
         ccall((:Tcl_SetObjResult,libtcl), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}),
               interp, obj)
     else
-        obj = ccall((:Tcl_NewStringObj,libtcl), Ptr{Cvoid}, (Ptr{UInt8}, Int32),
+        obj = ccall((:Tcl_NewStringObj,libtcl), Ptr{Cvoid}, (Ptr{UInt8}, Int),
                     empty_str, 0)
         ccall((:Tcl_SetObjResult,libtcl), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}),
               interp, obj)
